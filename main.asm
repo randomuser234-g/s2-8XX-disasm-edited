@@ -4836,11 +4836,11 @@ loc_54C0:
 		beq.s	loc_54B8
 		rts
 SS_Background_Load: ; loc_54CA:
-		lea	(Chunk_Table).l,A1
+		lea	(Chunk_Table).l,a1
 		move.w	#$4051,d0
 		bsr.w	EniDec				 ; loc_18DA
 		move.l	#$50000001,d3
-		lea	(Chunk_Table+$80).l,A2
+		lea	(Chunk_Table+$80).l,a2
 		moveq	#6,d7
 loc_54E6:
 		move.l	d3,d0
@@ -4857,7 +4857,7 @@ loc_54F6:
 		bne.s	loc_550A
 		cmpi.w	#6,d7
 		bne.s	loc_551A
-		lea	(Chunk_Table).l,A1
+		lea	(Chunk_Table).l,a1
 loc_550A:
 		movem.l d0-d4,-(sp)
 		moveq	#7,d1
@@ -4876,17 +4876,17 @@ loc_551A:
 		addi.l	#$C000,d3
 		swap	d3
 loc_5544:
-		adda.w	#$80,A2
+		adda.w	#$80,a2
 		dbf	d7,loc_54E6
-		lea	(Chunk_Table).l,A1
+		lea	(Chunk_Table).l,a1
 		move.w	#$4000,d0
 		bsr.w	EniDec				 ; loc_18DA
-		lea	(Chunk_Table).l,A1
+		lea	(Chunk_Table).l,a1
 		move.l	#$40000003,d0
 		moveq	#$3F,d1
 		moveq	#$1F,d2
 		bsr.w	PlaneMapToVRAM_H40		   ; loc_154C
-		lea	(Chunk_Table).l,A1
+		lea	(Chunk_Table).l,a1
 		move.l	#$50000003,d0
 		moveq	#$3F,d1
 		moveq	#$3F,d2
@@ -4902,8 +4902,8 @@ S1_Pal_Cycle_Special_Stage: ; loc_5584:
 		addq.w	#1,(SSPalCycle_Frame).w
 		andi.w	#$1F,d0
 		lsl.w	#2,d0
-		lea	(loc_565E).l,A0
-		adda.w	d0,A0
+		lea	(loc_565E).l,a0
+		adda.w	d0,a0
 		move.b	(a0)+,d0
 		bpl.s	loc_55B4
 		move.w	#$1FF,d0
@@ -4912,8 +4912,8 @@ loc_55B4:
 		moveq	#0,d0
 		move.b	(a0)+,d0
 		move.w	d0,(unk_F7A0).w
-		lea	(loc_56DE).l,A1
-		lea	(A1,d0.w),A1
+		lea	(loc_56DE).l,a1
+		lea	(a1,d0.w),a1
 		move.w	#$8200,d0
 		move.b	(a1)+,d0
 		move.w	d0,(a6)
@@ -4926,9 +4926,9 @@ loc_55B4:
 		moveq	#0,d0
 		move.b	(a0)+,d0
 		bmi.s	loc_560A
-		lea	(Pal_S1_SS_Cycle1).l,A1	 ; loc_56EC
-		adda.w	d0,A1
-		lea	(Normal_palette_line3+$E).w,A2
+		lea	(Pal_S1_SS_Cycle1).l,a1	 ; loc_56EC
+		adda.w	d0,a1
+		lea	(Normal_palette_line3+$E).w,a2
 		move.l	(a1)+,(a2)+
 		move.l	(a1)+,(a2)+
 		move.l	(a1)+,(a2)+
@@ -4941,27 +4941,27 @@ loc_560A:
 		addq.w	#1,d1
 loc_5616:
 		mulu.w	#$2A,d1
-		lea	(Pal_S1_SS_Cycle2).l,A1	 ; loc_5734
-		adda.w	d1,A1
+		lea	(Pal_S1_SS_Cycle2).l,a1	 ; loc_5734
+		adda.w	d1,a1
 		andi.w	#$7F,d0
 		bclr	#0,d0
 		beq.s	loc_563A
-		lea	(Normal_palette_line4+$E).w,A2
+		lea	(Normal_palette_line4+$E).w,a2
 		move.l	(a1),(a2)+
 		move.l	4(a1),(a2)+
 		move.l	8(a1),(a2)+
 loc_563A:
-		adda.w	#$C,A1
-		lea	(Normal_palette_line3+$1A).w,A2
+		adda.w	#$C,a1
+		lea	(Normal_palette_line3+$1A).w,a2
 		cmpi.w	#$A,d0
 		blo.s	loc_5650
 		subi.w	#$A,d0
-		lea	(Normal_palette_line4+$1A).w,A2
+		lea	(Normal_palette_line4+$1A).w,a2
 loc_5650:
 		move.w	d0,d1
 		add.w	d0,d0
 		add.w	d1,d0
-		adda.w	d0,A1
+		adda.w	d0,a1
 		move.l	(a1)+,(a2)+
 		move.w	(a1)+,(a2)+
 		rts
@@ -5015,8 +5015,8 @@ loc_5832:
 		move.w	(Camera_BG_X_pos).w,d0
 		neg.w	d0
 		swap	d0
-		lea	(loc_58ED).l,A1
-		lea	(Decomp_Buffer).w,A3
+		lea	(loc_58ED).l,a1
+		lea	(Decomp_Buffer).w,a3
 		moveq	#9,d3
 loc_5848:
 		move.w	2(a3),d0
@@ -5030,14 +5030,14 @@ loc_5848:
 		ext.w	d2
 		add.w	d2,(a3)+
 		dbf	d3,loc_5848
-		lea	(Decomp_Buffer).w,A3
-		lea	(loc_58DA).l,A2
+		lea	(Decomp_Buffer).w,a3
+		lea	(loc_58DA).l,a2
 		bra.s	loc_58A0
 loc_5870:
 		cmpi.w	#$C,d0
 		bne.s	loc_5896
 		subq.w	#1,(Camera_BG3_X_pos).w
-		lea	(Decomp_Buffer+$100).w,A3
+		lea	(Decomp_Buffer+$100).w,a3
 		move.l	#$18000,d2
 		moveq	#6,d1
 loc_5886:
@@ -5047,10 +5047,10 @@ loc_5886:
 		subi.l	#$2000,d2
 		dbf	d1,loc_5886
 loc_5896:
-		lea	(Decomp_Buffer+$100).w,A3
-		lea	(loc_58E5).l,A2
+		lea	(Decomp_Buffer+$100).w,a3
+		lea	(loc_58E5).l,a2
 loc_58A0:
-		lea	(Horiz_Scroll_Buf).w,A1
+		lea	(Horiz_Scroll_Buf).w,a1
 		move.w	(Camera_BG3_X_pos).w,d0
 		neg.w	d0
 		swap	d0
@@ -5062,12 +5062,12 @@ loc_58A0:
 		lsl.w	#2,d2
 loc_58BC:
 		move.w	(a3)+,d0
-		addq.w	#2,A3
+		addq.w	#2,a3
 		moveq	#0,d1
 		move.b	(a2)+,d1
 		subq.w	#1,d1
 loc_58C6:
-		move.l	d0,(A1,d2.w)
+		move.l	d0,(a1,d2.w)
 		addq.w	#4,d2
 		andi.w	#$3FC,d2
 		dbf	d1,loc_58C6
@@ -5340,7 +5340,7 @@ Bg_Scroll_Speed_HTz: ; loc_5C38: ; Hill Top Background Position
 		clr.l	(Camera_BG_Y_pos).w
 		clr.l	(Camera_BG2_Y_pos).w
 		clr.l	(Camera_BG3_Y_pos).w
-		lea	(TempArray_LayerDef).w,A2
+		lea	(TempArray_LayerDef).w,a2
 		clr.l	(a2)+
 		clr.l	(a2)+
 		clr.l	(a2)+
@@ -5407,7 +5407,7 @@ Bg_Scroll_Speed_CNz: ; loc_5CE8: ; Casino Night Background Position
 		move.w	d0,(Camera_BG_Y_pos).w
 		move.w	d0,(Camera_BG_Y_pos_P2).w
 		clr.l	(Camera_BG_X_pos).w
-		lea	(TempArray_LayerDef).w,A2
+		lea	(TempArray_LayerDef).w,a2
 		clr.l	(a2)+
 		clr.l	(a2)+
 		clr.l	(a2)+
@@ -5439,7 +5439,7 @@ loc_5d42:
 		clr.l	(Camera_BG_X_pos).w
 		clr.l	(Camera_BG2_Y_pos).w
 		clr.l	(Camera_BG3_Y_pos).w
-		lea	(TempArray_LayerDef).w,A2
+		lea	(TempArray_LayerDef).w,a2
 		clr.l	(a2)+
 		clr.l	(a2)+
 		clr.l	(a2)+
@@ -8806,7 +8806,7 @@ Obj11_Init:
 		addq.b	#2,routine(a0)
 		move.l	#Obj11_MapUnc_85E0,mappings(a0)
 		move.w	#$43C6,art_tile(a0)
-		move.b	#3,$18(a0)
+		move.b	#3,priority(a0)
 		cmpi.b	#hidden_palace_zone,(Current_Zone).w	; are we in HPZ?
 		bne.s	+			; if not,branch
 		addq.b	#4,routine(a0)
@@ -8815,7 +8815,7 @@ Obj11_Init:
 +
 		bsr.w	Adjust2PArtPointer
 		move.b	#4,render_flags(a0)
-		move.b	#$80,$19(a0)
+		move.b	#$80,width_pixels(a0)
 		move.w	y_pos(a0),d2
 		move.w	d2,$3C(a0)
 		move.w	x_pos(a0),d3
@@ -8861,8 +8861,8 @@ Obj11_MakeBdgSegment:
 		move.w	art_tile(a0),art_tile(a1)
 		move.b	render_flags(a0),render_flags(a1)
 		bset	#6,render_flags(a1)
-		move.b	#$40,$E(a1)
-		move.b	d1,$F(a1)
+		move.b	#$40,mainspr_width(a1)
+		move.b	d1,mainspr_childsprites(a1)
 		subq.b	#1,d1
 		lea	subspr_data(a1),a2	; starting address for subsprite data
 
@@ -8916,7 +8916,7 @@ loc_812C:
 		addq.w	#8,d1
 		add.w	d2,d2
 		moveq	#8,d3
-		move.w	8(a0),d4
+		move.w	x_pos(a0),d4
 		bsr.w	Obj11_Solid
 ; loc_8144:
 Obj11_Unload:
@@ -8926,7 +8926,7 @@ Obj11_Unload:
 		rts
 ; ---------------------------------------------------------------------------
 +
-		move.w	8(a0),d0
+		move.w	x_pos(a0),d0
 		andi.w	#$FF80,d0
 		sub.w	(Camera_X_pos_coarse).w,d0
 		cmpi.w	#$280,d0
@@ -8934,11 +8934,11 @@ Obj11_Unload:
 		rts
 ; ---------------------------------------------------------------------------
 +		; delete first subsprite object
-		move.l	$30(a0),a1	; a1=object
+		movea.l	$30(a0),a1	; a1=object
 		bsr.w	DeleteObject2
 		cmpi.b	#8,$28(a0)
 		bls.s	+		; if bridge has more than 8 logs,delete second subsprite object
-		move.l	$34(a0),a1	; a1=object
+		movea.l	$34(a0),a1	; a1=object
 		bsr.w	DeleteObject2
 +
 		bra.w	DeleteObject
@@ -8988,7 +8988,7 @@ loc_81C2:
 		addq.w	#8,d1
 		add.w	d2,d2
 		moveq	#8,d3
-		move.w	8(a0),d4
+		move.w	x_pos(a0),d4
 		bsr.w	Obj11_Solid
 		bsr.w	sub_8282
 		bra.w	Obj11_Unload
@@ -9013,8 +9013,8 @@ loc_81FC:
 		btst	#1,$22(a1)
 		bne.s	loc_821C
 		moveq	#0,d0
-		move.w	8(a1),d0
-		sub.w	8(a0),d0
+		move.w	x_pos(a1),d0
+		sub.w	x_pos(a0),d0
 		add.w	d1,d0
 		bmi.s	loc_821C
 		cmp.w	d2,d0
@@ -9030,10 +9030,10 @@ loc_821C:
 loc_822A:
 		lsr.w	#4,d0
 		move.b	d0,(a0,d5.w)
-		move.l	$30(a0),a2
+		movea.l	$30(a0),a2
 		cmpi.w	#8,d0
 		blo.s	loc_8242
-		move.l	$34(a0),a2	; a2=character
+		movea.l	$34(a0),a2	; a2=character
 		subi.w	#8,d0
 
 loc_8242:
@@ -9058,8 +9058,8 @@ loc_8260:
 		btst	d6,$22(a0)
 		beq.s	+
 		moveq	#0,d0
-		move.w	8(a1),d0
-		sub.w	8(a0),d0
+		move.w	x_pos(a1),d0
+		sub.w	x_pos(a0),d0
 		add.w	d1,d0
 		lsr.w	#4,d0
 		move.b	d0,(a0,d5.w)
@@ -9308,7 +9308,7 @@ Obj11_MapUnc_85E0:	binclude	"mappings/sprite/obj11_GHZ.bin"	; GHZ bridge
 ; [ Begin ]
 ;===============================================================================
 Obj_0x15_Swing_Platform: ; loc_85F8:
-		btst	#6,1(a0)
+		btst	#6,render_flags(a0)
 		bne.w	loc_8610
 		moveq	#0,d0
 		move.b	routine(a0),d0
@@ -9328,24 +9328,24 @@ loc_8618:
 loc_8626:
 		addq.b	#2,$24(a0)
 		move.l	#Obj15_MapUnc_8AD8,4(a0) ; loc_8AD8
-		move.w	#$43E3,2(a0)
-		move.b	#4,1(a0)
+		move.w	#$43E3,art_tile(a0)
+		move.b	#4,render_flags(a0)
 		move.b	#3,$18(a0)
 		move.b	#$20,$19(a0)
 		move.b	#$10,$16(a0)
 		move.w	$C(a0),$38(a0)
-		move.w	8(a0),$3A(a0)
+		move.w	x_pos(a0),$3A(a0)
 		cmpi.b	#dust_hill_zone,(Current_Zone).w
 		bne.s	loc_867E
 		move.l	#Obj15_MapUnc_8B46,4(a0) ; loc_8B46
-		move.w	#0,2(a0)
+		move.w	#0,art_tile(a0)
 		move.b	#$18,$19(a0)
 		move.b	#8,$16(a0)
 loc_867E:
 		cmpi.b	#neo_green_hill_zone,(Current_Zone).w
 		bne.s	loc_86A0
 		move.l	#Obj15_MapUnc_8B0E,4(a0) ; loc_8B0E
-		move.w	#0,2(a0)
+		move.w	#0,art_tile(a0)
 		move.b	#$20,$19(a0)
 		move.b	#8,$16(a0)
 loc_86A0:
@@ -9360,18 +9360,18 @@ loc_86B0:
 		lsl.w	#4,d2
 		addi.b	#8,d2
 		move.b	d2,$3C(a0)
-		move.w	8(a0),d2
+		move.w	x_pos(a0),d2
 		move.w	$C(a0),d3
 		bsr.w	SingleObjLoad2		; loc_E788
 		bne.s	loc_8738
 		_move.b	id(a0),id(a1)
 		move.l	4(a0),4(a1)
-		move.w	2(a0),2(a1)
+		move.w	art_tile(a0),art_tile(a1)
 		move.b	#4,1(a1)
 		bset	#6,1(a1)
 		move.b	#$48,$E(a1)
 		move.b	d1,$F(a1)
-		subq.b	#$1,d1
+		subq.b	#1,d1
 		lea	$10(a1),A2
 loc_86FC:
 		move.w	d2,(a2)+
@@ -9380,10 +9380,10 @@ loc_86FC:
 		addi.w	#$10,d3
 		dbf	d1,loc_86FC
 		move.b	#2,$15(a1)
-		move.w	d2,8(a1)
+		move.w	d2,x_pos(a1)
 		move.w	d3,$C(a1)
 		move.b	#1,$B(a1)
-		move.l	A1,$30(a0)
+		move.l	a1,$30(a0)
 		addi.w	#8,d3
 		move.w	d3,$C(a0)
 		move.b	#$50,$14(a1)
@@ -9399,7 +9399,7 @@ loc_8738:
 		move.l	#Obj15_MapUnc_8B7A,4(a0) ; loc_8B7A
 		move.b	#$A7,$20(a0)
 loc_8764:
-		move.w	8(a0),-(sp)
+		move.w	x_pos(a0),-(sp)
 		bsr.w	loc_8784
 		moveq	#0,d1
 		move.b	$19(a0),d1
@@ -9455,9 +9455,9 @@ loc_87d4:
 		add.w	d2,d4
 		add.w	d3,d5
 		move.w	d4,y_pos(a0)
-		move.w	d5,8(a0)
+		move.w	d5,x_pos(a0)
 		moveq	#0,d6
-		move.l	$30(a0),A1
+		movea.l	$30(a0),a1
 		move.b	$F(a1),d6
 		subq.w	#1,d6
 		blo.s	loc_885C
@@ -9469,7 +9469,7 @@ loc_87d4:
 		asl.l	#8,d1
 		moveq	#0,d4
 		moveq	#0,d5
-		lea	$10(a1),A2
+		lea	$10(a1),a2
 loc_881E:
 		movem.l d4-d5,-(sp)
 		swap	d4
@@ -9481,7 +9481,7 @@ loc_881E:
 		movem.l (sp)+,d4-d5
 		add.l	d0,d4
 		add.l	d1,d5
-		addq.w	#2,A2
+		addq.w	#2,a2
 		dbf	d6,loc_881E
 		swap	d4
 		swap	d5
@@ -9491,7 +9491,7 @@ loc_881E:
 		move.w	$2A(a1),d1
 		move.w	d5,$28(a1)
 		move.w	d4,$2A(a1)
-		move.w	d0,8(a1)
+		move.w	d0,x_pos(a1)
 		move.w	d1,$C(a1)
 loc_885C:
 		rts
@@ -9547,17 +9547,17 @@ loc_8906:
 		move.w	$3A(a0),d0
 		andi.w	#$FF80,d0
 		sub.w	(Camera_X_pos_coarse).w,d0
-		cmpi.w	#$0280,d0
+		cmpi.w	#$280,d0
 		bhi.w	loc_891E
 		bra.w	DisplaySprite			; loc_d3C2
 loc_891E:
-		move.l	$30(a0),A1
+		movea.l	$30(a0),a1
 		bsr.w	DeleteObject2
 		bra.w	DeleteObject			; loc_d3B4
 loc_892A:
 		bra.w	DisplaySprite			; loc_d3C2
 loc_892E:
-		move.w	8(a0),-(sp)
+		move.w	x_pos(a0),-(sp)
 		bsr.w	loc_8784
 		moveq	#0,d1
 		move.b	$19(a0),d1
@@ -9576,7 +9576,7 @@ loc_892E:
 		moveq	#0,d0
 		move.w	#$F,d1
 loc_896A:
-		move.l	(A0,d0),(A1,d0)
+		move.l	(a0,d0.w),(a1,d0.w)
 		addq.w	#4,d0
 		dbf	d1,loc_896A
 		move.b	#$A,$24(a1)
@@ -9590,11 +9590,11 @@ loc_8988:
 		neg.w	$10(a1)
 loc_899A:
 		bset	#1,$22(a1)
-		move.w	A0,d0
+		move.w	a0,d0
 		subi.w	#MainCharacter,d0
 		lsr.w	#6,d0
 		andi.w	#$7F,d0
-		move.w	A1,d1
+		move.w	a1,d1
 		subi.w	#MainCharacter,d1
 		lsr.w	#6,d1
 		andi.w	#$7F,d1
@@ -9617,7 +9617,7 @@ loc_89E8:
 		bsr.w	loc_8784
 		bra.w	loc_88FC
 loc_89F0:
-		move.w	8(a0),-(sp)
+		move.w	x_pos(a0),-(sp)
 		btst	#1,$22(a0)
 		beq.s	loc_8A2E
 		bsr.w	ObjectMove				; loc_d27A
@@ -9646,7 +9646,7 @@ loc_8A3E:
 		bsr.w	loc_FA28
 		bra.w	MarkObjGone				; loc_d2A0
 loc_8A56:
-		move.w	8(a0),-(sp)
+		move.w	x_pos(a0),-(sp)
 		bsr.w	ObjectMove				; loc_d27A
 		btst	#1,$22(a0)
 		beq.s	loc_8A92
@@ -9673,7 +9673,7 @@ loc_8A92:
 		bsr.w	JmpTo_ObjHitWallRight
 		tst.w	d1
 		bpl.s	loc_8AC0
-		add.w	d1,8(a0)
+		add.w	d1,x_pos(a0)
 		move.w	#0,$10(a0)
 loc_8AC0:
 		moveq	#0,d1
@@ -9758,9 +9758,9 @@ Obj17_Init:
 		move.b	#4,1(a0)
 		move.b	#3,$18(a0)
 		move.b	#8,$19(a0)
-		move.w	$C(a0),d2
-		move.w	8(a0),d3
-		_move.b	0(a0),d4
+		move.w	y_pos(a0),d2
+		move.w	x_pos(a0),d3
+		_move.b	id(a0),d4
 		lea	$28(a0),a2		; move helix length to a2
 		moveq	#0,d1
 		move.b	(a2),d1			; move helix length to d1
@@ -9784,9 +9784,9 @@ Obj17_MakeHelix:
 		move.b	d5,(a2)+		; copy child address to parent RAM
 		; since two of the routines are removed,this loads 4 instead of 8
 		move.b	#4,routine(a1)
-		_move.b	d4,0(a1)
-		move.w	d2,$C(a1)
-		move.w	d3,8(a1)
+		_move.b	d4,id(a1)
+		move.w	d2,y_pos(a1)
+		move.w	d3,x_pos(a1)
 		move.l	4(a0),4(a1)
 		move.w	#$4398,2(a1)
 		bsr.w	Adjust2PArtPointer2
@@ -9811,7 +9811,7 @@ Obj17_Main:
 		bsr.w	Obj17_RotateSpike
 		; the "check delete" routine was merged into here,
 		; as well as it no longer displaying after being deleted
-		move.w	8(a0),d0
+		move.w	x_pos(a0),d0
 		andi.w	#$FF80,d0
 		sub.w	(Camera_X_pos_coarse).w,d0
 		cmpi.w	#$280,d0
@@ -9889,9 +9889,9 @@ loc_8d5A:
 		addq.b	#2,routine(a0)
 		moveq	#0,d0
 		move.b	$28(a0),d0
-		lsr.w	#$03,d0
+		lsr.w	#3,d0
 		andi.w	#$E,d0
-		lea	loc_8d50(pc,d0),A2
+		lea	loc_8d50(pc,d0.w),a2
 		move.b	(a2)+,$19(a0)
 		move.b	(a2)+,$1A(a0)
 		move.l	#Obj18_MapUnc_9078,4(a0) ; loc_9078
@@ -10080,7 +10080,7 @@ loc_8F8C:
 		bne.s	loc_8FCC
 		btst	#3,$22(a0)
 		beq.s	loc_8FC6
-		lea	(MainCharacter).w,A1
+		lea	(MainCharacter).w,a1
 		bset	#1,$22(a1)
 		bclr	#3,$22(a1)
 		move.b	#2,routine(a1)
@@ -10235,9 +10235,9 @@ loc_9234:
 		bsr.w	loc_920A
 		subq.b	#1,$38(a0)
 		bne.s	loc_9262
-		lea	(MainCharacter).w,A1
+		lea	(MainCharacter).w,a1
 		bsr.s	loc_9248
-		lea	(Sidekick).w,A1
+		lea	(Sidekick).w,a1
 loc_9248:
 		btst	#3,$22(a1)
 		beq.s	loc_9262
@@ -10282,7 +10282,7 @@ loc_9288:
 		beq.s	loc_92C6
 		lea	(loc_9463).l,A4
 loc_92C6:
-		move.l	A4,$34(a0)
+		move.l	a4,$34(a0)
 		cmpi.b	#oil_ocean_zone,(Current_Zone).w
 		bne.s	loc_92F2
 		move.l	#Obj1A_MapUnc_9902,4(a0) ; loc_9902
@@ -10327,9 +10327,9 @@ loc_9366:
 		bsr.w	loc_933C
 		subq.b	#1,$38(a0)
 		bne.s	loc_9394
-		lea	(MainCharacter).w,A1
+		lea	(MainCharacter).w,a1
 		bsr.s	loc_937A
-		lea	(Sidekick).w,A1
+		lea	(Sidekick).w,a1
 loc_937A:
 		btst	#3,$22(a1)
 		beq.s	loc_9394
@@ -10349,27 +10349,27 @@ loc_93A6:
 loc_93AC:
 		addq.b	#2,$1A(a0)
 loc_93B0:
-		move.l	$34(a0),A4
+		movea.l	$34(a0),a4
 		moveq	#0,d0
 		move.b	$1A(a0),d0
 		add.w	d0,d0
-		move.l	4(a0),A3
-		adda.w	(A3,d0),A3
+		movea.l	4(a0),a3
+		adda.w	(a3,d0.w),a3
 		move.w	(a3)+,d1
 		subq.w	#1,d1
 		bset	#5,1(a0)
-		_move.b	0(a0),d4
+		_move.b	id(a0),d4
 		move.b	1(a0),d5
-		move.l	A0,A1
+		movea.l	a0,a1
 		bra.s	loc_93E2
 loc_93DA:
 		bsr.w	SingleObjLoad		 ; loc_E772
 		bne.s	loc_9428
-		addq.w	#8,A3
+		addq.w	#8,a3
 loc_93E2:
 		move.b	#4,$24(a1)
-		_move.b	d4,0(a1)
-		move.l	A3,4(a1)
+		_move.b	d4,id(a1)
+		move.l	a3,4(a1)
 		move.b	d5,1(a1)
 		move.w	8(a0),8(a1)
 		move.w	$C(a0),$C(a1)
@@ -10378,7 +10378,7 @@ loc_93E2:
 		move.b	$19(a0),$19(a1)
 		move.b	$16(a0),$16(a1)
 		move.b	(a4)+,$38(a1)
-		cmpa.l	A0,A1
+		cmpa.l	a0,a1
 		bhs.s	loc_9424
 		bsr.w	DisplaySprite2		   ; loc_d3E0
 loc_9424:
@@ -10885,7 +10885,7 @@ S1Obj1E_MakeBall:
 		bsr.w	SingleObjLoad
 		bne.s	loc_9F38
 		; missing code to actually load the ball,taken from Sonic 1 for reference
-		;_move.b	#$20,0(a1)	; load Ball Hog ball ($20,need to be readded to object list too)
+		;_move.b	#$20,id(a1)	; load Ball Hog ball ($20,need to be readded to object list too)
 		move.w	8(a0),8(a1)
 		move.w	$C(a0),$C(a1)
 		move.w	#-$100,$10(a1)
@@ -10965,8 +10965,8 @@ loc_9FC6:
 S1Obj20_Explode:
 		subq.w	#1,$30(a0)
 		bpl.s	S1Obj20_Animate
-		_move.b	#$24,0(a0)
-		_move.b	#$3F,0(a0)
+		_move.b	#$24,id(a0)
+		_move.b	#$3F,id(a0)
 		move.b	#0,routine(a0)
 		bra.w	Obj3F
 ; ===========================================================================
@@ -11050,7 +11050,7 @@ Obj27_InitWithAnimal:
 		addq.b	#2,routine(a0)
 		bsr.w	SingleObjLoad
 		bne.s	Obj27_Init
-		_move.b	#$28,0(a1)		 ; load obj28 (animal and 100 points)
+		_move.b	#$28,id(a1)		 ; load obj28 (animal and 100 points)
 		move.w	8(a0),8(a1)
 		move.w	$C(a0),$C(a1)
 		move.w	$3E(a0),$3E(a1)		; set by Touch_KillEnemy
@@ -11343,7 +11343,7 @@ loc_A46A:
 		bne.s	loc_A4CA
 		bsr.w	SingleObjLoad
 		bne.s	Obj28_Display
-		_move.b	#$29,0(a1)		; load obj29 (points)
+		_move.b	#$29,id(a1)		; load obj29 (points)
 		move.w	8(a0),8(a1)
 		move.w	$C(a0),$C(a1)
 		move.w	$3E(a0),d0
@@ -11768,7 +11768,7 @@ S1Obj1F_MakeFire:
 		move.b	#6,$1C(a0)		; use firing animation
 		bsr.w	SingleObjLoad
 		bne.s	S1Obj1F_MakeFire2
-		_move.b	#$1F,0(a1)		; load obj1F (left Crabmeat bullet)
+		_move.b	#$1F,id(a1)		; load obj1F (left Crabmeat bullet)
 		move.b	#6,routine(a1)
 		move.w	8(a0),8(a1)
 		subi.w	#$10,8(a1)
@@ -11778,7 +11778,7 @@ S1Obj1F_MakeFire:
 S1Obj1F_MakeFire2:
 		bsr.w	SingleObjLoad
 		bne.s	return_AA1C
-		_move.b	#$1F,0(a1)		; load obj1F (right Crabmeat bullet)
+		_move.b	#$1F,id(a1)		; load obj1F (right Crabmeat bullet)
 		move.b	#6,routine(a1)
 		move.w	8(a0),8(a1)
 		addi.w	#$10,8(a1)
@@ -44820,7 +44820,7 @@ BM128_NGHZ:	binclude	"mappings/128x128/NGHZ.kos"
 
 ; ===========================================================================
 ; Unused duplicate Sega sound
-Sega_SndDup:	binclude	"sound/Unused Sega PCM.bin"
+Sega_SndDup:	binclude	"leftovers/sound/PCM/Sega PCM.pcm"
 		even
 
 ; ===========================================================================
@@ -45055,7 +45055,7 @@ Mus_Emerald:	include		"sound/music/Got an emerald.asm"
 ; 8-bit unsigned raw audio at 16Khz
 ; -------------------------------------------------------------------------------
 ; loc_F1E8C:
-Sega_Snd:	binclude	"sound/Sega PCM.bin"
+Sega_Snd:	binclude	"sound/PCM/Sega PCM.pcm"
 Sega_Snd_End:
 
 	if Sega_Snd_End - Sega_Snd > $8000
