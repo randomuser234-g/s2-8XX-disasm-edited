@@ -12,7 +12,7 @@
 NemDec:
 		movem.l	d0-a1/a3-a5,-(sp)
 		lea	(NemPCD_WriteRowToVDP).l,a3	; write all data to the same location
-		lea	(vdp_data_port).l,a4	; specifically, to the VDP data port
+		lea	(VDP_data_port).l,a4	; specifically, to the VDP data port
 		bra.s	NemDecMain
 
 ; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
@@ -26,7 +26,7 @@ NemDecToRAM:
 		lea	(NemPCD_WriteRowToRAM).l,a3 ; advance to the next location after each write
 
 NemDecMain:
-		lea	(v_ngfx_buffer).w,a1
+		lea	(Decomp_Buffer).w,a1
 		move.w	(a0)+,d2	; get number of patterns
 		lsl.w	#1,d2
 		bcc.s	loc_146A	; branch if the sign bit isn't set

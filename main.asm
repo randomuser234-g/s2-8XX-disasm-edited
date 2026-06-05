@@ -1359,172 +1359,7 @@ ProcessDMAQueue_Done:
 		rts
 ; End of function ProcessDMAQueue
 
-; ---------------------------------------------------------------------------
-; START OF NEMESIS DECOMPRESSOR
-
-; For format explanation see http://info.sonicretro.org/Nemesis_compression
-; ---------------------------------------------------------------------------
-
-; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
-
-; Nemesis decompression to VRAM
-; loc_15FC:
-NemDec:
-		movem.l	d0-a1/a3-a5,-(sp)
-		lea	(NemDec_Output).l,a3
-		lea	(VDP_data_port).l,a4
-		bra.s	loc_1618
-
-; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
-
-; Nemesis decompression to RAM
-; input: a4 = starting address of destination
-; loc_160E:
-NemDecToRAM:
-		movem.l	d0-a1/a3-a5,-(sp)
-		lea	(NemDec_OutputRAM).l,a3
-
-loc_1618:
-		lea	(Decomp_Buffer).w,a1
-		move.w	(a0)+,d2
-		lsl.w	#1,d2
-		bhs.s	loc_1626
-		adda.w	#$A,a3
-loc_1626:
-		lsl.w	#2,d2
-		move.w	d2,a5
-		moveq	#8,d3
-		moveq	#0,d2
-		moveq	#0,d4
-		bsr.w	NemDec4
-		move.b	(a0)+,d5
-		asl.w	#8,d5
-		move.b	(a0)+,d5
-		move.w	#$10,d6
-		bsr.s	loc_1646
-		movem.l	(sp)+,d0-a1/a3-a5
-		rts
-loc_1646:
-		move.w	d6,d7
-		subq.w	#8,d7
-		move.w	d5,d1
-		lsr.w	d7,d1
-		cmpi.b	#$FC,d1
-		bhs.s	loc_1692
-		andi.w	#$FF,d1
-		add.w	d1,d1
-		move.b	(a1,d1.w),d0
-		ext.w	d0
-		sub.w	d0,d6
-		cmpi.w	#9,d6
-		bhs.s	loc_166E
-		addq.w	#8,d6
-		asl.w	#8,d5
-		move.b	(a0)+,d5
-loc_166E:
-		move.b	1(a1,d1.w),d1
-		move.w	d1,d0
-		andi.w	#$F,d1
-		andi.w	#$F0,d0
-loc_167C:
-		lsr.w	#4,d0
-loc_167E:
-		lsl.l	#4,d4
-		or.b	d1,d4
-		subq.w	#1,d3
-		bne.s	loc_168C
-		jmp	(a3)
-NemDec3: ; loc_1688:
-		moveq	#0,d4
-		moveq	#8,d3
-loc_168C:
-		dbf	d0,loc_167E
-		bra.s	loc_1646
-loc_1692:
-		subq.w	#6,d6
-		cmpi.w	#9,d6
-		bhs.s	loc_16A0
-		addq.w	#8,d6
-		asl.w	#8,d5
-		move.b	(a0)+,d5
-loc_16A0:
-		subq.w	#7,d6
-		move.w	d5,d1
-		lsr.w	d6,d1
-		move.w	d1,d0
-		andi.w	#$F,d1
-		andi.w	#$70,d0
-		cmpi.w	#9,d6
-		bhs.s	loc_167C
-		addq.w	#8,d6
-		asl.w	#8,d5
-		move.b	(a0)+,d5
-		bra.s	loc_167C
-NemDec_Output: ; loc_16BE:
-		move.l	d4,(a4)
-		subq.w	#1,a5
-		move.w	a5,d4
-		bne.s	NemDec3
-		rts
-;NemDec_Output_XOR: ; loc_16C8:
-		eor.l	d4,d2
-		move.l	d2,(a4)
-		subq.w	#1,a5
-		move.w	a5,d4
-		bne.s	NemDec3
-		rts
-NemDec_OutputRAM: ; loc_16d4:
-		move.l	d4,(a4)+
-		subq.w	#1,a5
-		move.w	a5,d4
-		bne.s	NemDec3
-		rts
-;NemDec_OutputRAM_XOR: ; loc_16DE:
-		eor.l	d4,d2
-		move.l	d2,(a4)+
-		subq.w	#1,a5
-		move.w	a5,d4
-		bne.s	NemDec3
-		rts
-NemDec4: ; loc_16EA:
-		move.b	(a0)+,d0
-loc_16EC:
-		cmpi.b	#$FF,d0
-		bne.s	loc_16F4
-		rts
-loc_16F4:
-		move.w	d0,d7
-loc_16F6:
-		move.b	(a0)+,d0
-		cmpi.b	#$80,d0
-		bhs.s	loc_16EC
-		move.b	d0,d1
-		andi.w	#$F,d7
-		andi.w	#$70,d1
-		or.w	d1,d7
-		andi.w	#$F,d0
-		move.b	d0,d1
-		lsl.w	#8,d1
-		or.w	d1,d7
-		moveq	#8,d1
-		sub.w	d0,d1
-		bne.s	loc_1724
-		move.b	(a0)+,d0
-		add.w	d0,d0
-		move.w	d7,(a1,d0.w)
-		bra.s	loc_16F6
-loc_1724:
-		move.b	(a0)+,d0
-		lsl.w	d1,d0
-		add.w	d0,d0
-		moveq	#1,d5
-		lsl.w	d1,d5
-		subq.w	#1,d5
-loc_1730:
-		move.w	d7,(a1,d0.w)
-		addq.w	#2,d0
-		dbf	d5,loc_1730
-		bra.s	loc_16F6
+		include	"_Include/Decompression/Nemesis Decompression.asm"
 
 ; ===========================================================================
 ; ---------------------------------------------------------------------------
@@ -1628,19 +1463,19 @@ RunPLC_RAM:
 		tst.w	(Plc_Buffer_Reg18).w
 		bne.s	return_17FC
 		move.l	(Plc_Buffer).w,a0
-		lea	NemDec_Output(pc),a3
+		lea	NemPCD_WriteRowToVDP(pc),a3
 		nop
 		lea	(Decomp_Buffer).w,a1
 		move.w	(a0)+,d2
 		bpl.s	loc_17CA
-		adda.w	#$A,a3
+		adda.w	#NemPCD_WriteRowToVDP_XOR-NemPCD_WriteRowToVDP,a3
 
 loc_17CA:
 		andi.w	#$7FFF,d2
 	if FixBugs=0
 		move.w	d2,(Plc_Buffer_Reg18).w
 	endif
-		bsr.w	NemDec4
+		bsr.w	NemDec_BuildCodeTable
 		move.b	(a0)+,d5
 		asl.w	#8,d5
 		move.b	(a0)+,d5
@@ -1704,7 +1539,7 @@ ProcessDPLC_Main:
 
 loc_1866:
 		move.w	#8,a5
-		bsr.w	NemDec3
+		bsr.w	NemPCD_NewRow
 		subq.w	#1,(Plc_Buffer_Reg18).w
 		beq.s	ProcessDPLC_Pop
 		subq.w	#1,(Plc_Buffer_Reg1A).w
@@ -1762,9 +1597,9 @@ loc_18BA:
 		rts
 ; End of function RunPLC_ROM
 
-		include	"Decompression/Enigma Decompression.asm"
-		include	"Decompression/Kosinski Decompression.asm"
-		include	"Decompression/Kid Chameleon Decompression.asm"
+		include	"_Include/Decompression/Enigma Decompression.asm"
+		include	"_Include/Decompression/Kosinski Decompression.asm"
+		include	"_Include/Decompression/Kid Chameleon Decompression.asm"
 
 ; ===========================================================================
 ; ---------------------------------------------------------------------------
@@ -2582,43 +2417,43 @@ PalPtr_NGHZ_U:	dc.l	Pal_NGHZ_U
 PalPtr_SpecStg:	dc.l	Pal_SpecialStage
 		dc.w	$FB00,$1F
 
-Pal_SEGA:		binclude	"art/palettes/Sega screen.bin"
+Pal_SEGA:		binclude	"palettes/Sega screen.bin"
 		even
-Pal_Title:		binclude	"art/palettes/Title screen.bin"
+Pal_Title:		binclude	"palettes/Title screen.bin"
 		even
-Pal_LevelSelect:	binclude	"art/palettes/Level select.bin"
+Pal_LevelSelect:	binclude	"palettes/Level select.bin"
 		even
-Pal_SonicTails:		binclude	"art/palettes/Sonic and Tails.bin"
+Pal_SonicTails:		binclude	"palettes/Sonic and Tails.bin"
 		even
-Pal_GHZ:		binclude	"art/palettes/GHZ.bin"
+Pal_GHZ:		binclude	"palettes/GHZ.bin"
 		even
-Pal_WZ:			binclude	"art/palettes/WZ.bin"
+Pal_WZ:			binclude	"palettes/WZ.bin"
 		even
-Pal_MTZ:		binclude	"art/palettes/MTZ.bin"
+Pal_MTZ:		binclude	"palettes/MTZ.bin"
 		even
-Pal_HTZ:		binclude	"art/palettes/HTZ.bin"
+Pal_HTZ:		binclude	"palettes/HTZ.bin"
 		even
-Pal_HPZ:		binclude	"art/palettes/HPZ.bin"
+Pal_HPZ:		binclude	"palettes/HPZ.bin"
 		even
-Pal_HPZ_U:		binclude	"art/palettes/HPZ underwater.bin"
+Pal_HPZ_U:		binclude	"palettes/HPZ underwater.bin"
 		even
-Pal_OOZ:		binclude	"art/palettes/OOZ.bin"
+Pal_OOZ:		binclude	"palettes/OOZ.bin"
 		even
-Pal_DHZ:		binclude	"art/palettes/DHZ.bin"
+Pal_DHZ:		binclude	"palettes/DHZ.bin"
 		even
-Pal_CNZ:		binclude	"art/palettes/CNZ.bin"
+Pal_CNZ:		binclude	"palettes/CNZ.bin"
 		even
-Pal_BLZ:		binclude	"art/palettes/BLZ.bin" ; duplicate of CNZ palette
+Pal_BLZ:		binclude	"palettes/BLZ.bin" ; duplicate of CNZ palette
 		even
-Pal_CPZ:		binclude	"art/palettes/CPZ.bin"
+Pal_CPZ:		binclude	"palettes/CPZ.bin"
 		even
-Pal_CPZ_U:		binclude	"art/palettes/CPZ underwater.bin"
+Pal_CPZ_U:		binclude	"palettes/CPZ underwater.bin"
 		even
-Pal_NGHZ:		binclude	"art/palettes/NGHZ.bin"
+Pal_NGHZ:		binclude	"palettes/NGHZ.bin"
 		even
-Pal_NGHZ_U:		binclude	"art/palettes/NGHZ underwater.bin"
+Pal_NGHZ_U:		binclude	"palettes/NGHZ underwater.bin"
 		even
-Pal_SpecialStage:	binclude	"art/palettes/Special Stage.bin"
+Pal_SpecialStage:	binclude	"palettes/Special Stage.bin"
 		even
 
 		nop
@@ -44783,6 +44618,7 @@ BM128_NGHZ:	binclude	"mappings/128x128/NGHZ.kos"
 		even
 ; LevChunk_Dd04A:
 		binclude	"leftovers/mappings/128x128/NGHZ.bin"
+		even
 
 	if PaddingOptimization=0
 		align 4
