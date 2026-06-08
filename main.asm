@@ -16047,6 +16047,12 @@ ObjectsManager_Init:
 -		clr.l	(a2)+
 		dbf	d0,-
 
+	if FixBugs
+	if (Obj_respawn_data_End-Obj_respawn_data)&2
+		clr.w	(a2)+
+	endif
+	endif
+
 		lea	(Object_Respawn_Table).w,a2
 		moveq	#0,d2
 		move.w	(Camera_X_pos).w,d6

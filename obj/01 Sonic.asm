@@ -545,7 +545,6 @@ loc_10112:
 
 loc_10124:
 		add.w	d1,$12(a0)
-; ---------------------------------------------------------------------------
 
 loc_10128:
 		rts
@@ -927,7 +926,7 @@ JmpTo_KillCharacter
 ; loc_103F8:
 Sonic_Boundary_Sides:
 		move.w	d0,x_pos(a0)
-		move.w	#0,$A(a0)
+		move.w	#0,x_pos+2(a0)
 		move.w	#0,$10(a0)
 		move.w	#0,$14(a0)
 		bra.s	Sonic_Boundary_CheckBottom
