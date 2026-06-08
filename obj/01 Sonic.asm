@@ -907,6 +907,10 @@ Sonic_Boundary_CheckBottom:
 ; ===========================================================================
 ; loc_103CE:
 Sonic_Boundary_Bottom:
+
+	if RemoveJmpTos
+JmpTo_KillCharacter
+	endif
 		jmpto	JmpTo_KillCharacter
 ; ---------------------------------------------------------------------------
 ; Leftover from Sonic 1,which would transport the player to SBZ3/LZ4 upon

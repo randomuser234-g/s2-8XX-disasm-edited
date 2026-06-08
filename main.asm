@@ -21797,6 +21797,11 @@ Obj74_MapUnc_156B2:	binclude	"mappings/sprite/obj74.bin"
 		even
 ; ===========================================================================
 
+	if RemoveJmpTos
+JmpTo10_DeleteObject:
+		jmp	(DeleteObject).l
+	endif
+
 		jmpTos	JmpTo_DisplaySprite,JmpTo10_DeleteObject
 
 ; ===========================================================================
@@ -22613,6 +22618,11 @@ Obj16_MapUnc_1611E:	binclude	"mappings/sprite/obj16.bin"
 		even
 ; ===========================================================================
 
+	if RemoveJmpTos
+JmpTo12_DeleteObject:
+		jmp	(DeleteObject).l
+	endif
+
 		jmpTos	JmpTo12_DeleteObject,JmpTo_MarkObjGone,JmpTo2_Adjust2PArtPointer,JmpTo_ObjectMove
 
 ;===============================================================================
@@ -22803,6 +22813,11 @@ loc_163FE:
 Obj19_MapUnc_16412:	binclude	"mappings/sprite/obj19.bin"
 		even
 ; ===========================================================================
+
+	if RemoveJmpTos
+JmpTo13_DeleteObject:
+		jmp	(DeleteObject).l
+	endif
 
 		jmpTos	JmpTo2_DisplaySprite,JmpTo13_DeleteObject,JmpTo3_Adjust2PArtPointer,JmpTo2_ObjectMove
 
@@ -23041,6 +23056,12 @@ Obj_0x1E_Tube_Attributes: ; loc_16724:
 		add.b	$0036(a0),d0
 		beq.w	JmpTo_MarkObjGone3
 		rts
+
+	if RemoveJmpTos
+JmpTo_MarkObjGone3:
+		jmp	(MarkObjGone3).l
+	endif
+
 loc_16740:
 		dc.w	loc_1674A-loc_16740
 		dc.w	loc_1675E-loc_16740
@@ -23698,7 +23719,7 @@ loc_17390:
 		add.w	d0,x_pos(a1)
 		move.l	A1,-(sp)
 		bsr.w	loc_138CE
-		move.l	(sp)+,A1
+		movea.l	(sp)+,A1
 		add.w	d1,y_pos(a1)
 loc_173A0:
 		lea	(loc_173B2).l,A1
@@ -24078,6 +24099,11 @@ Obj32_MapUnc_179F6:	binclude	"mappings/sprite/obj32_CPZ.bin" ; CPZ tube cover
 		even
 ; ===========================================================================
 
+	if RemoveJmpTos
+JmpTo15_DeleteObject:
+		jmp	(DeleteObject).l
+	endif
+
 		jmpTos	JmpTo3_DisplaySprite,JmpTo15_DeleteObject,JmpTo_SingleObjLoad,JmpTo5_MarkObjGone,JmpTo6_Adjust2PArtPointer,JmpTo_BreakObjectToPieces,JmpTo_SolidObject,JmpTo5_ObjectMove
 
 ;===============================================================================
@@ -24129,6 +24155,12 @@ loc_17AB4:
 		tst.b	(Screen_Shaking_Flag_HTZ).w
 		beq.w	JmpTo2_MarkObjGone3
 		rts
+
+	if RemoveJmpTos
+JmpTo2_MarkObjGone3:
+		jmp	(MarkObjGone3).l
+	endif
+
 loc_17AD8:
 		dc.w	loc_17AE2-loc_17AD8
 		dc.w	loc_17AE2-loc_17AD8
@@ -25054,6 +25086,9 @@ loc_18C6C:
 		beq.s	loc_18C80
 		bclr	#$07,$02(A2,d0)
 loc_18C80:
+	if RemoveJmpTos
+JmpTo18_DeleteObject:
+	endif
 		jmpto	JmpTo18_DeleteObject
 loc_18C84:
 		tst.b	$0030(a0)
@@ -25297,6 +25332,12 @@ loc_18FE2:
 		add.b	$0036(a0),d0
 		beq.w	JmpTo3_MarkObjGone3
 		rts
+
+	if RemoveJmpTos
+JmpTo3_MarkObjGone3:
+		jmp	(MarkObjGone3).l
+	endif
+
 loc_19004:
 		moveq	#0,d0
 		move.b	(a4),d0
@@ -25398,6 +25439,11 @@ Obj3D_MapUnc_1916E:	binclude	"mappings/sprite/obj3D.bin"
 		even
 ; ===========================================================================
 
+	if RemoveJmpTos
+JmpTo19_DeleteObject:
+		jmp	(DeleteObject).l
+	endif
+
 		jmpTos	JmpTo4_DisplaySprite,JmpTo19_DeleteObject,JmpTo9_MarkObjGone,JmpTo3_SingleObjLoad2,JmpTo3_MarkObjGone3,JmpTo11_Adjust2PArtPointer,JmpTo2_BreakObjectToPieces,JmpTo5_SolidObject,JmpTo7_ObjectMove
 
 ;===============================================================================
@@ -25413,6 +25459,12 @@ Obj_0x48_Cannon: ; loc_19250:
 		add.b	$0036(a0),d0
 		beq.w	JmpTo10_MarkObjGone
 		jmpto	JmpTo5_DisplaySprite
+
+	if RemoveJmpTos
+JmpTo10_MarkObjGone:
+		jmp	(MarkObjGone).l
+	endif
+
 loc_1926E:
 		dc.w	loc_19282-loc_1926E
 		dc.w	loc_192d2-loc_1926E
@@ -25961,6 +26013,12 @@ loc_19B66:
 		tst.b	$0001(a0)
 		bpl.w	JmpTo21_DeleteObject
 		jmpto	JmpTo6_DisplaySprite
+
+	if RemoveJmpTos
+JmpTo21_DeleteObject:
+		jmp	(DeleteObject).l
+	endif
+
 loc_19B72:
 		dc.b	$00,$00,$00,$00,$04,$04,$08,$08,$0C,$0C,$10,$10,$14,$14
 loc_19B80:
@@ -26182,6 +26240,11 @@ loc_1A130:
 		beq.s	Obj2C_RemoveCollision
 		bsr.s	Obj2C_CreateLeaves
 		bra.s	Obj2C_RemoveCollision
+
+	if RemoveJmpTos
+JmpTo22_DeleteObject:
+		jmp	(DeleteObject).l
+	endif
 ; ---------------------------------------------------------------------------
 
 loc_1A150:
@@ -26663,6 +26726,11 @@ loc_1A7FA:
 Obj42_MapUnc_1A7FE:	binclude	"mappings/sprite/obj42.bin"
 		even
 ; ===========================================================================
+
+	if RemoveJmpTos
+JmpTo23_DeleteObject:
+		jmp	(DeleteObject).l
+	endif
 
 		jmpTos	JmpTo8_DisplaySprite,JmpTo23_DeleteObject,JmpTo5_SingleObjLoad,JmpTo14_MarkObjGone,JmpTo16_Adjust2PArtPointer,JmpTo2_SolidObject_Always_SingleCharacter
 
@@ -27254,6 +27322,11 @@ Obj66_MapUnc_1B084:	binclude	"mappings/sprite/obj66.bin"
 ; [ End ]
 ;===============================================================================
 
+	if RemoveJmpTos
+JmpTo26_DeleteObject:
+		jmp	(DeleteObject).l
+	endif
+
 		jmpTos0	JmpTo9_DisplaySprite,JmpTo26_DeleteObject,JmpTo19_Adjust2PArtPointer,JmpTo3_SolidObject_Always_SingleCharacter
 
 ;===============================================================================
@@ -27271,6 +27344,12 @@ Obj_0x67_Teleport_Attributes: ; loc_1B0C4:
 		lea	(loc_1B4BA).l,a1
 		jsrto	JmpTo4_AnimateSprite
 		jmpto	JmpTo10_DisplaySprite
+
+	if RemoveJmpTos
+JmpTo4_MarkObjGone3:
+		jmp	(MarkObjGone3).l
+	endif
+
 loc_1B0EC:
 		dc.w	loc_1B0F0-loc_1B0EC
 		dc.w	loc_1B114-loc_1B0EC
@@ -29578,7 +29657,7 @@ Obj_0x78_Rotating_Platforms: ; loc_1d3C0:
 		move.w	loc_1d3d6(pc,d0.w),d1
 		jsr	loc_1d3d6(pc,d1.w)
 		move.w	$0030(a0),d0
-		bra.w	JmpTo6_MarkObjGone2
+		jmpto	JmpTo6_MarkObjGone2
 loc_1d3d6:
 		dc.w	loc_1d3DC-loc_1d3d6
 		dc.w	loc_1d460-loc_1d3d6
@@ -29901,6 +29980,12 @@ loc_1d764:
 		cmpi.w	#$280,d0
 		bhi.w	JmpTo34_DeleteObject
 		jmpto	JmpTo14_DisplaySprite
+
+	if RemoveJmpTos
+JmpTo34_DeleteObject:
+		jmp	(DeleteObject).l
+	endif
+
 loc_1d77C:
 		dc.w	loc_1d784-loc_1d77C
 		dc.w	loc_1d7BA-loc_1d77C
@@ -30268,6 +30353,9 @@ loc_1Dd0E:
 		move.w	#$FFFF,$003A(a0)
 		move.b	#2,$001C(a0)
 		move.w	#1,$003E(a0)
+	if RemoveJmpTos
+JmpTo21_MarkObjGone:
+	endif
 		jmpto	JmpTo21_MarkObjGone
 loc_1Dd50:
 		move.w	#$390,(Water_Level_1).w
@@ -30810,6 +30898,9 @@ loc_1E480:
 		move.l	mappings(a0),mappings(a1)
 		move.w	#$24E0,art_tile(a1)
 loc_1E4A2:
+	if RemoveJmpTos
+JmpTo36_DeleteObject:
+	endif
 		jmpto	JmpTo36_DeleteObject
 loc_1E4A6:
 		rts
@@ -31120,6 +31211,12 @@ loc_1E8C4:
 		tst.w	$0030(a1)
 		bmi.s	loc_1E8d6
 		rts
+
+	if RemoveJmpTos
+JmpTo37_DeleteObject:
+		jmp	(DeleteObject).l
+	endif
+
 loc_1E8d6:
 		move.w	x_pos(a1),x_pos(a0)
 		move.w	y_pos(a1),y_pos(a0)
@@ -31186,6 +31283,12 @@ loc_1E9C8:
 		move.w	#$1E,$0030(a0)
 loc_1E9EC:
 		rts
+
+	if RemoveJmpTos
+JmpTo15_ObjectMove:
+		jmp	(ObjectMove).l
+	endif
+
 loc_1E9EE:
 		sf		$0032(a0)
 		neg.w	$0010(a0)
@@ -31313,6 +31416,12 @@ loc_1EBEA:
 		subq.w	#1,$002C(a0)
 		beq.w	JmpTo38_DeleteObject
 		jmpto	JmpTo17_DisplaySprite
+
+	if RemoveJmpTos
+JmpTo38_DeleteObject:
+		jmp	(DeleteObject).l
+	endif
+
 loc_1EBF6:
 		move.l	#Octus_Mappings,mappings(a0) ; loc_1EDBC
 		move.w	#$238A,art_tile(a0)
@@ -32073,7 +32182,16 @@ loc_1F904:
 		move.w	y_pos(a1),y_pos(a0)
 		move.b	$0022(a1),$0022(a0)
 		move.b	$0001(a1),$0001(a0)
+	if RemoveJmpTos
+JmpTo2_MarkObjGone_P1:
+	endif
 		jmpto	JmpTo2_MarkObjGone_P1
+
+	if RemoveJmpTos
+JmpTo39_DeleteObject:
+		jmp	(DeleteObject).l
+	endif
+
 loc_1F92C:
 		dc.w	loc_1F930-loc_1F92C
 		dc.w	loc_1F934-loc_1F92C
@@ -32358,7 +32476,7 @@ loc_1FCCC:
 loc_1Fd0E:
 		move.b	#$08,$001A(a0)
 		move.b	#0,$0018(a0)
-		bra.w	JmpTo18_DisplaySprite
+		jmpto	JmpTo18_DisplaySprite
 loc_1Fd1E:
 		moveq	#0,d0
 		move.b	$0025(a0),d0
@@ -32458,7 +32576,16 @@ loc_1FE74:
 		add.w	d0,x_pos(a0)
 		lea	(loc_2023C).l,A1
 		jsrto	JmpTo16_AnimateSprite
+	if RemoveJmpTos
+JmpTo18_DisplaySprite:
+	endif
 		jmpto	JmpTo18_DisplaySprite
+
+	if RemoveJmpTos
+JmpTo40_DeleteObject:
+		jmp	(DeleteObject).l
+	endif
+
 loc_1FE86:
 		cmpi.b	#1,$21(a1)
 		beq.s	loc_1FE90
@@ -32870,6 +32997,9 @@ loc_20560:
 		addi.w	#4,y_pos(a0)
 		subi.w	#$28,x_pos(a0)
 loc_205A2:
+	if RemoveJmpTos
+JmpTo19_DisplaySprite:
+	endif
 		jmpto	JmpTo19_DisplaySprite
 ;===============================================================================
 ; Object 0x55 - Ghz Boss
@@ -32908,6 +33038,12 @@ loc_205F4:
 		beq.w	JmpTo41_DeleteObject
 loc_2060E:
 		jmpto	JmpTo19_DisplaySprite
+
+	if RemoveJmpTos
+JmpTo41_DeleteObject:
+		jmp	(DeleteObject).l
+	endif
+
 Ghz_Boss_Mappings_1:
 loc_20612:
 		dc.w	loc_20616-loc_20612
@@ -33028,7 +33164,7 @@ Obj8A_Init:
 		cmpi.b	#GameModeID_TitleScreen,(Game_Mode).w
 		bne.s	Obj8A_Display
 		move.w	#$300,2(a0)
-		bsr.w	JmpTo37_Adjust2PArtPointer
+		jsrto	JmpTo37_Adjust2PArtPointer
 		move.b	#$A,$1A(a0)
 		tst.b	(Hidden_credits_flag).w
 		beq.s	Obj8A_Display

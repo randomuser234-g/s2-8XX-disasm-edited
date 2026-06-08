@@ -853,6 +853,10 @@ loc_11530:
 		blt.s	loc_11540
 		rts
 loc_11540:
+
+	if RemoveJmpTos
+JmpTo2_KillCharacter
+	endif
 		jmpto	JmpTo2_KillCharacter				; loc_12074
 		cmpi.w	#scrap_brain_zone_act_2,(Current_ZoneAndAct).w
 		bne.w	JmpTo2_KillCharacter				 ; loc_12074
