@@ -22093,8 +22093,8 @@ loc_15DD8:
 		move.w	d1,y_pos(a0)		; set y position so ball rests on seesaw
 		add.w	$30(a0),d2
 		move.w	d2,x_pos(a0)
-		clr.w	$E(a0)
-		clr.w	$A(a0)
+		clr.w	y_pos+2(a0)
+		clr.w	x_pos+2(a0)
 		rts
 ; ===========================================================================
 ; loc_15DF8:
