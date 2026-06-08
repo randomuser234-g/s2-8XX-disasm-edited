@@ -32742,17 +32742,17 @@ TouchResponse: ; loc_21160:
 loc_2118A:
 		move.w	#$10,d4
 		add.w	d5,d5
-		lea	($FFFFB800).w,A1
-		move.w	#$5F,d6
+		lea	(Dynamic_Object_RAM).w,A1
+		move.w	#bytesToXcnt(Dynamic_Object_RAM_End-Dynamic_Object_RAM,object_size),d6
 loc_21198:
 		move.b	$20(a1),d0
 		bne.s	Touch_Height	; loc_211F8
 loc_2119E:
-		lea	$40(a1),A1
+		lea	object_size(a1),A1
 		dbf	d6,loc_21198
 		moveq	#0,d0
-Touch_Sizes: ; loc_211A8:
 		rts
+Touch_Sizes: ; loc_211A8:
 		dc.b	$14,$14,$0C,$14,$14,$0C,$04,$10,$0C,$12,$10,$10,$06,$06,$18,$0C
 		dc.b	$0C,$10,$10,$0C,$08,$08,$14,$10,$14,$08,$0E,$0E,$18,$18,$28,$10
 		dc.b	$10,$18,$08,$10,$20,$70,$40,$20,$80,$20,$20,$20,$08,$08,$04,$04
@@ -32762,7 +32762,7 @@ Touch_Sizes: ; loc_211A8:
 Touch_Height: ; loc_211F8:
 		andi.w	#$3F,d0
 		add.w	d0,d0
-		lea	Touch_Sizes(pc,d0),A2 ; loc_211A8
+		lea	Touch_Sizes-2(pc,d0),A2 ; loc_211A8
 		moveq	#0,d1
 		move.b	(a2)+,d1
 		move.w	x_pos(a1),d0
