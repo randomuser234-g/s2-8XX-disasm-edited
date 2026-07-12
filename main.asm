@@ -4841,7 +4841,7 @@ loc_53F8:
 		move.w	(Ring_count).w,d0
 		mulu.w	#10,d0
 		move.w	d0,(Bonus_Countdown_2).w
-		move.w	#S1MusID_ActClear,d0
+		move.w	#MusID_ActClear,d0		;not s1 theme
 		jsr	(PlaySound).l			   ; loc_14C6
 		clearRAM Object_RAM,Object_RAM_End
 		move.b	#$7E,($FFFFB5C0).w
@@ -5179,7 +5179,7 @@ LevelSize:	zoneOrderedTable 4,4
 	zoneTableEntry.l	$00002E00,$00000720,$00003EFF,$00000720 ; $05 - Metropolis
 	zoneTableEntry.l	$00003FFF,$00000720,$00003FFF,$00000720 ; $06
 	zoneTableEntry.l	$00002800,$00000720,$00002880,$00000720 ; $07 - Hill Top
-	zoneTableEntry.l	$00003FFF,$00000720,$00003FFF,$00000720 ; $08 - Hidden Palace
+	zoneTableEntry.l	$00002300,$00000720,$00003FFF,$00000720 ; $08 - Hidden Palace
 	zoneTableEntry.l	$00003FFF,$00000720,$00003FFF,$00000720 ; $09
 	zoneTableEntry.l	$00002F80,$00000680,$00002580,$00000680 ; $0A - Oil Ocean
 	zoneTableEntry.l	$00002380,$03C00720,$00002180,$00600720 ; $0B - Dust Hill
@@ -18593,9 +18593,9 @@ Obj01_ControlsLock:
 		move.b	(Secondary_Angle).w,$37(a0)
 		tst.b	(WindTunnel_flag).w
 		beq.s	loc_Fd4A
-		tst.b	$1C(a0)
+		tst.b	anim(a0)
 		bne.s	loc_Fd4A
-		move.b	$1D(a0),$1C(a0)
+		move.b	prev_anim(a0),anim(a0)
 
 loc_Fd4A:
 		bsr.w	Sonic_Animate
@@ -18765,9 +18765,12 @@ Obj01_InWater:
 		bsr.w	ResumeMusic
 		move.b	#$A,(BreathingBubbles).w	; load Obj0A (Sonic's breathing bubbles) at $FFFFB340
 		move.b	#$81,(BreathingBubbles+$28).w
+	cmpa.w	#MainCharacter,a0		;is tails player 1
+	bne.s	.donttouchspeed			;if not, don't touch speed
 		move.w	#$300,(Sonic_top_speed).w
 		move.w	#6,(Sonic_acceleration).w
 		move.w	#$40,(Sonic_deceleration).w
+.donttouchspeed:
 		asr.w	$10(a0)
 		asr.w	$12(a0)			; memory operands can only be shifted one bit at a time
 		asr.w	$12(a0)
@@ -18781,9 +18784,12 @@ Obj01_OutWater:
 		bclr	#6,$22(a0)	; clear underwater flag
 		beq.s	return_FE54	; if already cleared,branch
 		bsr.w	ResumeMusic
+	cmpa.w	#MainCharacter,a0		;is tails player 1
+	bne.s	.donttouchspeed			;if not, don't touch speed
 		move.w	#$600,(Sonic_top_speed).w
 		move.w	#$C,(Sonic_acceleration).w
 		move.w	#$80,(Sonic_deceleration).w
+.donttouchspeed:
 		asl.w	$12(a0)
 		beq.w	return_FE54
 		move.b	#8,(WaterSplash).w	; load Obj08 (splash animation) at $FFFFB300
@@ -19319,26 +19325,37 @@ Sonic_ChgJumpDir:
 		bne.s	Obj01_Jump_ResetScr	; if yes,branch to skip midair control
 		move.w	$10(a0),d0
 		btst	#button_left,(Ctrl_1_Held_Logical).w
-		beq.s	+	; if not holding left,branch
-
+		beq.s	.pressingright	; if not holding left,branch
 		bset	#0,$22(a0)
 		sub.w	d5,d0	; add acceleration to the left
 		move.w	d6,d1
 		neg.w	d1
 		cmp.w	d1,d0	; compare new speed with top speed
-		bgt.s	+	; if new speed is less than the maximum,branch
-		move.w	d1,d0	; limit speed in air going left,even if Sonic was already going faster (speed limit/cap)
-+
+		bgt.s	.pressingright	; if new speed is less than the maximum,branch
+		tst.w	(Demo_mode_flag).w	; is ending demo flag set? (leftover from Sonic 1)
+		bne.s	.demo		;if yes, limit speed
+		add.w	d5,d0	; remove this frame's acceleration change
+		cmp.w	d1,d0	; compare speed with top speed
+		ble.s	.pressingright; if speed was already greater than the maximum, branch
+	.demo:
+		move.w	d1,d0	; don't limit speed in air going left, if Sonic was already going faster (speed limit/cap)
+.pressingright:
 		btst	#button_right,(Ctrl_1_Held_Logical).w
-		beq.s	+	; if not holding right,branch
+		beq.s	Obj01_JumpMove	; if not holding right,branch
 
 		bclr	#0,$22(a0)
 		add.w	d5,d0	; accelerate right in the air
 		cmp.w	d6,d0	; compare new speed to top speed
-		blt.s	+	; if new speed is less than maximum,branch
-		move.w	d6,d0	; limit speed in air going right,even if Sonic was already going faster (speed limit/cap)
-; Obj01_JumpMove:
-+		move.w	d0,$10(a0)
+		blt.s	Obj01_JumpMove	; if new speed is less than maximum,branch
+		tst.w	(Demo_mode_flag).w	; is ending demo flag set? (leftover from Sonic 1)
+		bne.s	.demo2		; if yes, limit speed
+		sub.w	d5,d0			; +++ remove this frame's acceleration change
+		cmp.w	d6,d0			; +++ compare speed with top speed
+		bge.s	Obj01_JumpMove		; +++ if speed was already greater than the maximum, branch
+	.demo2:
+		move.w	d6,d0	; don't limit speed in air going right,even if Sonic was already going faster (speed limit/cap)
+Obj01_JumpMove:
+		move.w	d0,$10(a0)
 
 ; loc_1034A: Obj01_ResetScr2:
 Obj01_Jump_ResetScr:
@@ -20539,7 +20556,11 @@ JmpTo_KillSonic:	; JmpTo
 Obj02:
 	; a0=character
 	cmpa.w	#MainCharacter,a0
-	bne.s	+
+	bne.s	++
+	tst.w	(Debug_placement_mode).w; is Debug Mode being used?
+	beq.s	+		; if not,branch
+	jmp	(DebugMode).l
++
 	move.w	(Camera_Min_X_pos).w,(Tails_Min_X_pos).w
 	move.w	(Camera_Max_X_pos).w,(Tails_Max_X_pos).w
 	move.w	(Camera_Max_Y_pos).w,(Tails_Max_Y_pos).w
@@ -20568,9 +20589,12 @@ Obj02_Init:
 		move.b	#2,$18(a0)
 		move.b	#$18,$19(a0)
 		move.b	#$84,1(a0)
+	cmpa.w	#MainCharacter,a0		;is tails player 1
+	bne.s	.donttouchspeed			;if not, don't touch speed
 		move.w	#$600,(Sonic_top_speed).w
 		move.w	#$C,(Sonic_acceleration).w
 		move.w	#$80,(Sonic_deceleration).w
+.donttouchspeed:
 		move.b	#$C,$3E(a0)
 		move.b	#$D,$3F(a0)
 		move.b	#0,$2C(a0)
@@ -20584,6 +20608,16 @@ Obj02_Init:
 Obj02_Control:
 	cmpa.w	#MainCharacter,a0
 	bne.s	Obj02_Control_Joypad2
+		tst.w	(Debug_mode_flag).w		; is Debug Mode enabled?
+		beq.s	Obj02_ControlNoDebug			; if not,branch
+		btst	#button_B,(Ctrl_1_Press).w		; is button B pressed?
+		beq.s	Obj02_ControlNoDebug			; if not,branch
+		move.w	#1,(Debug_placement_mode).w	; change Sonic into a ring/item
+		clr.b	(Control_Locked).w		; unlock control
+		rts
+; -----------------------------------------------------------------------
+
+Obj02_ControlNoDebug:
 	move.w	(Ctrl_1_Logical).w,(Ctrl_2_Logical).w
 	tst.b	(Control_Locked).w	; are controls locked?
 	bne.s	Obj02_Control_Part2	; if yes, branch
@@ -20612,8 +20646,15 @@ Obj02_Control_Part2:
 Obj02_ControlsLock:
 		bsr.s	Tails_Display
 		bsr.w	Tails_RecordPos
+		jsr	Sonic_Water		;added routines for water
 		move.b	(Primary_Angle).w,$36(a0)
 		move.b	(Secondary_Angle).w,$37(a0)
+		tst.b	(WindTunnel_flag).w
+		beq.s	.notwindtunnel
+		tst.b	anim(a0)
+		bne.s	.notwindtunnel
+		move.b	prev_anim(a0),anim(a0)
+.notwindtunnel:
 		bsr.w	Tails_Animate
 		tst.b	obj_control(a0)
 		bmi.s	loc_10EF4
@@ -20672,6 +20713,8 @@ Obj02_Display:
 		jsr	(DisplaySprite).l
 ; loc_10F26:
 Obj02_ChkInvin:	; Checks if Tails has run out of invincibility frames
+	cmpa.w	#MainCharacter,a0		;is tails player 1
+	bne.s	Obj02_ExitChk		;if not, don't touch speed
 		tst.b	(Invincibility_flag).w
 		beq.s	Obj02_ChkShoes
 		tst.w	$32(a0)
@@ -21704,6 +21747,12 @@ Tails_ChgJumpDir: ; loc_11484:
 		neg.w	d1
 		cmp.w	d1,d0
 		bgt.s	loc_114B4
+		tst.w	(Demo_mode_flag).w	; is ending demo flag set? (leftover from Sonic 1)
+		bne.s	.demo		; if yes, limit speed
+		add.w	d5,d0	; remove this frame's acceleration change
+		cmp.w	d1,d0	; compare speed with top speed
+		ble.s	loc_114B4; if speed was already greater than the maximum, branch
+	.demo:
 		move.w	d1,d0
 loc_114B4:
 		btst	#button_right,(Ctrl_2_Held_Logical).w
@@ -21712,6 +21761,12 @@ loc_114B4:
 		add.w	d5,d0
 		cmp.w	d6,d0
 		blt.s	loc_114CA
+		tst.w	(Demo_mode_flag).w	; is ending demo flag set? (leftover from Sonic 1)
+		bne.s	.demo2		;if yes, limit speed
+		sub.w	d5,d0			; +++ remove this frame's acceleration change
+		cmp.w	d6,d0			; +++ compare speed with top speed
+		bge.s	loc_114CA		; +++ if speed was already greater than the maximum, branch
+.demo2:
 		move.w	d6,d0
 loc_114CA:
 		move.w	d0,$0010(a0)
@@ -22785,6 +22840,10 @@ return_11F94:
 ; ---------------------------------------------------------------------------
 ; loc_11F96: Obj_0x05_Tails_Tail:
 Obj05:
+	tst.w	(Debug_placement_mode).w; is Debug Mode being used?
+	beq.s	+		; if not,branch
+	rts
++
 		moveq	#0,d0
 		move.b	routine(a0),d0
 		move.w	Obj05_Index(pc,d0.w),d1
@@ -23027,6 +23086,8 @@ loc_1230C:
 		bhs.w	loc_124FC
 		btst	#6,(MainCharacter+$22).w
 		beq.w	loc_124FC
+		tst.b	(Update_HUD_timer).w	;is time stopped?
+		beq.w	loc_124FC	;if yes, don't drown
 		subq.w	#1,$38(a0)
 		bpl.w	loc_1241C
 		move.w	#59,$38(a0)
@@ -23155,14 +23216,25 @@ loc_124FC:
 ResumeMusic: ; loc_124FE:
 		cmpi.w	#$C,(Current_Air).w
 		bhi.s	loc_12524
-		move.w	#S1MusID_LZ,d0
+		move.w	#MusID_CPZ,d0		;try to account for all water areas
+		cmpi.b	#neo_green_hill_zone,(Current_ZoneAndAct).w	; is it NGHZ?
+		beq.s	.nghz				; if yes,branch
+		cmpi.b	#hidden_palace_zone,(Current_ZoneAndAct).w	; is it HPZ?
+		beq.s	.hpz				;if yes, branch
+		bra.s	.musicpicked			;otherwise, CPZ
+.nghz:
+		move.w	#MusID_NGHZ,d0
+		bra.s	.musicpicked
+.hpz:
+		move.w	#MusID_HPZ,d0
+.musicpicked:
 		tst.b	(Invincibility_flag).w
 		beq.s	loc_12514
-		move.w	#S1MusID_Invinc,d0
+		move.w	#MusID_Invinc,d0	;not s1 theme
 loc_12514:
 		tst.b	(Current_Boss_ID).w
 		beq.s	loc_1251E
-		move.w	#S1MusID_Boss,d0
+		move.w	#MusID_Boss,d0		;not s1
 loc_1251E:
 		jsr	(PlayMusic).l			 ; loc_14C0
 loc_12524:
@@ -41747,15 +41819,26 @@ Debug_SpawnObject:
 ; loc_23d36:
 Debug_ExitDebugMode:
 		btst	#button_B,(Ctrl_1_Press).w
-		beq.s	return_23D9C
+		beq.w	return_23D9C
 		; exit debug mode
 		moveq	#0,d0
 		move.w	d0,(Debug_placement_mode).w
+		cmpi.b	#2,(Player_mode).w	;tails?
+		beq.s	.tails			;if yes, branch
 		move.l	#MapUnc_Sonic,(MainCharacter+mappings).w
 		move.w	#$780,(MainCharacter+art_tile).w
 		tst.w	(Two_player_mode).w
 		beq.s	.notTwoPlayerMode
 		move.w	#$3C0,(MainCharacter+art_tile).w
+		bra.s	.notTwoPlayerMode
+.tails:
+		move.l	#Tails_Mappings,(MainCharacter+mappings).w
+		move.w	#$7A0,(MainCharacter+art_tile).w
+		tst.w	(Two_player_mode).w
+		beq.s	.notTwoPlayerMode
+		move.w	#$3D0,(MainCharacter+art_tile).w
+		;bra.s	.notTwoPlayerMode
+
 ; loc_23d5E:
 .notTwoPlayerMode:
 		move.b	d0,(MainCharacter+anim).w
