@@ -3015,12 +3015,26 @@ TitleScreen_SkipC:
 		beq.w	Demo_Mode
 		andi.b	#button_start_mask,(Ctrl_1_Press).w
 		beq.w	TitleScreen_Loop
+TitScreen_TestForB:
+		btst	#button_B,(Ctrl_1_Held).w
+		beq.w	TitScreen_TestForC
+		move.b	#1,(Player_option).w
+		bra.w	Title_ChkLevSel
+TitScreen_TestForC:
+		btst	#button_C,(Ctrl_1_Held).w
+		beq.w	TitScreen_NoButton
+		move.b	#2,(Player_option).w
+		bra.w	Title_ChkLevSel
+TitScreen_NoButton:
+		move.b	#0,(Player_option).w
 ; loc_39F2:
 Title_ChkLevSel:
 		tst.b	(Level_select_flag).w
 		beq.w	PlayLevel
 		btst	#button_A,(Ctrl_1_Held).w
 		beq.w	PlayLevel
+
+LevSelEnter:
 		move.b	#MusID_LevelSel,d0
 		bsr.w	PlayMusic
 		moveq	#PalID_LevelSel,d0
@@ -3168,7 +3182,7 @@ loc_3B68:
 		rts
 Run_Demo_Mode: ; loc_3B8E:
 		andi.b	#button_start_mask,(Ctrl_1_Press).w
-		bne.w	Title_ChkLevSel
+		bne.w	TitScreen_TestForB		;originally Title_ChkLevSel
 		tst.w	(Demo_Time_left).w
 		bne.w	loc_3B68
 		move.b	#SndID_SpindashRev,d0	; Bug: This should be using MusID_Stop
@@ -3686,13 +3700,47 @@ Level_LoadData:
 		jsr	(ConvertCollisionArray).l
 		bsr.w	LoadCollisionIndexes
 		bsr.w	WaterEffects
-		move.b	#1,(MainCharacter).w	; load Sonic object	;1 is sonic object, 2 is tails
+		bsr.w	InitPlayers
+
 		tst.w	(Demo_mode_flag).w	; is ending demo flag set? (leftover from Sonic 1)
 		bmi.s	Level_SkipHUD		; if not,branch
 		move.b	#$21,(HeadsUpDisplay).w	; load HUD object
+		bra.s	Level_SkipHUD
+;--------------------------------------------------------------------------------------------------------------
+InitPlayers:
+		move.b	(Player_option).w,(Player_mode).w
+		tst.w	(Two_player_mode).w
+		bne.s	SkipPlayerChoice ; don't display this in 2p, it's broken
+		tst.w	(Demo_mode_flag).w	; is ending demo flag set? (leftover from Sonic 1)
+		beq.s	SonicAndTails		; if not,branch
+SkipPlayerChoice:
+		move.b	#0,(Player_mode).w
+;--------------------------------------------------------------------------------------------------------------
+SonicAndTails:
+		cmpi.b	#0,(Player_mode).w	;sonic and tails game?
+		bne.s	SonicAlone		;if not branch
+		move.b	#1,(MainCharacter).w	; load Sonic object	;1 is sonic object, 2 is tails
+		move.b	#2,(Sidekick).w		; load Tails object	;2 is tails object, 0 is no object
+		move.w	(MainCharacter+x_pos).w,(Sidekick+x_pos).w
+		move.w	(MainCharacter+y_pos).w,(Sidekick+y_pos).w
+		subi.w	#32,(Sidekick+x_pos).w
+		rts
+;--------------------------------------------------------------------------------------------------------------
+SonicAlone:
+		cmpi.b	#1,(Player_mode).w	;sonic and tails game?
+		bne.s	TailsAlone		;if not branch
+		move.b	#1,(MainCharacter).w	; load Sonic object	;1 is sonic object, 2 is tails
+		rts
+;--------------------------------------------------------------------------------------------------------------
+TailsAlone:
+		move.b	#2,(MainCharacter).w
+		subi.w	#32,(MainCharacter+x_pos).w
+		rts
+;--------------------------------------------------------------------------------------------------------------
+
+
 ; loc_4390: Skip_Head_Up_Display:
 Level_SkipHUD:
-		move.b	#2,(Sidekick).w		; load Tails object	;2 is tails object, 0 is no object
 		move.w	(MainCharacter+x_pos).w,(Sidekick+x_pos).w
 		move.w	(MainCharacter+y_pos).w,(Sidekick+y_pos).w
 		subi.w	#32,(Sidekick+x_pos).w
@@ -5097,6 +5145,8 @@ LevelSizeLoad:
 		clr.b	(Deform_lock).w
 		clr.b	(Screen_Shaking_Flag_HTZ).w
 		clr.b	(Screen_Shaking_Flag).w
+		clr.b	(Scroll_lock).w
+		clr.b	(Scroll_lock_P2).w
 		moveq	#0,d0
 		move.b	d0,(Dynamic_Resize_Routine).w
 		move.w	(Current_ZoneAndAct).w,d0
@@ -5105,6 +5155,7 @@ LevelSizeLoad:
 		lea	LevelSize(pc,d0.w),a0
 		move.l	(a0)+,d0
 		move.l	d0,(Camera_Min_X_pos).w
+		move.l	d0,(Tails_Min_X_pos).w		; Also sets Tails_Max_X_pos.
 		move.l	d0,(unk_EEC0).w
 		move.l	(a0)+,d0
 		move.l	d0,(Camera_Min_Y_pos).w
@@ -12923,6 +12974,8 @@ loc_BBF0:
 		cmpi.w	#$200,d0
 		bhs.s	return_BC02
 		;removed rts, now it displays
+		tst.w	(Two_player_mode).w
+		bne.s	return_BC02 ; don't display this in 2p, it's broken
 ; ---------------------------------------------------------------------------
 		bra.w	DisplaySprite
 
@@ -12935,6 +12988,8 @@ Obj34_Wait:
 		beq.s	Obj34_ChkPos2
 		subq.w	#1,$1E(a0)
 		;removed rts, now it displays
+		tst.w	(Two_player_mode).w
+		bne.s	return_BC02 ; don't display this in 2p, it's broken
 ; ---------------------------------------------------------------------------
 		bra.w	DisplaySprite
 ; ===========================================================================
@@ -12956,6 +13011,8 @@ Obj34_Move2:
 		cmpi.w	#$200,d0
 		bhs.s	return_BC40
 		;removed rts, now it displays
+		tst.w	(Two_player_mode).w
+		bne.s	return_BC02 ; don't display this in 2p, it's broken
 ; ---------------------------------------------------------------------------
 		bra.w	DisplaySprite
 
@@ -12992,7 +13049,7 @@ Obj34_ItemData:
 ; word_BC66: Title_Cards_Config:
 Obj34_ConData:	dc.w	0,$120,$FEFC,$13C,$414,$154,$214,$154		;green hill
 		dc.w	0,$120,$FEF4,$134,$40C,$14C,$20C,$14C		;zone 01 unused
-		dc.w 	0,$120,$FEF1,$121,$3EC,$3EC,$1D9,$129		;wood zone
+		dc.w 	0,$120,$FF09,$139,$3EC,$3EC,$1F1,$141		;wood zone
 		dc.w	0,$120,$FEFC,$13C,$414,$154,$214,$154		;zone 03 unused
 		dc.w	0,$120,$FF04,$144,$41C,$15C,$21C,$15C		;metropolis
 		dc.w	0,$120,$FF04,$144,$41C,$15C,$21C,$15C		;metropolis act 3
@@ -13115,9 +13172,18 @@ loc_BE60:
 		move.w	(a2)+,$000A(a1)
 		move.b	(a2)+,$0024(a1)
 		move.b	(a2)+,d0
+		cmpi.b	#0,d0
+		beq.s	Results_Characters
 		cmpi.b	#6,d0
 		bne.s	loc_BE86
 		add.b	(Current_Act).w,d0
+		bra.s	loc_BE86
+Results_Characters:
+		cmpi.b	#2,(Player_mode).w	; is the multiple character flag set to 2 (Tails)?
+		bne.s	loc_BE86	; if not, must be sonic
+		moveq	#9,d0		; load "TAILS HAS" text
+		move.b	d0,mapping_frame(a0)
+		
 loc_BE86:
 		move.b	d0,$1A(a1)
 		move.l	#Level_Results_Mappings,4(a1) ; loc_C5A8
@@ -13141,6 +13207,8 @@ loc_BEBE:
 		cmpi.w	#$200,d0
 		bhs.s	loc_BEd0
 		;removed rts, should display
+		tst.w	(Two_player_mode).w
+		bne.s	loc_BEd0 ; don't display this in 2p, it's broken
 		bra.w	DisplaySprite			; loc_d3C2
 loc_BEd0:
 		rts
@@ -13160,8 +13228,12 @@ loc_BEF6:
 		addq.b	#2,$24(a0)
 loc_BF00:
 		;removed rts, should display
+		tst.w	(Two_player_mode).w
+		bne.s	loc_BEd0 ; don't display this in 2p, it's broken
 		bra.w	DisplaySprite			; loc_d3C2
 Got_TimeBonus:
+		tst.w	(Two_player_mode).w
+		bne.w	GotThrough_Reset ; don't display this in 2p, it's broken
 		bsr.w	DisplaySprite			; loc_d3C2
 		move.b	#1,(Update_Bonus_score).w
 		moveq	#0,d0
@@ -13207,7 +13279,12 @@ loc_BF8E:
 		move.w	#1,(Level_Inactive_flag).w
 loc_BF94:
 		;removed rts, should display
+		tst.w	(Two_player_mode).w
+		bne.s	loc_BF4A ; don't display this in 2p, it's broken
 		bra.w	DisplaySprite			; loc_d3C2
+GotThrough_Reset:
+		move.b	#GameModeID_TitleScreen,(Game_Mode).w	;reset the game
+		rts
 ; ===========================================================================
 ; -------------------------------------------------------------------------------
 ; Main game level order
@@ -13513,8 +13590,8 @@ TC_Lz_Map: ; loc_C302: ; Hill Top (Labyrinth)
 		dc.l	$F8050036,$0010002C
 TC_Mz_Map: ; loc_C34C: ; Wood	(Marble)
 		dc.w	$0004
-		dc.l	$F705102A,$0015FFDF,$F8050032,$0000FFF1
-		dc.l	$F8050032,$001D0001,$F805000C,$00020011
+		dc.l	$F705102A,$0015FFF7,$F8050032,$00000009
+		dc.l	$F8050032,$001D0019,$F805000C,$00020029
 TC_SLz_Map: ; loc_C37E: ; Hidden Palace (Star Light)
 		dc.w	$000C
 		dc.l	$F805001C,$001FFF9C,$F8010020,$0004FFAC
@@ -13561,12 +13638,12 @@ TC_CPz_Map: ; loc_C2B8: ; Chemical Plant (custom)
 		dc.w	$F805,$0042,$0006,$005C
 TC_GCz_Map: ; loc_C37E: ; Genocide City (custom)
 		dc.w	$000C
-		dc.l	$F805001C,$001FFFA0,$F8010020,$0004FFB0
-		dc.l	$F805000C,$001DFFC0,$F805000C,$0000FFD0
-		dc.l	$F8050010,$001BFFE0,$F805002E,$001BFFF0
-		dc.l	$F8050036,$001dFFF8,$F8050000,$00000008
-		dc.l	$F8050026,$00100028,$F8050000,$00170038
-		dc.l	$F8050008,$00100040,$F8050010,$00170050
+		dc.l	$F8050018,$001FFFA0,$F8050010,$0004FFB0
+		dc.l	$F805002E,$001DFFC0,$F8050032,$0000FFD0
+		dc.l	$F8050008,$001BFFE0,$F8010020,$001BFFF0
+		dc.l	$F805000C,$001dFFF8,$F8050010,$00000008
+		dc.l	$F8050008,$00100028,$F8010020,$00170038
+		dc.l	$F8050042,$00100040,$F805004A,$00170050
 TC_NGHz_Map: ; loc_C2B8: ;Neo Green Hill (custom)
 		dc.w	$000C		;num of letters
 		dc.l	$F805002E,$000CFF94,$F8050010,$001DFFA4
@@ -13633,20 +13710,27 @@ loc_C596:
 		dc.w	$0002
 		dc.l	$F80d0014,$000A000C,$F80d000C,$0006002C
 Level_Results_Mappings: ; loc_C5A8:
-		dc.w	LR_Sonic_Has_Map-Level_Results_Mappings
-		dc.w	LR_Passed_Map-Level_Results_Mappings
-		dc.w	LR_Score_Map-Level_Results_Mappings
-		dc.w	LR_Time_Bonus_Map-Level_Results_Mappings
-		dc.w	LR_Ring_Bonus_Map-Level_Results_Mappings
-		dc.w	TC_Oval_Map-Level_Results_Mappings
-		dc.w	TC_Act1_Map-Level_Results_Mappings
-		dc.w	TC_Act2_Map-Level_Results_Mappings
-		dc.w	TC_Act3_Map-Level_Results_Mappings
+		dc.w	LR_Sonic_Has_Map-Level_Results_Mappings		;0
+		dc.w	LR_Passed_Map-Level_Results_Mappings		;1
+		dc.w	LR_Score_Map-Level_Results_Mappings		;2
+		dc.w	LR_Time_Bonus_Map-Level_Results_Mappings	;3
+		dc.w	LR_Ring_Bonus_Map-Level_Results_Mappings	;4
+		dc.w	TC_Oval_Map-Level_Results_Mappings		;5
+		dc.w	TC_Act1_Map-Level_Results_Mappings		;6
+		dc.w	TC_Act2_Map-Level_Results_Mappings		;7
+		dc.w	TC_Act3_Map-Level_Results_Mappings		;8
+		dc.w	LR_Tails_Has_Map-Level_Results_Mappings		;9
 LR_Sonic_Has_Map: ; loc_C5BA: ; Sonic Has
 		dc.w	$0008
 		dc.l	$F805003E,$001FFFB8,$F8050032,$0019FFC8
 		dc.l	$F805002E,$0017FFD8,$F8010020,$0010FFE8
 		dc.l	$F8050008,$0004FFF0,$F805001C,$000E0010
+		dc.l	$F8050000,$00000020,$F805003E,$001F0030
+LR_Tails_Has_Map: ; loc_C5BA: ; Tails Has
+		dc.w	$0008
+		dc.l	$F8050042,$001FFFB8,$F8050000,$0019FFC8
+		dc.l	$F8010020,$0017FFD8,$F8050026,$0010FFE0
+		dc.l	$F805003E,$0004FFF0,$F805001C,$000E0010
 		dc.l	$F8050000,$00000020,$F805003E,$001F0030
 LR_Passed_Map: ; loc_C5FC: ; Passed
 		dc.w	$0006
@@ -17544,6 +17628,9 @@ Obj0D_Spin:
 		cmpi.b	#3,$1C(a0)		; has 3 cycles completed?
 		bne.s	Obj0D_ChkSparkle	; if not,branch
 		addq.b	#2,routine(a0)
+		cmpi.b	#2,(Player_mode).w	;playing as tails?	
+		bne.s	Obj0D_ChkSparkle	;if not, branch
+		addq.b	#1,anim(a0)		;tails signpost
 ; loc_F29C:
 Obj0D_ChkSparkle:
 		subq.w	#1,$32(a0)		; subtract 1 from time delay
@@ -17664,11 +17751,13 @@ Ani_obj0D:	offsetTable
 		offsetTableEntry.w loc_F3EF
 		offsetTableEntry.w loc_F3FD
 		offsetTableEntry.w loc_F40B
+		offsetTableEntry.w loc_Tails
 
 loc_F3EC:	dc.b $0F,$02,$FF
 loc_F3EF:	dc.b $01,$02,$03,$04,$05,$01,$03,$04,$05,$00,$03,$04,$05,$FF
 loc_F3FD:	dc.b $01,$02,$03,$04,$05,$01,$03,$04,$05,$00,$03,$04,$05,$FF
 loc_F40B:	dc.b $0F,$00,$FF
+loc_Tails:	dc.b $0F,$01,$FF
 		even
 ; ---------------------------------------------------------------------------
 ; Sprite mappings
@@ -20049,6 +20138,8 @@ Obj01_Dead:
 
 ; loc_10A1A: Sonic_GameOver:
 CheckGameOver:
+		move.b	#1,(Scroll_lock).w
+		move.b	#0,spindash_flag(a0)
 		move.w	(Camera_Max_Y_pos_now).w,d0
 		addi.w	#$100,d0
 		cmp.w	$C(a0),d0
@@ -20443,6 +20534,13 @@ JmpTo_KillSonic:	; JmpTo
 ; ---------------------------------------------------------------------------
 ; Sprite_10E38: Obj_0x02_Tails:
 Obj02:
+	; a0=character
+	cmpa.w	#MainCharacter,a0
+	bne.s	+
+	move.w	(Camera_Min_X_pos).w,(Tails_Min_X_pos).w
+	move.w	(Camera_Max_X_pos).w,(Tails_Max_X_pos).w
+	move.w	(Camera_Max_Y_pos).w,(Tails_Max_Y_pos).w
++
 		moveq	#0,d0
 		move.b	routine(a0),d0
 		move.w	Obj02_Index(pc,d0.w),d1
@@ -20475,6 +20573,7 @@ Obj02_Init:
 		move.b	#0,$2C(a0)
 		move.b	#4,$2D(a0)
 		move.b	#5,(Tails_Tails).w
+		move.w	a0,(Tails_Tails+parent).w ; set its parent object to this
 		move.w	#0,(Tails_CPU_routine).w	; set AI state to TailsCPU_Init
 		move.w	#0,(Tails_control_counter).w
 		move.w	#0,(Tails_respawn_counter).w
@@ -22277,23 +22376,18 @@ Tails_Death: ; loc_11B32:
 ; [ Begin ]
 ;===============================================================================
 Tails_GameOver: ; loc_11B4A:
-		move.w	(Camera_Max_Y_pos_now).w,d0
-		addi.w	#$0100,d0
-		cmp.w	y_pos(a0),d0
-		bhs.w	loc_11B8C
-		move.w	(MainCharacter+8).w,d0
-		subi.w	#$0040,d0
-		move.w	d0,8(a0)
-		move.w	(MainCharacter+$C).w,d0
-		subi.w	#$0080,d0
-		move.w	d0,y_pos(a0)
-		move.b	#2,$0024(a0)
-		andi.w	#$7FFF,art_tile(a0)
-		move.b	#$0C,$003E(a0)
-		move.b	#$0D,$003F(a0)
-		nop
-loc_11B8C:
-		rts
+	cmpa.w	#MainCharacter,a0	;is tails P1?
+	beq.w	CheckGameOver		;if yes, gameover
+	move.b	#1,(Scroll_lock_P2).w
+	move.b	#0,spindash_flag(a0)
+	move.w	(Tails_Max_Y_pos).w,d0
+	addi.w	#$100,d0
+	cmp.w	y_pos(a0),d0
+	bge.w	loc_11BA0
+	move.b	#2,routine(a0)
+	;tst.w	(Two_player_mode).w
+	;bne.s	Obj02_CheckGameOver_2Pmode
+	bra.w	TailsCPU_Despawn
 ;===============================================================================
 ; Sub Routine Tails_GameOver
 ; [ End ]
@@ -22491,8 +22585,8 @@ loc_11d7E:
 		or.b	d1,$0001(a0)
 		bra.w	loc_11BF0
 loc_11DA0:
-		move.w	(Sidekick+$10).w,d1
-		move.w	(Sidekick+$12).w,d2
+		move.w	x_vel(a2),d1	;changed from sidekick to parent, like final s2
+		move.w	y_vel(a2),d2
 		jsr	(CalcAngle).l			   ; loc_34A2
 		moveq	#0,d1
 		move.b	$0022(a0),d2
@@ -22709,15 +22803,23 @@ Obj05_Init:
 		move.b	#4,1(a0)
 ; loc_11Fd0:
 Obj05_Main:
-		move.b	(Sidekick+$26).w,$26(a0)
-		move.b	(Sidekick+$22).w,$22(a0)
-		move.w	(Sidekick+8).w,8(a0)
-		move.w	(Sidekick+$C).w,$C(a0)
+		;parent like s2
+		movea.w	parent(a0),a2 ; a2=character
+		move.b	angle(a2),angle(a0)
+		move.b	status(a2),status(a0)
+		move.w	mappings(a2),mappings(a0)
+		move.w	x_pos(a2),x_pos(a0)
+		move.w	y_pos(a2),y_pos(a0)
+		andi.w	#$7FFF,art_tile(a0)
+		tst.w	art_tile(a2)
+		bpl.s	+
+		ori.w	#(1<<15),art_tile(a0)
++
 		moveq	#0,d0
-		move.b	(Sidekick+$1C).w,d0
-		cmp.b	$30(a0),d0
+		move.b	anim(a2),d0
+		cmp.b	invulnerable_time(a0),d0
 		beq.s	loc_11FFE
-		move.b	d0,$30(a0)
+		move.b	d0,invulnerable_time(a0)
 		move.b	Obj05AniSelection(pc,d0.w),$1C(a0)
 
 loc_11FFE:
@@ -38751,6 +38853,8 @@ Touch_Hurt: ; loc_2137A:
 ; [ Begin ]
 ;===============================================================================
 HurtSonic: ; loc_21384:
+		cmpa.w	#MainCharacter,a0
+		bne.s	Hurt_SkipShield
 		tst.b	(Shield_flag).w
 		bne.s	HurtShield	; loc_213AC
 		tst.w	(Ring_count).w
@@ -38762,6 +38866,7 @@ HurtSonic: ; loc_21384:
 		move.w	$C(a0),$C(a1)
 HurtShield: ; loc_213AC:
 		move.b	#0,(Shield_flag).w
+Hurt_SkipShield:
 		move.b	#4,$24(a0)
 		bsr.w	J_Sonic_ResetOnFloor_00	; loc_214FC
 		bset	#1,$22(a0)
@@ -41475,6 +41580,7 @@ Debug_Init:
 		andi.w	#$7FF,(MainCharacter+y_pos).w
 		andi.w	#$7FF,(Camera_Y_pos).w
 		andi.w	#$7FF,(Camera_BG_Y_pos).w
+		clr.b	(Scroll_lock).w
 		move.b	#0,mapping_frame(a0)
 		move.b	#0,anim(a0)
 		; S1 leftover

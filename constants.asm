@@ -734,7 +734,8 @@ Camera_Delay_P2_End:
 Camera_Y_pos_bias:		ds.w	1	; added to y position for lookup/lookdown, $60 is center
 Camera_Y_pos_bias_End:
 
-				ds.b	2	; $FFFFEEDA ; seems unused
+Scroll_lock			ds.b	1	; set to 1 to stop all scrolling for P1
+Scroll_lock_P2			ds.b	1	; set to 1 to stop all scrolling for P2
 Deform_lock:			ds.b	1	; set to 1 to stop all deformation
 				ds.b	1	; $FFFFEEDD ; seems unused
 Camera_Max_Y_Pos_Changing:	ds.b	1
@@ -748,7 +749,10 @@ HTZ_Terrain_Direction:		ds.b	1	; During HTZ screen shake, 0 if terrain/lava is r
 Vscroll_Factor_P2_HInt:		ds.l	1
 Camera_X_pos_copy:		ds.l	1
 Camera_Y_pos_copy:		ds.l	1
-				ds.b	8	; $FFFFEEF8-$FFFFEEFF ; seems unused
+Tails_Min_X_pos			ds.w	1	; 
+Tails_Max_X_pos			ds.w	1	; 
+Tails_Max_Y_pos			ds.w	1	; $FFFFEEF8-$FFFFEEFD ; was unused
+				ds.b	2	; $FFFFEEFE-$FFFFEEFF ; seems unused
 
 Camera_RAM_End:
 
@@ -1127,7 +1131,9 @@ Level_select_zone:		ds.w	1
 Sound_test_sound:		ds.w	1
 				ds.b	$3A	; $FFFFFF86-$FFFFFFBF ; seems unused
 Next_Extra_life_score:		ds.l	1
-				ds.b	$C	; $FFFFFFC4-$FFFFFFCF ; seems unused
+Player_option:			ds.b	1	; player option
+Player_mode:			ds.b	1	; player option
+				ds.b	$A	; $FFFFFFC5-$FFFFFFCF ; seems unused
 
 Level_select_flag:		ds.b	1
 Slow_motion_flag:		ds.b	1
