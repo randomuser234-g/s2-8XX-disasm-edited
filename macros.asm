@@ -182,6 +182,13 @@ zoneTableEnd macro
 ;	endif
 	!org zone_table_addr+cur_zone_id*zone_entry_len*zone_entries
 	endm
+; macro to move the absolute value of the source in the destination
+mvabs macro source,destination
+	move.ATTRIBUTE	source,destination
+	bpl.s	.skip
+	neg.ATTRIBUTE	destination
+.skip:
+    endm
 
 ; macros to convert from tile index to art tiles, block mapping or VRAM address.
 make_art_tile function addr,pal,pri,((pri&1)<<15)|((pal&3)<<13)|(addr&tile_mask)

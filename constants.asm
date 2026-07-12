@@ -6,7 +6,12 @@
 ; they are all in units of bytes
 Size_of_DAC_samples =		$2723
 Size_of_SEGA_sound =		$6174
+	if FixBugs
+; To be on the safe side, we'll use a larger guess size.
+Size_of_Snd_driver_guess =	$E80 ; approximate post-compressed size of the Z80 sound driver
+	else
 Size_of_Snd_driver_guess =	$DF3 ; approximate post-compressed size of the Z80 sound driver
+	endif
 
 ; ---------------------------------------------------------------------------
 ; Object Status Table offsets (for everything between Object_RAM and Primary_Collision)
@@ -417,7 +422,6 @@ MusID__End =		id(zMusIDPtr__End)
 S1MusID_LZ =		$82
 S1MusID_Invinc =	$87
 S1MusID_ExtraLife =	$88
-S1MusID_SpecStg =	$89
 S1MusID_Boss =		$8C
 S1MusID_ActClear =	$8E
 S1MusID_Emerald =	$93
@@ -579,34 +583,7 @@ BreathingBubbles:		; Sonic's breathing bubbles
 				ds.b	object_size
 HeadsUpDisplay:			; HUD (still uses Sonic 1's HUD system at this point)
 				ds.b	object_size
-				ds.b	object_size
-				ds.b	object_size
-				ds.b	object_size
-				ds.b	object_size
-				ds.b	object_size
-				ds.b	object_size
-				ds.b	object_size
-				ds.b	object_size
-				ds.b	object_size
-				ds.b	object_size
-				ds.b	object_size
-				ds.b	object_size
-				ds.b	object_size
-				ds.b	object_size
-				ds.b	object_size
-WaterSurface1:			; First water surface
-Oil:				; Oil at the bottom of OOZ
-				ds.b	object_size
-WaterSurface2:			; Second water surface
-				ds.b	object_size
-Reserved_Object_RAM_End:
-
-Dynamic_Object_RAM:		; Dynamic object RAM
-				ds.b	$60*object_size
-Dynamic_Object_RAM_End:
-; 2P mode reserves 6 'blocks' of 12 RAM slots at the end.
-Dynamic_Object_RAM_2P_End = Dynamic_Object_RAM_End - ($C * 6) * object_size
-
+				ds.b	$1C40 ; RESERVED FOR OBJECT RAM, DO NOT REMOVE!!!
 Object_RAM_End:
 
 Primary_Collision:		ds.b	$600
@@ -792,7 +769,10 @@ Ctrl_1_Press:			ds.b	1	; 1 byte
 Ctrl_2:						; 2 bytes
 Ctrl_2_Held:			ds.b	1	; 1 byte
 Ctrl_2_Press:			ds.b	1	; 1 byte
-				ds.b	4	; $FFFFF608-$FFFFF60B ; seems unused
+Ctrl_2_Logical:						; 2 bytes
+Ctrl_2_Held_Logical:			ds.b	1	; 1 byte
+Ctrl_2_Press_Logical:			ds.b	1	; 1 byte
+				ds.b	2	; $FFFFF60A-$FFFFF60B ; seems unused
 VDP_Reg1_val:			ds.w	1	; normal value of VDP register #1 when display is disabled
 				ds.b	6	; $FFFFF60E-$FFFFF613 ; seems unused
 Demo_Time_left:			ds.w	1	; 2 bytes
@@ -820,7 +800,7 @@ Sprite_count:			ds.b	1	; the number of sprites drawn in the current frame
 PalCycle_Frame:			ds.w	1	; ColorID loaded in PalCycle
 PalCycle_Timer:			ds.w	1	; number of frames until next PalCycle call
 RNG_seed:			ds.l	1	; used for random number generation
-Game_paused:			ds.w	1
+Game_paused:			ds.w	1	
 				ds.b	4	; $FFFFF63C-$FFFFF63F ; seems unused
 DMA_data_thunk:			ds.w	1	; Used as a RAM holder for the final DMA command word. Data will NOT be preserved across V-INTs, so consider this space reserved.
 				ds.w	1	; $FFFFF642-$FFFFF643 ; seems unused
@@ -853,14 +833,14 @@ MiscLevelVariables_End
 Plc_Buffer:			ds.b	$60	; Pattern load queue (each entry is 6 bytes)
 Plc_Buffer_Only_End:
 				; these seem to store nemesis decompression state so PLC processing can be spread out across frames
-Plc_Buffer_Reg0:		ds.l	1
-Plc_Buffer_Reg4:		ds.l	1
-Plc_Buffer_Reg8:		ds.l	1
-Plc_Buffer_RegC:		ds.l	1
-Plc_Buffer_Reg10:		ds.l	1
-Plc_Buffer_Reg14:		ds.l	1
+Plc_Buffer_Reg0:		ds.l	1	
+Plc_Buffer_Reg4:		ds.l	1	
+Plc_Buffer_Reg8:		ds.l	1	
+Plc_Buffer_RegC:		ds.l	1	
+Plc_Buffer_Reg10:		ds.l	1	
+Plc_Buffer_Reg14:		ds.l	1	
 Plc_Buffer_Reg18:		ds.w	1	; amount of current entry remaining to decompress
-Plc_Buffer_Reg1A:		ds.w	1
+Plc_Buffer_Reg1A:		ds.w	1	
 				ds.b	4	; seems unused
 Plc_Buffer_End:
 
@@ -869,10 +849,13 @@ unk_F700:			ds.w	1	; cleared once in Tails CPU routine, never used
 
 ; extra variables for the second player (CPU) in 1-player mode
 Tails_control_counter:		ds.w	1	; how long until the CPU takes control
-				ds.b	2	; $FFFFF704-$FFFFF705 ; seems unused
-unk_F706:			ds.w	1	; used in unused Tails CPU routines
+Tails_CPU_target_x:		ds.w	1	; $FFFFF704-$FFFFF705 ; seems unused
+Tails_CPU_target_y:		ds.w	1	; used in unused Tails CPU routines, originally unk_F706
 Tails_CPU_routine:		ds.w	1
-				ds.b	6	; $FFFFF70A-$FFFFF70F ; seems unused
+Tails_respawn_counter:		ds.w	1
+Tails_interact_ID:		ds.b	1
+Tails_CPU_jumping:		ds.b	1
+				ds.b	2	; $FFFFF70A-$FFFFF70F ; seems unused
 
 Rings_manager_routine:		ds.b	1
 Level_started_flag:		ds.b	1
@@ -969,7 +952,8 @@ Sliding_flag:			ds.b	1	; merged into the character's status flag in the final, l
 				ds.b	1	; $FFFFF7CB ; seems unused
 Control_Locked:			ds.b	1
 Enter_SpecialStage_flag:	ds.b	1
-				ds.b	2	; $FFFFF7CE-$FFFFF7CF ; seems unused
+Control_Locked_P2		ds.b	1
+				ds.b	1	; $FFFFF7CF ; seems unused
 Chain_Bonus_counter:		ds.w	1	; counts up when you destroy things that give points, resets when you touch the ground
 Bonus_Countdown_1:		ds.w	1	; level results time bonus
 Bonus_Countdown_2:		ds.w	1	; level results ring bonus
@@ -1212,7 +1196,7 @@ Z80_Reset =			$A11200
 Security_Addr =			$A14000
 
 ; ---------------------------------------------------------------------------
-; I/O Area
+; I/O Area 
 HW_Version =			$A10001
 HW_Port_1_Data =		$A10003
 HW_Port_2_Data =		$A10005
