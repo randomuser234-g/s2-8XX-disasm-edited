@@ -5175,15 +5175,15 @@ LevelSize:	zoneOrderedTable 4,4
 	zoneTableEntry.l	$00003FFF,$00000720,$00003FFF,$00000720 ; $01
 	zoneTableEntry.l	$00003FFF,$00000720,$00003FFF,$00000720 ; $02 - Wood
 	zoneTableEntry.l	$00003FFF,$00000720,$00003FFF,$00000720 ; $03
-	zoneTableEntry.l	$00003FFF,$00000720,$00003FFF,$00000720 ; $04 - Metropolis
-	zoneTableEntry.l	$00003FFF,$00000720,$00003FFF,$00000720 ; $05 - Metropolis
+	zoneTableEntry.l	$00001FFF,$00000720,$00001D00,$00000720 ; $04 - Metropolis
+	zoneTableEntry.l	$00002E00,$00000720,$00003EFF,$00000720 ; $05 - Metropolis
 	zoneTableEntry.l	$00003FFF,$00000720,$00003FFF,$00000720 ; $06
 	zoneTableEntry.l	$00002800,$00000720,$00002880,$00000720 ; $07 - Hill Top
 	zoneTableEntry.l	$00003FFF,$00000720,$00003FFF,$00000720 ; $08 - Hidden Palace
 	zoneTableEntry.l	$00003FFF,$00000720,$00003FFF,$00000720 ; $09
 	zoneTableEntry.l	$00002F80,$00000680,$00002580,$00000680 ; $0A - Oil Ocean
 	zoneTableEntry.l	$00002380,$03C00720,$00002180,$00600720 ; $0B - Dust Hill
-	zoneTableEntry.l	$00003FFF,$00000720,$00003FFF,$00000720 ; $0C - Casino Night
+	zoneTableEntry.l	$00002800,$00000720,$000027A0,$00000720 ; $0C - Casino Night
 	zoneTableEntry.l	$00002780,$00000720,$00002880,$00000720 ; $0D - Chemical Plant
 	zoneTableEntry.l	$00003FFF,$00000720,$00003FFF,$00000720 ; $0E - Genocide City
 	zoneTableEntry.l	$000028C0,$020003A0,$000026C0,$018005A0 ; $0F - Neo Green Hill
@@ -13177,6 +13177,9 @@ loc_BE60:
 		cmpi.b	#6,d0
 		bne.s	loc_BE86
 		add.b	(Current_Act).w,d0
+		cmpi.w	#metropolis_zone_act_3,(Current_ZoneAndAct).w	;metropolis act 3?	
+		bne.s	loc_BE86				;if not, branch
+		addq.b	#2,d0						;add 2, set from act 1 to act 3
 		bra.s	loc_BE86
 Results_Characters:
 		cmpi.b	#2,(Player_mode).w	; is the multiple character flag set to 2 (Tails)?
@@ -20807,7 +20810,7 @@ TailsCPU_Flying:
 	move.b	#1<<1,status(a0)
 	move.w	#0,x_pos(a0)
 	move.w	#0,y_pos(a0)
-	move.b	#0,anim(a0)	;no flying animation yet, use walking for now
+	move.b	#$E,anim(a0)	;flying animation
 	rts
 ; ---------------------------------------------------------------------------
 ; loc_1BBC8:
@@ -20922,7 +20925,7 @@ TailsCPU_Normal:
 	move.w	#0,spindash_counter(a0)
 	move.b	#$81,obj_control(a0)
 	move.b	#1<<1,status(a0)
-	move.b	#0,anim(a0)	;no flying animation yet, use walking for now
+	move.b	#$E,anim(a0)	;flying animation
 	rts
 ; ---------------------------------------------------------------------------
 ; loc_1BD0E:
@@ -21058,7 +21061,7 @@ TailsCPU_Despawn:
 	move.b	#1<<1,status(a0)
 	move.w	#$4000,x_pos(a0)
 	move.w	#0,y_pos(a0)
-	move.b	#0,anim(a0)	;no flying animation yet, use walking for now
+	move.b	#$E,anim(a0)	;flying animation
 	rts
 ; ===========================================================================
 ; sub_1BE66:
@@ -31579,7 +31582,7 @@ loc_1A726:
 		beq.s	loc_1A730
 		rts
 loc_1A730:
-		move.w	#$FA00,$0012(a1)
+		move.w	#-$A00,y_vel(a1)	;change from fa00 to -a00
 		bset	#1,$0022(a1)
 		bclr	#$03,$0022(a1)
 		move.b	#$10,$001C(a1)
@@ -43113,8 +43116,8 @@ Objects_Layout: zoneOrderedOffsetTable 2,2
 	zoneOffsetTableEntry.w	OOz_2_Objects_Layout
 	zoneOffsetTableEntry.w	Dhz_1_Objects_Layout
 	zoneOffsetTableEntry.w	Dhz_2_Objects_Layout
-	zoneOffsetTableEntry.w	Null_Objects_Layout
-	zoneOffsetTableEntry.w	Null_Objects_Layout
+	zoneOffsetTableEntry.w	Cnz_1_Objects_Layout
+	zoneOffsetTableEntry.w	Cnz_2_Objects_Layout
 	zoneOffsetTableEntry.w	Cpz_1_Objects_Layout
 	zoneOffsetTableEntry.w	Cpz_2_Objects_Layout
 	zoneOffsetTableEntry.w	Null_Objects_Layout
@@ -43152,7 +43155,11 @@ OOz_2_Objects_Layout:	binclude	"level/objects/OOZ_2.bin"
 	ObjectLayoutBoundary
 Dhz_1_Objects_Layout:	binclude	"level/objects/DHZ_1.bin"
 	ObjectLayoutBoundary
-Dhz_2_Objects_Layout:
+Dhz_2_Objects_Layout:	binclude	"level/objects/DHZ_2.bin"
+	ObjectLayoutBoundary
+Cnz_1_Objects_Layout:	binclude	"level/objects/CNZ_1.bin"
+	ObjectLayoutBoundary
+Cnz_2_Objects_Layout:	binclude	"level/objects/CNZ_2.bin"
 	ObjectLayoutBoundary
 Cpz_1_Objects_Layout:	binclude	"level/objects/CPZ_1.bin"
 	ObjectLayoutBoundary
