@@ -65,6 +65,13 @@ FixMusicAndSFXDataBugs = FixBugs
 	include	"macros.asm"
 
 ; >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+; >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+; Expressing sprite mappings and DPLCs in a portable and human-readable form
+SonicMappingsVer := 2
+SonicDplcVer := 2
+	include "mappings/MapMacros.asm"
+
+; >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 ; start of ROM
 
 StartOfRom:
@@ -14452,8 +14459,8 @@ ObjPtr_Oil:		dc.l	Obj07			; Oil Ocean in OOZ
 			dc.l	Obj_Null
 			dc.l	Obj7D			; Points that can be gotten at the end of an act (leftover from S1)
 			dc.l	Obj_Null
-			dc.l	Obj_Null		;dust hill hanging vines switch
-			dc.l	Obj_Null		;hanging vine that moves down
+			dc.l	Obj7F		;dust hill (DHZ) hanging vines switch
+			dc.l	Obj_Null		;hanging vine that moves down Obj80
 			dc.l	Obj_Null
 			dc.l	Obj_Null
 			dc.l	Obj_Null
@@ -19116,7 +19123,7 @@ loc_1016C:
 		bne.s	return_1019A
 		cmpi.w	#$400,d0
 		blt.s	return_1019A
-		move.b	#$D,$1C(a0)	; use "stopping" animation
+		move.b	#$D,anim(a0)	; use "stopping" animation
 		bclr	#0,$22(a0)
 		move.w	#SndID_Skidding,d0
 		jsr	(PlaySound).l
@@ -19148,7 +19155,7 @@ loc_101B6:
 
 loc_101C4:
 		move.w	d0,$14(a0)
-		move.b	#0,$1C(a0)	; use walking animation
+		move.b	#0,anim(a0)	; use walking animation
 		rts
 ; ---------------------------------------------------------------------------
 ; loc_101d0:
@@ -19171,7 +19178,7 @@ loc_101D8:
 		bne.s	return_10206
 		cmpi.w	#-$400,d0
 		bgt.s	return_10206
-		move.b	#$D,$1C(a0)	; use "stopping" animation
+		move.b	#$D,anim(a0)	; use "stopping" animation
 		bset	#0,$22(a0)
 		move.w	#SndID_Skidding,d0
 		jsr	(PlaySound).l
@@ -20465,6 +20472,7 @@ SonicAniData:	offsetTable
 		offsetTableEntry.w SonAni_0x1C
 		offsetTableEntry.w SonAni_Float3
 		offsetTableEntry.w SonAni_0x1E
+		offsetTableEntry.w SonAni_HangingOntoObj
 SonAni_Walk:		dc.b $FF,$10,$11,$12,$13,$14,$15,$16,$17,$0C,$0D,$0E,$0F,$FF
 SonAni_Run:		dc.b $FF,$3C,$3D,$3E,$3F,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF
 SonAni_Roll:		dc.b $FE,$6C,$70,$6D,$70,$6E,$70,$6F,$70,$FF
@@ -20498,6 +20506,7 @@ SonAni_S1LzSlide:	dc.b $09,$8D,$8E,$FF
 SonAni_0x1C:		dc.b $77,$00,$FD,$00
 SonAni_Float3:		dc.b $03,$91,$92,$93,$94,$95,$FF
 SonAni_0x1E:		dc.b $03,$3C,$FD,$00
+SonAni_HangingOntoObj:		dc.b $13,$A7,$A8,$FF
 		even
 
 ; ---------------------------------------------------------------------------
@@ -22702,6 +22711,7 @@ Tails_AnimateData: ; loc_11DF4: ; Tails Data
 		dc.w	Tails_Animate_0x1C-Tails_AnimateData		   ; loc_11F02
 		dc.w	Tails_Animate_0x1D-Tails_AnimateData		   ; loc_11F06
 		dc.w	Tails_Animate_0x1E-Tails_AnimateData		   ; loc_11F10
+		dc.w	Tails_Animate_HangingFromObj-Tails_AnimateData		   ; 1F
 Tails_Animate_Walk: ; loc_11E32:
 		dc.b	$FF,$10,$11,$12,$13,$14,$15,$0E,$0F,$FF
 Tails_Animate_Run: ; loc_11E3C:
@@ -22768,7 +22778,9 @@ Tails_Animate_0x1D: ; loc_11F06:
 Tails_Animate_0x1E: ; loc_11F10:
 		dc.b	$03,$01,$02,$03,$04,$05,$06,$07,$08,$FF
 		even
-
+Tails_Animate_HangingFromObj: ; loc_11F10:
+		dc.b $13,$85,$86,$FF
+		even
 ; ===========================================================================
 ; ---------------------------------------------------------------------------
 ; Tails' Tails pattern loading subroutine
@@ -22910,6 +22922,7 @@ Obj05AniSelection:
 		dc.b	0,0
 		dc.b	0,0
 		dc.b	0,0
+		dc.b	1,7	;hanging anim
 		even
 ; ---------------------------------------------------------------------------
 ; Animation script - Tails' tails
@@ -43407,938 +43420,1627 @@ Invencibility_Stars: ; loc_6E114:
 		even
 Unused_Dust: ; loc_6E1FC:
 		binclude	"data\sprites\dust.dat"
-Tails_Mappings: ; loc_6FB3C:
-		dc.w	loc_6FC46-Tails_Mappings
-		dc.w	loc_6FC48-Tails_Mappings
-		dc.w	loc_6FC5A-Tails_Mappings
-		dc.w	loc_6FC6C-Tails_Mappings
-		dc.w	loc_6FC7E-Tails_Mappings
-		dc.w	loc_6FC90-Tails_Mappings
-		dc.w	loc_6FC9A-Tails_Mappings
-		dc.w	loc_6FCA4-Tails_Mappings
-		dc.w	loc_6FCB6-Tails_Mappings
-		dc.w	loc_6FCC8-Tails_Mappings
-		dc.w	loc_6FCd2-Tails_Mappings
-		dc.w	loc_6FCDC-Tails_Mappings
-		dc.w	loc_6FCE6-Tails_Mappings
-		dc.w	loc_6FCF0-Tails_Mappings
-		dc.w	loc_6FCFA-Tails_Mappings
-		dc.w	loc_6Fd14-Tails_Mappings
-		dc.w	loc_6Fd2E-Tails_Mappings
-		dc.w	loc_6Fd48-Tails_Mappings
-		dc.w	loc_6Fd62-Tails_Mappings
-		dc.w	loc_6Fd7C-Tails_Mappings
-		dc.w	loc_6FD96-Tails_Mappings
-		dc.w	loc_6FDB0-Tails_Mappings
-		dc.w	loc_6FDCA-Tails_Mappings
-		dc.w	loc_6FDE4-Tails_Mappings
-		dc.w	loc_6FDFE-Tails_Mappings
-		dc.w	loc_6FE18-Tails_Mappings
-		dc.w	loc_6FE32-Tails_Mappings
-		dc.w	loc_6FE4C-Tails_Mappings
-		dc.w	loc_6FE66-Tails_Mappings
-		dc.w	loc_6FE80-Tails_Mappings
-		dc.w	loc_6FE9A-Tails_Mappings
-		dc.w	loc_6FEB4-Tails_Mappings
-		dc.w	loc_6FECE-Tails_Mappings
-		dc.w	loc_6FEE8-Tails_Mappings
-		dc.w	loc_6FF02-Tails_Mappings
-		dc.w	loc_6FF1C-Tails_Mappings
-		dc.w	loc_6FF36-Tails_Mappings
-		dc.w	loc_6FF50-Tails_Mappings
-		dc.w	loc_6FF6A-Tails_Mappings
-		dc.w	loc_6FF7C-Tails_Mappings
-		dc.w	loc_6FF96-Tails_Mappings
-		dc.w	loc_6FFA8-Tails_Mappings
-		dc.w	loc_6FFC2-Tails_Mappings
-		dc.w	loc_6FFd4-Tails_Mappings
-		dc.w	loc_6FFEE-Tails_Mappings
-		dc.w	loc_70000-Tails_Mappings
-		dc.w	loc_7001A-Tails_Mappings
-		dc.w	loc_7002C-Tails_Mappings
-		dc.w	loc_7003E-Tails_Mappings
-		dc.w	loc_70050-Tails_Mappings
-		dc.w	loc_70062-Tails_Mappings
-		dc.w	loc_70074-Tails_Mappings
-		dc.w	loc_70086-Tails_Mappings
-		dc.w	loc_700A0-Tails_Mappings
-		dc.w	loc_700BA-Tails_Mappings
-		dc.w	loc_700d4-Tails_Mappings
-		dc.w	loc_700EE-Tails_Mappings
-		dc.w	loc_70108-Tails_Mappings
-		dc.w	loc_70122-Tails_Mappings
-		dc.w	loc_7013C-Tails_Mappings
-		dc.w	loc_70156-Tails_Mappings
-		dc.w	loc_7013C-Tails_Mappings
-		dc.w	loc_70170-Tails_Mappings
-		dc.w	loc_7018A-Tails_Mappings
-		dc.w	loc_701A4-Tails_Mappings
-		dc.w	loc_701BE-Tails_Mappings
-		dc.w	loc_701D8-Tails_Mappings
-		dc.w	loc_701F2-Tails_Mappings
-		dc.w	loc_7020C-Tails_Mappings
-		dc.w	loc_70226-Tails_Mappings
-		dc.w	loc_70240-Tails_Mappings
-		dc.w	loc_7024A-Tails_Mappings
-		dc.w	loc_70254-Tails_Mappings
-		dc.w	loc_7025E-Tails_Mappings
-		dc.w	loc_70268-Tails_Mappings
-		dc.w	loc_70272-Tails_Mappings
-		dc.w	loc_7027C-Tails_Mappings
-		dc.w	loc_70286-Tails_Mappings
-		dc.w	loc_70290-Tails_Mappings
-		dc.w	loc_7029A-Tails_Mappings
-		dc.w	loc_702A4-Tails_Mappings
-		dc.w	loc_702AE-Tails_Mappings
-		dc.w	loc_702B8-Tails_Mappings
-		dc.w	loc_702C2-Tails_Mappings
-		dc.w	loc_702CC-Tails_Mappings
-		dc.w	loc_702d6-Tails_Mappings
-		dc.w	loc_702E0-Tails_Mappings
-		dc.w	loc_702EA-Tails_Mappings
-		dc.w	loc_702F4-Tails_Mappings
-		dc.w	loc_702FE-Tails_Mappings
-		dc.w	loc_70310-Tails_Mappings
-		dc.w	loc_70322-Tails_Mappings
-		dc.w	loc_7032C-Tails_Mappings
-		dc.w	loc_70336-Tails_Mappings
-		dc.w	loc_70340-Tails_Mappings
-		dc.w	loc_70352-Tails_Mappings
-		dc.w	loc_70364-Tails_Mappings
-		dc.w	loc_7036E-Tails_Mappings
-		dc.w	loc_70378-Tails_Mappings
-		dc.w	loc_70382-Tails_Mappings
-		dc.w	loc_70394-Tails_Mappings
-		dc.w	loc_703A6-Tails_Mappings
-		dc.w	loc_703B8-Tails_Mappings
-		dc.w	loc_703CA-Tails_Mappings
-		dc.w	loc_703DC-Tails_Mappings
-		dc.w	loc_703EE-Tails_Mappings
-		dc.w	loc_70400-Tails_Mappings
-		dc.w	loc_70412-Tails_Mappings
-		dc.w	loc_7041C-Tails_Mappings
-		dc.w	loc_7042E-Tails_Mappings
-		dc.w	loc_70440-Tails_Mappings
-		dc.w	loc_70452-Tails_Mappings
-		dc.w	loc_70464-Tails_Mappings
-		dc.w	loc_70476-Tails_Mappings
-		dc.w	loc_70488-Tails_Mappings
-		dc.w	loc_7049A-Tails_Mappings
-		dc.w	loc_704AC-Tails_Mappings
-		dc.w	loc_704B6-Tails_Mappings
-		dc.w	loc_704C0-Tails_Mappings
-		dc.w	loc_704d2-Tails_Mappings
-		dc.w	loc_704DC-Tails_Mappings
-		dc.w	loc_704E6-Tails_Mappings
-		dc.w	loc_704F0-Tails_Mappings
-		dc.w	loc_704FA-Tails_Mappings
-		dc.w	loc_70504-Tails_Mappings
-		dc.w	loc_7050E-Tails_Mappings
-		dc.w	loc_70518-Tails_Mappings
-		dc.w	loc_70522-Tails_Mappings
-		dc.w	loc_70534-Tails_Mappings
-		dc.w	loc_70546-Tails_Mappings
-		dc.w	loc_70550-Tails_Mappings
-		dc.w	loc_7055A-Tails_Mappings
-		dc.w	loc_70564-Tails_Mappings
-loc_6FC46:
-		dc.w	$0000
-loc_6FC48:
-		dc.w	$0002
-		dc.l	$F0090000,$0000FFF4,$00090006,$0003FFF4
-loc_6FC5A:
-		dc.w	$0002
-		dc.l	$F0090000,$0000FFF4,$00090006,$0003FFF4
-loc_6FC6C:
-		dc.w	$0002
-		dc.l	$F0090000,$0000FFF4,$00090006,$0003FFF4
-loc_6FC7E:
-		dc.w	$0002
-		dc.l	$F0090000,$0000FFF4,$00090006,$0003FFF4
-loc_6FC90:
-		dc.w	$0001
-		dc.l	$F00B0000,$0000FFF4
-loc_6FC9A:
-		dc.w	$0001
-		dc.l	$F00B0000,$0000FFF4
-loc_6FCA4:
-		dc.w	$0002
-		dc.l	$F0090000,$0000FFF4,$00090006,$0003FFF4
-loc_6FCB6:
-		dc.w	$0002
-		dc.l	$F0090000,$0000FFF4,$00090006,$0003FFF4
-loc_6FCC8:
-		dc.w	$0001
-		dc.l	$F0070000,$0000FFEC
-loc_6FCd2:
-		dc.w	$0001
-		dc.l	$F00B0000,$0000FFE4
-loc_6FCDC:
-		dc.w	$0001
-		dc.l	$F00B0000,$0000FFE4
-loc_6FCE6:
-		dc.w	$0001
-		dc.l	$00090000,$0000FFE4
-loc_6FCF0:
-		dc.w	$0001
-		dc.l	$F00B0000,$0000FFE4
-loc_6FCFA:
-		dc.w	$0003
-		dc.l	$EC090000,$0000FFF0,$FC0d0006,$0003FFF0
-		dc.l	$FC09000E,$0007FFE2
-loc_6Fd14:
-		dc.w	$0003
-		dc.l	$F0090000,$0000FFF3,$000d0006,$0003FFF0
-		dc.l	$0009000E,$0007FFE4
-loc_6Fd2E:
-		dc.w	$0003
-		dc.l	$F0090000,$0000FFF8,$00090006,$0003FFF3
-		dc.l	$Fd09000C,$0006FFE4
-loc_6Fd48:
-		dc.w	$0003
-		dc.l	$F0090000,$0000FFF2,$00090006,$0003FFF2
-		dc.l	$Fd09000C,$0006FFE6
-loc_6Fd62:
-		dc.w	$0003
-		dc.l	$EC090000,$0000FFF0,$FC0d0006,$0003FFF0
-		dc.l	$FC09000E,$0007FFE2
-loc_6Fd7C:
-		dc.w	$0003
-		dc.l	$F0090000,$0000FFF3,$000d0006,$0003FFF0
-		dc.l	$0009000E,$0007FFE4
-loc_6FD96:
-		dc.w	$0003
-		dc.l	$F0090000,$0000FFF8,$00090006,$0003FFF1
-		dc.l	$Fd09000C,$0006FFE4
-loc_6FDB0:
-		dc.w	$0003
-		dc.l	$F0090000,$0000FFF2,$00090006,$0003FFF2
-		dc.l	$Fd09000C,$0006FFE6
-loc_6FDCA:
-		dc.w	$0003
-		dc.l	$E3010000,$0000FFF3,$F3030002,$0001FFEC
-		dc.l	$F30B0006,$0003FFF4
-loc_6FDE4:
-		dc.w	$0003
-		dc.l	$E7050000,$0000FFF6,$F70B0004,$0002FFEE
-		dc.l	$FE050010,$00080006
-loc_6FDFE:
-		dc.w	$0003
-		dc.l	$E6050000,$0000FFF8,$F6030004,$0002FFEF
-		dc.l	$F60B0008,$0004FFF7
-loc_6FE18:
-		dc.w	$0003
-		dc.l	$E3010000,$0000FFF7,$F30F0002,$0001FFEC
-		dc.l	$FB010012,$0009000C
-loc_6FE32:
-		dc.w	$0003
-		dc.l	$E3010000,$0000FFF3,$F3030002,$0001FFEC
-		dc.l	$F30B0006,$0003FFF4
-loc_6FE4C:
-		dc.w	$0003
-		dc.l	$E7050000,$0000FFF6,$F70B0004,$0002FFEE
-		dc.l	$FF050010,$00080006
-loc_6FE66:
-		dc.w	$0003
-		dc.l	$E6050000,$0000FFF8,$F6030004,$0002FFEF
-		dc.l	$F60B0008,$0004FFF7
-loc_6FE80:
-		dc.w	$0003
-		dc.l	$E3010000,$0000FFF7,$F30F0002,$0001FFEC
-		dc.l	$03010012,$0009000C
-loc_6FE9A:
-		dc.w	$0003
-		dc.l	$F0070000,$0000FFEC,$F0070008,$0004FFFC
-		dc.l	$06070010,$0008FFFC
-loc_6FEB4:
-		dc.w	$0003
-		dc.l	$F0070000,$0000FFF0,$F0070008,$00040000
-		dc.l	$04070010,$00080000
-loc_6FECE:
-		dc.w	$0003
-		dc.l	$F0070000,$0000FFF0,$F0070008,$00040000
-		dc.l	$04070010,$0008FFFD
-loc_6FEE8:
-		dc.w	$0003
-		dc.l	$F0070000,$0000FFF0,$F0070008,$00040000
-		dc.l	$04070010,$0008FFFD
-loc_6FF02:
-		dc.w	$0003
-		dc.l	$F0070000,$0000FFEC,$F0070008,$0004FFFC
-		dc.l	$06070010,$0008FFFC
-loc_6FF1C:
-		dc.w	$0003
-		dc.l	$F0070000,$0000FFF0,$F0070008,$00040000
-		dc.l	$04070010,$00080000
-loc_6FF36:
-		dc.w	$0003
-		dc.l	$F0070000,$0000FFF0,$F0070008,$00040000
-		dc.l	$04070010,$0008FFFD
-loc_6FF50:
-		dc.w	$0003
-		dc.l	$F0070000,$0000FFF0,$F0070008,$00040000
-		dc.l	$04070010,$0008FFFD
-loc_6FF6A:
-		dc.w	$0002
-		dc.l	$04010000,$0000FFEB,$F40F0002,$0001FFF3
-loc_6FF7C:
-		dc.w	$0003
-		dc.l	$E2050000,$0000FFF8,$FA010004,$0002FFF0
-		dc.l	$F20F0006,$0003FFF8
-loc_6FF96:
-		dc.w	$0002
-		dc.l	$F9010000,$0000FFEC,$F10F0002,$0001FFF4
-loc_6FFA8:
-		dc.w	$0003
-		dc.l	$FC010000,$0000FFEF,$E5010002,$0001FFFF
-		dc.l	$F50F0004,$0002FFF7
-loc_6FFC2:
-		dc.w	$0002
-		dc.l	$04010000,$0000FFEB,$F40F0002,$0001FFF3
-loc_6FFd4:
-		dc.w	$0003
-		dc.l	$E2010000,$00000000,$FA010002,$0001FFF0
-		dc.l	$F20F0004,$0002FFF8
-loc_6FFEE:
-		dc.w	$0002
-		dc.l	$F9010000,$0000FFEC,$F10F0002,$0001FFF4
-loc_70000:
-		dc.w	$0003
-		dc.l	$E4010000,$0000FFFF,$FC010002,$0001FFEF
-		dc.l	$F40F0004,$0002FFF7
-loc_7001A:
-		dc.w	$0002
-		dc.l	$F00F0000,$0000FFF0,$F0070010,$0008FFEA
-loc_7002C:
-		dc.w	$0002
-		dc.l	$F00F0000,$0000FFF0,$F8050010,$0008FFEA
-loc_7003E:
-		dc.w	$0002
-		dc.l	$F00F0000,$0000FFF0,$F8050010,$0008FFEA
-loc_70050:
-		dc.w	$0002
-		dc.l	$F00F0000,$0000FFF0,$F8051010,$1008FFEA
-loc_70062:
-		dc.w	$0002
-		dc.l	$F00F0000,$0000FFF0,$F0070010,$0008FFEA
-loc_70074:
-		dc.w	$0002
-		dc.l	$F00F0000,$0000FFF0,$F0071810,$1808FFEA
-loc_70086:
-		dc.w	$0003
-		dc.l	$E4010000,$0000FFFA,$F40B0002,$0001FFF0
-		dc.l	$FE0B000E,$0007FFE8
-loc_700A0:
-		dc.w	$0003
-		dc.l	$E4050000,$0000FFF8,$F40B0004,$0002FFF0
-		dc.l	$04050010,$0008FFEF
-loc_700BA:
-		dc.w	$0003
-		dc.l	$E4010000,$0000FFFA,$F40B0002,$0001FFF0
-		dc.l	$0405000E,$0007FFEF
-loc_700d4:
-		dc.w	$0003
-		dc.l	$E4050000,$0000FFF8,$F40B0004,$0002FFF0
-		dc.l	$04050010,$0008FFEF
-loc_700EE:
-		dc.w	$0003
-		dc.l	$E4010000,$0000FFFA,$F40B0002,$0001FFF0
-		dc.l	$FC0B000E,$0007FFEA
-loc_70108:
-		dc.w	$0003
-		dc.l	$E4050000,$0000FFF8,$F40B0004,$0002FFF0
-		dc.l	$E90B1810,$1808FFF2
-loc_70122:
-		dc.w	$0003
-		dc.l	$F0090000,$0000FFF0,$000d0006,$0003FFF0
-		dc.l	$060d000E,$0007FFF0
-loc_7013C:
-		dc.w	$0003
-		dc.l	$F0090000,$0000FFF0,$000d0006,$0003FFF0
-		dc.l	$0605000E,$0007FFF8
-loc_70156:
-		dc.w	$0003
-		dc.l	$F0090000,$0000FFF0,$000d0006,$0003FFF0
-		dc.l	$0605000E,$0007FFF8
-loc_70170:
-		dc.w	$0003
-		dc.l	$F0090000,$0000FFF0,$000d0006,$0003FFF0
-		dc.l	$060d000E,$0007FFF0
-loc_7018A:
-		dc.w	$0003
-		dc.l	$F0090000,$0000FFF0,$000d0006,$0003FFF0
-		dc.l	$060d000E,$0007FFF0
-loc_701A4:
-		dc.w	$0003
-		dc.l	$F80B0000,$0000FFEC,$F805000C,$00060004
-		dc.l	$FE0B0810,$08080000
-loc_701BE:
-		dc.w	$0003
-		dc.l	$F80B0000,$0000FFEC,$F805000C,$00060004
-		dc.l	$01050810,$08080004
-loc_701D8:
-		dc.w	$0003
-		dc.l	$F80B0000,$0000FFEC,$F805000C,$00060004
-		dc.l	$01050810,$08080004
-loc_701F2:
-		dc.w	$0003
-		dc.l	$F80B0000,$0000FFEC,$F805000C,$00060004
-		dc.l	$01050810,$08080004
-loc_7020C:
-		dc.w	$0003
-		dc.l	$F80B0000,$0000FFEC,$F805000C,$00060004
-		dc.l	$FC0B0810,$0808FFFE
-loc_70226:
-		dc.w	$0003
-		dc.l	$F80B0000,$0000FFEC,$F805000C,$00060004
-		dc.l	$FC0B1010,$10080006
-loc_70240:
-		dc.w	$0001
-		dc.l	$F00F0000,$0000FFF0
-loc_7024A:
-		dc.w	$0001
-		dc.l	$F00F0000,$0000FFF0
-loc_70254:
-		dc.w	$0001
-		dc.l	$F00F0000,$0000FFF0
-loc_7025E:
-		dc.w	$0001
-		dc.l	$F8090000,$0000FFDC
-loc_70268:
-		dc.w	$0001
-		dc.l	$F8090000,$0000FFDC
-loc_70272:
-		dc.w	$0001
-		dc.l	$F8090000,$0000FFDC
-loc_7027C:
-		dc.w	$0001
-		dc.l	$F8090000,$0000FFDC
-loc_70286:
-		dc.w	$0001
-		dc.l	$07090000,$0000FFE1
-loc_70290:
-		dc.w	$0001
-		dc.l	$07090000,$0000FFE1
-loc_7029A:
-		dc.w	$0001
-		dc.l	$07090000,$0000FFE1
-loc_702A4:
-		dc.w	$0001
-		dc.l	$07090000,$0000FFE1
-loc_702AE:
-		dc.w	$0001
-		dc.l	$0C070000,$0000FFF8
-loc_702B8:
-		dc.w	$0001
-		dc.l	$0C070000,$0000FFF8
-loc_702C2:
-		dc.w	$0001
-		dc.l	$0C070000,$0000FFF8
-loc_702CC:
-		dc.w	$0001
-		dc.l	$0C070000,$0000FFF8
-loc_702d6:
-		dc.w	$0001
-		dc.l	$07070000,$00000007
-loc_702E0:
-		dc.w	$0001
-		dc.l	$07070000,$00000007
-loc_702EA:
-		dc.w	$0001
-		dc.l	$07070000,$00000007
-loc_702F4:
-		dc.w	$0001
-		dc.l	$07070000,$00000007
-loc_702FE:
-		dc.w	$0002
-		dc.l	$E8050000,$0000FFF8,$F80B0004,$0002FFF0
-loc_70310:
-		dc.w	$0002
-		dc.l	$E8050000,$0000FFF8,$F80B0004,$0002FFF0
-loc_70322:
-		dc.w	$0001
-		dc.l	$F00B0000,$0000FFF9
-loc_7032C:
-		dc.w	$0001
-		dc.l	$F00F0000,$0000FFF0
-loc_70336:
-		dc.w	$0001
-		dc.l	$F00F0000,$0000FFF0
-loc_70340:
-		dc.w	$0002
-		dc.l	$F00F0000,$0000FFF0,$E40d0010,$0008FFEA
-loc_70352:
-		dc.w	$0002
-		dc.l	$F00F0000,$0000FFF0,$E40d0810,$0808FFEA
-loc_70364:
-		dc.w	$0001
-		dc.l	$F40F0000,$0000FFF0
-loc_7036E:
-		dc.w	$0001
-		dc.l	$F40F0000,$0000FFF0
-loc_70378:
-		dc.w	$0001
-		dc.l	$F40F0000,$0000FFF0
-loc_70382:
-		dc.w	$0002
-		dc.l	$F0090000,$0000FFF8,$000d0006,$0003FFF0
-loc_70394:
-		dc.w	$0002
-		dc.l	$F0090000,$0000FFF8,$00090006,$0003FFF8
-loc_703A6:
-		dc.w	$0002
-		dc.l	$F0090000,$0000FFF8,$00090006,$0003FFF8
-loc_703B8:
-		dc.w	$0002
-		dc.l	$F0090000,$0000FFF8,$00090006,$0003FFF8
-loc_703CA:
-		dc.w	$0002
-		dc.l	$F0090000,$0000FFF0,$000d0006,$0003FFF0
-loc_703DC:
-		dc.w	$0002
-		dc.l	$F0090000,$0000FFF0,$000d0006,$0003FFF0
-loc_703EE:
-		dc.w	$0002
-		dc.l	$F8010000,$0000FFF0,$F00B0002,$0001FFF8
-loc_70400:
-		dc.w	$0002
-		dc.l	$F0090000,$0000FFF8,$000d0006,$0003FFF0
-loc_70412:
-		dc.w	$0001
-		dc.l	$F00F0000,$0000FFF0
-loc_7041C:
-		dc.w	$0002
-		dc.l	$F00F0000,$0000FFEC,$F0030010,$0008000C
-loc_7042E:
-		dc.w	$0002
-		dc.l	$F00F0000,$0000FFEC,$F0030010,$0008000C
-loc_70440:
-		dc.w	$0002
-		dc.l	$F8050000,$0000FFEC,$F00B0004,$0002FFFC
-loc_70452:
-		dc.w	$0002
-		dc.l	$F0070000,$0000FFF0,$F0070800,$08000000
-loc_70464:
-		dc.w	$0002
-		dc.l	$F8050800,$08000004,$F00B0804,$0802FFEC
-loc_70476:
-		dc.w	$0002
-		dc.l	$F0070000,$0000FFF0,$F8050008,$00040000
-loc_70488:
-		dc.w	$0002
-		dc.l	$F0070800,$08000000,$F8050808,$0804FFF0
-loc_7049A:
-		dc.w	$0002
-		dc.l	$F8050000,$0000FFEC,$F00B0004,$0002FFFC
-loc_704AC:
-		dc.w	$0001
-		dc.l	$F00F0000,$0000FFF0
-loc_704B6:
-		dc.w	$0001
-		dc.l	$F00B0000,$0000FFF1
-loc_704C0:
-		dc.w	$0002
-		dc.l	$E4050000,$0000FFF8,$F40B0004,$0002FFF1
-loc_704d2:
-		dc.w	$0001
-		dc.l	$F20B0000,$0000FFF2
-loc_704DC:
-		dc.w	$0001
-		dc.l	$F40B0000,$0000FFF0
-loc_704E6:
-		dc.w	$0001
-		dc.l	$F30B0000,$0000FFF2
-loc_704F0:
-		dc.w	$0001
-		dc.l	$F20B0000,$0000FFF2
-loc_704FA:
-		dc.w	$0001
-		dc.l	$F20B0000,$0000FFF2
-loc_70504:
-		dc.w	$0001
-		dc.l	$F00B0000,$0000FFF1
-loc_7050E:
-		dc.w	$0001
-		dc.l	$Ed0B0000,$0000FFF0
-loc_70518:
-		dc.w	$0001
-		dc.l	$EC0B0000,$0000FFF1
-loc_70522:
-		dc.w	$0002
-		dc.l	$F4090000,$0000FFF3,$04050006,$0003FFF3
-loc_70534:
-		dc.w	$0002
-		dc.l	$F2070000,$0000FFF0,$EC030008,$00040000
-loc_70546:
-		dc.w	$0001
-		dc.l	$F8090000,$0000FFE0
-loc_70550:
-		dc.w	$0001
-		dc.l	$F8090000,$0000FFE0
-loc_7055A:
-		dc.w	$0001
-		dc.l	$F8090000,$0000FFE0
-loc_70564:
-		dc.w	$0001
-		dc.l	$F8090000,$0000FFE0
-Tails_Dyn_Script: ; loc_7056E:
-		dc.w	loc_70678-Tails_Dyn_Script
-		dc.w	loc_7067A-Tails_Dyn_Script
-		dc.w	loc_70680-Tails_Dyn_Script
-		dc.w	loc_70686-Tails_Dyn_Script
-		dc.w	loc_7068C-Tails_Dyn_Script
-		dc.w	loc_70692-Tails_Dyn_Script
-		dc.w	loc_70696-Tails_Dyn_Script
-		dc.w	loc_7069A-Tails_Dyn_Script
-		dc.w	loc_706A0-Tails_Dyn_Script
-		dc.w	loc_706A6-Tails_Dyn_Script
-		dc.w	loc_706AA-Tails_Dyn_Script
-		dc.w	loc_706AE-Tails_Dyn_Script
-		dc.w	loc_706B2-Tails_Dyn_Script
-		dc.w	loc_706B6-Tails_Dyn_Script
-		dc.w	loc_706BA-Tails_Dyn_Script
-		dc.w	loc_706C2-Tails_Dyn_Script
-		dc.w	loc_706CA-Tails_Dyn_Script
-		dc.w	loc_706d2-Tails_Dyn_Script
-		dc.w	loc_706DA-Tails_Dyn_Script
-		dc.w	loc_706E2-Tails_Dyn_Script
-		dc.w	loc_706EA-Tails_Dyn_Script
-		dc.w	loc_706F2-Tails_Dyn_Script
-		dc.w	loc_706FA-Tails_Dyn_Script
-		dc.w	loc_70702-Tails_Dyn_Script
-		dc.w	loc_7070A-Tails_Dyn_Script
-		dc.w	loc_70712-Tails_Dyn_Script
-		dc.w	loc_7071A-Tails_Dyn_Script
-		dc.w	loc_70722-Tails_Dyn_Script
-		dc.w	loc_7072A-Tails_Dyn_Script
-		dc.w	loc_70732-Tails_Dyn_Script
-		dc.w	loc_7073A-Tails_Dyn_Script
-		dc.w	loc_70742-Tails_Dyn_Script
-		dc.w	loc_7074A-Tails_Dyn_Script
-		dc.w	loc_70752-Tails_Dyn_Script
-		dc.w	loc_7075A-Tails_Dyn_Script
-		dc.w	loc_70762-Tails_Dyn_Script
-		dc.w	loc_7076A-Tails_Dyn_Script
-		dc.w	loc_70772-Tails_Dyn_Script
-		dc.w	loc_7077A-Tails_Dyn_Script
-		dc.w	loc_70780-Tails_Dyn_Script
-		dc.w	loc_70788-Tails_Dyn_Script
-		dc.w	loc_7078E-Tails_Dyn_Script
-		dc.w	loc_70796-Tails_Dyn_Script
-		dc.w	loc_7079C-Tails_Dyn_Script
-		dc.w	loc_707A4-Tails_Dyn_Script
-		dc.w	loc_707AA-Tails_Dyn_Script
-		dc.w	loc_707B2-Tails_Dyn_Script
-		dc.w	loc_707B8-Tails_Dyn_Script
-		dc.w	loc_707BE-Tails_Dyn_Script
-		dc.w	loc_707B8-Tails_Dyn_Script
-		dc.w	loc_707C4-Tails_Dyn_Script
-		dc.w	loc_707CA-Tails_Dyn_Script
-		dc.w	loc_707d0-Tails_Dyn_Script
-		dc.w	loc_707D8-Tails_Dyn_Script
-		dc.w	loc_707E0-Tails_Dyn_Script
-		dc.w	loc_707E8-Tails_Dyn_Script
-		dc.w	loc_707F0-Tails_Dyn_Script
-		dc.w	loc_707F8-Tails_Dyn_Script
-		dc.w	loc_70800-Tails_Dyn_Script
-		dc.w	loc_70808-Tails_Dyn_Script
-		dc.w	loc_70810-Tails_Dyn_Script
-		dc.w	loc_70808-Tails_Dyn_Script
-		dc.w	loc_70818-Tails_Dyn_Script
-		dc.w	loc_70820-Tails_Dyn_Script
-		dc.w	loc_70828-Tails_Dyn_Script
-		dc.w	loc_70830-Tails_Dyn_Script
-		dc.w	loc_70838-Tails_Dyn_Script
-		dc.w	loc_70840-Tails_Dyn_Script
-		dc.w	loc_70848-Tails_Dyn_Script
-		dc.w	loc_70850-Tails_Dyn_Script
-		dc.w	loc_70858-Tails_Dyn_Script
-		dc.w	loc_7085C-Tails_Dyn_Script
-		dc.w	loc_70860-Tails_Dyn_Script
-		dc.w	loc_70864-Tails_Dyn_Script
-		dc.w	loc_70868-Tails_Dyn_Script
-		dc.w	loc_7086C-Tails_Dyn_Script
-		dc.w	loc_70870-Tails_Dyn_Script
-		dc.w	loc_70874-Tails_Dyn_Script
-		dc.w	loc_70878-Tails_Dyn_Script
-		dc.w	loc_7087C-Tails_Dyn_Script
-		dc.w	loc_70880-Tails_Dyn_Script
-		dc.w	loc_70884-Tails_Dyn_Script
-		dc.w	loc_70888-Tails_Dyn_Script
-		dc.w	loc_7088C-Tails_Dyn_Script
-		dc.w	loc_70890-Tails_Dyn_Script
-		dc.w	loc_70894-Tails_Dyn_Script
-		dc.w	loc_70898-Tails_Dyn_Script
-		dc.w	loc_7089C-Tails_Dyn_Script
-		dc.w	loc_708A0-Tails_Dyn_Script
-		dc.w	loc_708A4-Tails_Dyn_Script
-		dc.w	loc_708AA-Tails_Dyn_Script
-		dc.w	loc_708B0-Tails_Dyn_Script
-		dc.w	loc_708B4-Tails_Dyn_Script
-		dc.w	loc_708B8-Tails_Dyn_Script
-		dc.w	loc_708BC-Tails_Dyn_Script
-		dc.w	loc_708BC-Tails_Dyn_Script
-		dc.w	loc_708C2-Tails_Dyn_Script
-		dc.w	loc_708C6-Tails_Dyn_Script
-		dc.w	loc_708CA-Tails_Dyn_Script
-		dc.w	loc_708CE-Tails_Dyn_Script
-		dc.w	loc_708d4-Tails_Dyn_Script
-		dc.w	loc_708DA-Tails_Dyn_Script
-		dc.w	loc_708E0-Tails_Dyn_Script
-		dc.w	loc_708E6-Tails_Dyn_Script
-		dc.w	loc_708EC-Tails_Dyn_Script
-		dc.w	loc_708F2-Tails_Dyn_Script
-		dc.w	loc_708F8-Tails_Dyn_Script
-		dc.w	loc_708FE-Tails_Dyn_Script
-		dc.w	loc_70902-Tails_Dyn_Script
-		dc.w	loc_70908-Tails_Dyn_Script
-		dc.w	loc_7090E-Tails_Dyn_Script
-		dc.w	loc_70914-Tails_Dyn_Script
-		dc.w	loc_7090E-Tails_Dyn_Script
-		dc.w	loc_7091A-Tails_Dyn_Script
-		dc.w	loc_7091A-Tails_Dyn_Script
-		dc.w	loc_70920-Tails_Dyn_Script
-		dc.w	loc_70926-Tails_Dyn_Script
-		dc.w	loc_7092A-Tails_Dyn_Script
-		dc.w	loc_7092E-Tails_Dyn_Script
-		dc.w	loc_70934-Tails_Dyn_Script
-		dc.w	loc_70938-Tails_Dyn_Script
-		dc.w	loc_7093C-Tails_Dyn_Script
-		dc.w	loc_70940-Tails_Dyn_Script
-		dc.w	loc_70944-Tails_Dyn_Script
-		dc.w	loc_70948-Tails_Dyn_Script
-		dc.w	loc_7094C-Tails_Dyn_Script
-		dc.w	loc_70950-Tails_Dyn_Script
-		dc.w	loc_70954-Tails_Dyn_Script
-		dc.w	loc_7095A-Tails_Dyn_Script
-		dc.w	loc_70864-Tails_Dyn_Script
-		dc.w	loc_70868-Tails_Dyn_Script
-		dc.w	loc_7086C-Tails_Dyn_Script
-		dc.w	loc_70870-Tails_Dyn_Script
-loc_70678:
-		dc.w	$0000
-loc_7067A:
-		dc.w	$0002
-		dc.w	$5000,$5006
-loc_70680:
-		dc.w	$0002
-		dc.w	$500C,$5006
-loc_70686:
-		dc.w	$0002
-		dc.w	$5012,$5006
-loc_7068C:
-		dc.w	$0002
-		dc.w	$5018,$5006
-loc_70692:
-		dc.w	$0001
-		dc.w	$B01E
-loc_70696:
-		dc.w	$0001
-		dc.w	$B02A
-loc_7069A:
-		dc.w	$0002
-		dc.w	$5036,$503C
-loc_706A0:
-		dc.w	$0002
-		dc.w	$5036,$5042
-loc_706A6:
-		dc.w	$0001
-		dc.w	$7048
-loc_706AA:
-		dc.w	$0001
-		dc.w	$B050
-loc_706AE:
-		dc.w	$0001
-		dc.w	$B05C
-loc_706B2:
-		dc.w	$0001
-		dc.w	$5068
-loc_706B6:
-		dc.w	$0001
-		dc.w	$B06E
-loc_706BA:
-		dc.w	$0003
-		dc.w	$507A,$7080,$50CA
-loc_706C2:
-		dc.w	$0003
-		dc.w	$5088,$708E,$50d0
-loc_706CA:
-		dc.w	$0003
-		dc.w	$5096,$509C,$50d6
-loc_706d2:
-		dc.w	$0003
-		dc.w	$50A2,$50A8,$50DC
-loc_706DA:
-		dc.w	$0003
-		dc.w	$507A,$70AE,$50CA
-loc_706E2:
-		dc.w	$0003
-		dc.w	$5088,$70B6,$50d0
-loc_706EA:
-		dc.w	$0003
-		dc.w	$5096,$50BE,$50d6
-loc_706F2:
-		dc.w	$0003
-		dc.w	$50A2,$50C4,$50DC
-loc_706FA:
-		dc.w	$0003
-		dc.w	$10E2,$30E4,$B0E8
-loc_70702:
-		dc.w	$0003
-		dc.w	$30F4,$B0F8,$3104
-loc_7070A:
-		dc.w	$0003
-		dc.w	$3108,$310C,$B110
-loc_70712:
-		dc.w	$0003
-		dc.w	$111C,$F11E,$112E
-loc_7071A:
-		dc.w	$0003
-		dc.w	$10E2,$30E4,$B130
-loc_70722:
-		dc.w	$0003
-		dc.w	$30F4,$B13C,$3148
-loc_7072A:
-		dc.w	$0003
-		dc.w	$3108,$310C,$B14C
-loc_70732:
-		dc.w	$0003
-		dc.w	$111C,$F158,$1168
-loc_7073A:
-		dc.w	$0003
-		dc.w	$716A,$7172,$71CA
-loc_70742:
-		dc.w	$0003
-		dc.w	$717A,$7182,$71d2
-loc_7074A:
-		dc.w	$0003
-		dc.w	$718A,$7192,$71DA
-loc_70752:
-		dc.w	$0003
-		dc.w	$719A,$71A2,$71E2
-loc_7075A:
-		dc.w	$0003
-		dc.w	$716A,$71AA,$71CA
-loc_70762:
-		dc.w	$0003
-		dc.w	$717A,$71B2,$71d2
-loc_7076A:
-		dc.w	$0003
-		dc.w	$718A,$71BA,$71DA
-loc_70772:
-		dc.w	$0003
-		dc.w	$719A,$71C2,$71E2
-loc_7077A:
-		dc.w	$0002
-		dc.w	$11EA,$F1EC
-loc_70780:
-		dc.w	$0003
-		dc.w	$31FC,$1200,$F202
-loc_70788:
-		dc.w	$0002
-		dc.w	$1212,$F214
-loc_7078E:
-		dc.w	$0003
-		dc.w	$1224,$1226,$F228
-loc_70796:
-		dc.w	$0002
-		dc.w	$11EA,$F238
-loc_7079C:
-		dc.w	$0003
-		dc.w	$1248,$1200,$F24A
-loc_707A4:
-		dc.w	$0002
-		dc.w	$1212,$F25A
-loc_707AA:
-		dc.w	$0003
-		dc.w	$126A,$1224,$F26C
-loc_707B2:
-		dc.w	$0002
-		dc.w	$F27C,$729C
-loc_707B8:
-		dc.w	$0002
-		dc.w	$F28C,$32A4
-loc_707BE:
-		dc.w	$0002
-		dc.w	$F27C,$32A8
-loc_707C4:
-		dc.w	$0002
-		dc.w	$F27C,$72AC
-loc_707CA:
-		dc.w	$0002
-		dc.w	$F28C,$72AC
-loc_707d0:
-		dc.w	$0003
-		dc.w	$12B4,$B2B6,$B2d2
-loc_707D8:
-		dc.w	$0003
-		dc.w	$32C2,$B2C6,$32DE
-loc_707E0:
-		dc.w	$0003
-		dc.w	$12B4,$B2B6,$32E2
-loc_707E8:
-		dc.w	$0003
-		dc.w	$32C2,$B2C6,$32E6
-loc_707F0:
-		dc.w	$0003
-		dc.w	$12B4,$B2B6,$B2EA
-loc_707F8:
-		dc.w	$0003
-		dc.w	$32C2,$B2C6,$B2EA
-loc_70800:
-		dc.w	$0003
-		dc.w	$52F6,$72FC,$7312
-loc_70808:
-		dc.w	$0003
-		dc.w	$5304,$730A,$331E
-loc_70810:
-		dc.w	$0003
-		dc.w	$52F6,$72FC,$331A
-loc_70818:
-		dc.w	$0003
-		dc.w	$52F6,$72FC,$7322
-loc_70820:
-		dc.w	$0003
-		dc.w	$5304,$730A,$7322
-loc_70828:
-		dc.w	$0003
-		dc.w	$B32A,$3336,$B2d2
-loc_70830:
-		dc.w	$0003
-		dc.w	$B33A,$3346,$32DE
-loc_70838:
-		dc.w	$0003
-		dc.w	$B32A,$3336,$32E2
-loc_70840:
-		dc.w	$0003
-		dc.w	$B33A,$3346,$32E6
-loc_70848:
-		dc.w	$0003
-		dc.w	$B32A,$3336,$B2EA
-loc_70850:
-		dc.w	$0003
-		dc.w	$B33A,$3346,$B2EA
-loc_70858:
-		dc.w	$0001
-		dc.w	$F34A
-loc_7085C:
-		dc.w	$0001
-		dc.w	$F35A
-loc_70860:
-		dc.w	$0001
-		dc.w	$F36A
-loc_70864:
-		dc.w	$0001
-		dc.w	$50CA
-loc_70868:
-		dc.w	$0001
-		dc.w	$50d0
-loc_7086C:
-		dc.w	$0001
-		dc.w	$50d6
-loc_70870:
-		dc.w	$0001
-		dc.w	$50DC
+Tails_Mappings:
+Map_6c0f: mappingsTable
+	mappingsTableEntry.w	Map_6c0f_0
+	mappingsTableEntry.w	Map_6c0f_1
+	mappingsTableEntry.w	Map_6c0f_2
+	mappingsTableEntry.w	Map_6c0f_3
+	mappingsTableEntry.w	Map_6c0f_4
+	mappingsTableEntry.w	Map_6c0f_5
+	mappingsTableEntry.w	Map_6c0f_6
+	mappingsTableEntry.w	Map_6c0f_7
+	mappingsTableEntry.w	Map_6c0f_8
+	mappingsTableEntry.w	Map_6c0f_9
+	mappingsTableEntry.w	Map_6c0f_10
+	mappingsTableEntry.w	Map_6c0f_11
+	mappingsTableEntry.w	Map_6c0f_12
+	mappingsTableEntry.w	Map_6c0f_13
+	mappingsTableEntry.w	Map_6c0f_14
+	mappingsTableEntry.w	Map_6c0f_15
+	mappingsTableEntry.w	Map_6c0f_16
+	mappingsTableEntry.w	Map_6c0f_17
+	mappingsTableEntry.w	Map_6c0f_18
+	mappingsTableEntry.w	Map_6c0f_19
+	mappingsTableEntry.w	Map_6c0f_20
+	mappingsTableEntry.w	Map_6c0f_21
+	mappingsTableEntry.w	Map_6c0f_22
+	mappingsTableEntry.w	Map_6c0f_23
+	mappingsTableEntry.w	Map_6c0f_24
+	mappingsTableEntry.w	Map_6c0f_25
+	mappingsTableEntry.w	Map_6c0f_26
+	mappingsTableEntry.w	Map_6c0f_27
+	mappingsTableEntry.w	Map_6c0f_28
+	mappingsTableEntry.w	Map_6c0f_29
+	mappingsTableEntry.w	Map_6c0f_30
+	mappingsTableEntry.w	Map_6c0f_31
+	mappingsTableEntry.w	Map_6c0f_32
+	mappingsTableEntry.w	Map_6c0f_33
+	mappingsTableEntry.w	Map_6c0f_34
+	mappingsTableEntry.w	Map_6c0f_35
+	mappingsTableEntry.w	Map_6c0f_36
+	mappingsTableEntry.w	Map_6c0f_37
+	mappingsTableEntry.w	Map_6c0f_38
+	mappingsTableEntry.w	Map_6c0f_39
+	mappingsTableEntry.w	Map_6c0f_40
+	mappingsTableEntry.w	Map_6c0f_41
+	mappingsTableEntry.w	Map_6c0f_42
+	mappingsTableEntry.w	Map_6c0f_43
+	mappingsTableEntry.w	Map_6c0f_44
+	mappingsTableEntry.w	Map_6c0f_45
+	mappingsTableEntry.w	Map_6c0f_46
+	mappingsTableEntry.w	Map_6c0f_47
+	mappingsTableEntry.w	Map_6c0f_48
+	mappingsTableEntry.w	Map_6c0f_49
+	mappingsTableEntry.w	Map_6c0f_50
+	mappingsTableEntry.w	Map_6c0f_51
+	mappingsTableEntry.w	Map_6c0f_52
+	mappingsTableEntry.w	Map_6c0f_53
+	mappingsTableEntry.w	Map_6c0f_54
+	mappingsTableEntry.w	Map_6c0f_55
+	mappingsTableEntry.w	Map_6c0f_56
+	mappingsTableEntry.w	Map_6c0f_57
+	mappingsTableEntry.w	Map_6c0f_58
+	mappingsTableEntry.w	Map_6c0f_59
+	mappingsTableEntry.w	Map_6c0f_60
+	mappingsTableEntry.w	Map_6c0f_61
+	mappingsTableEntry.w	Map_6c0f_62
+	mappingsTableEntry.w	Map_6c0f_63
+	mappingsTableEntry.w	Map_6c0f_64
+	mappingsTableEntry.w	Map_6c0f_65
+	mappingsTableEntry.w	Map_6c0f_66
+	mappingsTableEntry.w	Map_6c0f_67
+	mappingsTableEntry.w	Map_6c0f_68
+	mappingsTableEntry.w	Map_6c0f_69
+	mappingsTableEntry.w	Map_6c0f_70
+	mappingsTableEntry.w	Map_6c0f_71
+	mappingsTableEntry.w	Map_6c0f_72
+	mappingsTableEntry.w	Map_6c0f_73
+	mappingsTableEntry.w	Map_6c0f_74
+	mappingsTableEntry.w	Map_6c0f_75
+	mappingsTableEntry.w	Map_6c0f_76
+	mappingsTableEntry.w	Map_6c0f_77
+	mappingsTableEntry.w	Map_6c0f_78
+	mappingsTableEntry.w	Map_6c0f_79
+	mappingsTableEntry.w	Map_6c0f_80
+	mappingsTableEntry.w	Map_6c0f_81
+	mappingsTableEntry.w	Map_6c0f_82
+	mappingsTableEntry.w	Map_6c0f_83
+	mappingsTableEntry.w	Map_6c0f_84
+	mappingsTableEntry.w	Map_6c0f_85
+	mappingsTableEntry.w	Map_6c0f_86
+	mappingsTableEntry.w	Map_6c0f_87
+	mappingsTableEntry.w	Map_6c0f_88
+	mappingsTableEntry.w	Map_6c0f_89
+	mappingsTableEntry.w	Map_6c0f_90
+	mappingsTableEntry.w	Map_6c0f_91
+	mappingsTableEntry.w	Map_6c0f_92
+	mappingsTableEntry.w	Map_6c0f_93
+	mappingsTableEntry.w	Map_6c0f_94
+	mappingsTableEntry.w	Map_6c0f_95
+	mappingsTableEntry.w	Map_6c0f_96
+	mappingsTableEntry.w	Map_6c0f_97
+	mappingsTableEntry.w	Map_6c0f_98
+	mappingsTableEntry.w	Map_6c0f_99
+	mappingsTableEntry.w	Map_6c0f_100
+	mappingsTableEntry.w	Map_6c0f_101
+	mappingsTableEntry.w	Map_6c0f_102
+	mappingsTableEntry.w	Map_6c0f_103
+	mappingsTableEntry.w	Map_6c0f_104
+	mappingsTableEntry.w	Map_6c0f_105
+	mappingsTableEntry.w	Map_6c0f_106
+	mappingsTableEntry.w	Map_6c0f_107
+	mappingsTableEntry.w	Map_6c0f_108
+	mappingsTableEntry.w	Map_6c0f_109
+	mappingsTableEntry.w	Map_6c0f_110
+	mappingsTableEntry.w	Map_6c0f_111
+	mappingsTableEntry.w	Map_6c0f_112
+	mappingsTableEntry.w	Map_6c0f_113
+	mappingsTableEntry.w	Map_6c0f_114
+	mappingsTableEntry.w	Map_6c0f_115
+	mappingsTableEntry.w	Map_6c0f_116
+	mappingsTableEntry.w	Map_6c0f_117
+	mappingsTableEntry.w	Map_6c0f_118
+	mappingsTableEntry.w	Map_6c0f_119
+	mappingsTableEntry.w	Map_6c0f_120
+	mappingsTableEntry.w	Map_6c0f_121
+	mappingsTableEntry.w	Map_6c0f_122
+	mappingsTableEntry.w	Map_6c0f_123
+	mappingsTableEntry.w	Map_6c0f_124
+	mappingsTableEntry.w	Map_6c0f_125
+	mappingsTableEntry.w	Map_6c0f_126
+	mappingsTableEntry.w	Map_6c0f_127
+	mappingsTableEntry.w	Map_6c0f_128
+	mappingsTableEntry.w	Map_6c0f_129
+	mappingsTableEntry.w	Map_6c0f_130
+	mappingsTableEntry.w	Map_6c0f_131
+	mappingsTableEntry.w	Map_6c0f_132
+	mappingsTableEntry.w	Map_6c0f_133
+	mappingsTableEntry.w	Map_6c0f_134
+
+Map_6c0f_0:	spriteHeader
+Map_6c0f_0_End
+
+Map_6c0f_1:	spriteHeader
+ spritePiece -$C, -$10, 3, 2, 0, 0, 0, 0, 0
+ spritePiece -$C, 0, 3, 2, 6, 0, 0, 0, 0
+Map_6c0f_1_End
+
+Map_6c0f_2:	spriteHeader
+ spritePiece -$C, -$10, 3, 2, 0, 0, 0, 0, 0
+ spritePiece -$C, 0, 3, 2, 6, 0, 0, 0, 0
+Map_6c0f_2_End
+
+Map_6c0f_3:	spriteHeader
+ spritePiece -$C, -$10, 3, 2, 0, 0, 0, 0, 0
+ spritePiece -$C, 0, 3, 2, 6, 0, 0, 0, 0
+Map_6c0f_3_End
+
+Map_6c0f_4:	spriteHeader
+ spritePiece -$C, -$10, 3, 2, 0, 0, 0, 0, 0
+ spritePiece -$C, 0, 3, 2, 6, 0, 0, 0, 0
+Map_6c0f_4_End
+
+Map_6c0f_5:	spriteHeader
+ spritePiece -$C, -$10, 3, 4, 0, 0, 0, 0, 0
+Map_6c0f_5_End
+
+Map_6c0f_6:	spriteHeader
+ spritePiece -$C, -$10, 3, 4, 0, 0, 0, 0, 0
+Map_6c0f_6_End
+
+Map_6c0f_7:	spriteHeader
+ spritePiece -$C, -$10, 3, 2, 0, 0, 0, 0, 0
+ spritePiece -$C, 0, 3, 2, 6, 0, 0, 0, 0
+Map_6c0f_7_End
+
+Map_6c0f_8:	spriteHeader
+ spritePiece -$C, -$10, 3, 2, 0, 0, 0, 0, 0
+ spritePiece -$C, 0, 3, 2, 6, 0, 0, 0, 0
+Map_6c0f_8_End
+
+Map_6c0f_9:	spriteHeader
+ spritePiece -$14, -$10, 2, 4, 0, 0, 0, 0, 0
+Map_6c0f_9_End
+
+Map_6c0f_10:	spriteHeader
+ spritePiece -$1C, -$10, 3, 4, 0, 0, 0, 0, 0
+Map_6c0f_10_End
+
+Map_6c0f_11:	spriteHeader
+ spritePiece -$1C, -$10, 3, 4, 0, 0, 0, 0, 0
+Map_6c0f_11_End
+
+Map_6c0f_12:	spriteHeader
+ spritePiece -$1C, 0, 3, 2, 0, 0, 0, 0, 0
+Map_6c0f_12_End
+
+Map_6c0f_13:	spriteHeader
+ spritePiece -$1C, -$10, 3, 4, 0, 0, 0, 0, 0
+Map_6c0f_13_End
+
+Map_6c0f_14:	spriteHeader
+ spritePiece -$10, -$14, 3, 2, 0, 0, 0, 0, 0
+ spritePiece -$10, -4, 4, 2, 6, 0, 0, 0, 0
+ spritePiece -$1E, -4, 3, 2, $E, 0, 0, 0, 0
+Map_6c0f_14_End
+
+Map_6c0f_15:	spriteHeader
+ spritePiece -$D, -$10, 3, 2, 0, 0, 0, 0, 0
+ spritePiece -$10, 0, 4, 2, 6, 0, 0, 0, 0
+ spritePiece -$1C, 0, 3, 2, $E, 0, 0, 0, 0
+Map_6c0f_15_End
+
+Map_6c0f_16:	spriteHeader
+ spritePiece -8, -$10, 3, 2, 0, 0, 0, 0, 0
+ spritePiece -$D, 0, 3, 2, 6, 0, 0, 0, 0
+ spritePiece -$1C, -3, 3, 2, $C, 0, 0, 0, 0
+Map_6c0f_16_End
+
+Map_6c0f_17:	spriteHeader
+ spritePiece -$E, -$10, 3, 2, 0, 0, 0, 0, 0
+ spritePiece -$E, 0, 3, 2, 6, 0, 0, 0, 0
+ spritePiece -$1A, -3, 3, 2, $C, 0, 0, 0, 0
+Map_6c0f_17_End
+
+Map_6c0f_18:	spriteHeader
+ spritePiece -$10, -$14, 3, 2, 0, 0, 0, 0, 0
+ spritePiece -$10, -4, 4, 2, 6, 0, 0, 0, 0
+ spritePiece -$1E, -4, 3, 2, $E, 0, 0, 0, 0
+Map_6c0f_18_End
+
+Map_6c0f_19:	spriteHeader
+ spritePiece -$D, -$10, 3, 2, 0, 0, 0, 0, 0
+ spritePiece -$10, 0, 4, 2, 6, 0, 0, 0, 0
+ spritePiece -$1C, 0, 3, 2, $E, 0, 0, 0, 0
+Map_6c0f_19_End
+
+Map_6c0f_20:	spriteHeader
+ spritePiece -8, -$10, 3, 2, 0, 0, 0, 0, 0
+ spritePiece -$F, 0, 3, 2, 6, 0, 0, 0, 0
+ spritePiece -$1C, -3, 3, 2, $C, 0, 0, 0, 0
+Map_6c0f_20_End
+
+Map_6c0f_21:	spriteHeader
+ spritePiece -$E, -$10, 3, 2, 0, 0, 0, 0, 0
+ spritePiece -$E, 0, 3, 2, 6, 0, 0, 0, 0
+ spritePiece -$1A, -3, 3, 2, $C, 0, 0, 0, 0
+Map_6c0f_21_End
+
+Map_6c0f_22:	spriteHeader
+ spritePiece -$D, -$1D, 1, 2, 0, 0, 0, 0, 0
+ spritePiece -$14, -$D, 1, 4, 2, 0, 0, 0, 0
+ spritePiece -$C, -$D, 3, 4, 6, 0, 0, 0, 0
+Map_6c0f_22_End
+
+Map_6c0f_23:	spriteHeader
+ spritePiece -$A, -$19, 2, 2, 0, 0, 0, 0, 0
+ spritePiece -$12, -9, 3, 4, 4, 0, 0, 0, 0
+ spritePiece 6, -2, 2, 2, $10, 0, 0, 0, 0
+Map_6c0f_23_End
+
+Map_6c0f_24:	spriteHeader
+ spritePiece -8, -$1A, 2, 2, 0, 0, 0, 0, 0
+ spritePiece -$11, -$A, 1, 4, 4, 0, 0, 0, 0
+ spritePiece -9, -$A, 3, 4, 8, 0, 0, 0, 0
+Map_6c0f_24_End
+
+Map_6c0f_25:	spriteHeader
+ spritePiece -9, -$1D, 1, 2, 0, 0, 0, 0, 0
+ spritePiece -$14, -$D, 4, 4, 2, 0, 0, 0, 0
+ spritePiece $C, -5, 1, 2, $12, 0, 0, 0, 0
+Map_6c0f_25_End
+
+Map_6c0f_26:	spriteHeader
+ spritePiece -$D, -$1D, 1, 2, 0, 0, 0, 0, 0
+ spritePiece -$14, -$D, 1, 4, 2, 0, 0, 0, 0
+ spritePiece -$C, -$D, 3, 4, 6, 0, 0, 0, 0
+Map_6c0f_26_End
+
+Map_6c0f_27:	spriteHeader
+ spritePiece -$A, -$19, 2, 2, 0, 0, 0, 0, 0
+ spritePiece -$12, -9, 3, 4, 4, 0, 0, 0, 0
+ spritePiece 6, -1, 2, 2, $10, 0, 0, 0, 0
+Map_6c0f_27_End
+
+Map_6c0f_28:	spriteHeader
+ spritePiece -8, -$1A, 2, 2, 0, 0, 0, 0, 0
+ spritePiece -$11, -$A, 1, 4, 4, 0, 0, 0, 0
+ spritePiece -9, -$A, 3, 4, 8, 0, 0, 0, 0
+Map_6c0f_28_End
+
+Map_6c0f_29:	spriteHeader
+ spritePiece -9, -$1D, 1, 2, 0, 0, 0, 0, 0
+ spritePiece -$14, -$D, 4, 4, 2, 0, 0, 0, 0
+ spritePiece $C, 3, 1, 2, $12, 0, 0, 0, 0
+Map_6c0f_29_End
+
+Map_6c0f_30:	spriteHeader
+ spritePiece -$14, -$10, 2, 4, 0, 0, 0, 0, 0
+ spritePiece -4, -$10, 2, 4, 8, 0, 0, 0, 0
+ spritePiece -4, 6, 2, 4, $10, 0, 0, 0, 0
+Map_6c0f_30_End
+
+Map_6c0f_31:	spriteHeader
+ spritePiece -$10, -$10, 2, 4, 0, 0, 0, 0, 0
+ spritePiece 0, -$10, 2, 4, 8, 0, 0, 0, 0
+ spritePiece 0, 4, 2, 4, $10, 0, 0, 0, 0
+Map_6c0f_31_End
+
+Map_6c0f_32:	spriteHeader
+ spritePiece -$10, -$10, 2, 4, 0, 0, 0, 0, 0
+ spritePiece 0, -$10, 2, 4, 8, 0, 0, 0, 0
+ spritePiece -3, 4, 2, 4, $10, 0, 0, 0, 0
+Map_6c0f_32_End
+
+Map_6c0f_33:	spriteHeader
+ spritePiece -$10, -$10, 2, 4, 0, 0, 0, 0, 0
+ spritePiece 0, -$10, 2, 4, 8, 0, 0, 0, 0
+ spritePiece -3, 4, 2, 4, $10, 0, 0, 0, 0
+Map_6c0f_33_End
+
+Map_6c0f_34:	spriteHeader
+ spritePiece -$14, -$10, 2, 4, 0, 0, 0, 0, 0
+ spritePiece -4, -$10, 2, 4, 8, 0, 0, 0, 0
+ spritePiece -4, 6, 2, 4, $10, 0, 0, 0, 0
+Map_6c0f_34_End
+
+Map_6c0f_35:	spriteHeader
+ spritePiece -$10, -$10, 2, 4, 0, 0, 0, 0, 0
+ spritePiece 0, -$10, 2, 4, 8, 0, 0, 0, 0
+ spritePiece 0, 4, 2, 4, $10, 0, 0, 0, 0
+Map_6c0f_35_End
+
+Map_6c0f_36:	spriteHeader
+ spritePiece -$10, -$10, 2, 4, 0, 0, 0, 0, 0
+ spritePiece 0, -$10, 2, 4, 8, 0, 0, 0, 0
+ spritePiece -3, 4, 2, 4, $10, 0, 0, 0, 0
+Map_6c0f_36_End
+
+Map_6c0f_37:	spriteHeader
+ spritePiece -$10, -$10, 2, 4, 0, 0, 0, 0, 0
+ spritePiece 0, -$10, 2, 4, 8, 0, 0, 0, 0
+ spritePiece -3, 4, 2, 4, $10, 0, 0, 0, 0
+Map_6c0f_37_End
+
+Map_6c0f_38:	spriteHeader
+ spritePiece -$15, 4, 1, 2, 0, 0, 0, 0, 0
+ spritePiece -$D, -$C, 4, 4, 2, 0, 0, 0, 0
+Map_6c0f_38_End
+
+Map_6c0f_39:	spriteHeader
+ spritePiece -8, -$1E, 2, 2, 0, 0, 0, 0, 0
+ spritePiece -$10, -6, 1, 2, 4, 0, 0, 0, 0
+ spritePiece -8, -$E, 4, 4, 6, 0, 0, 0, 0
+Map_6c0f_39_End
+
+Map_6c0f_40:	spriteHeader
+ spritePiece -$14, -7, 1, 2, 0, 0, 0, 0, 0
+ spritePiece -$C, -$F, 4, 4, 2, 0, 0, 0, 0
+Map_6c0f_40_End
+
+Map_6c0f_41:	spriteHeader
+ spritePiece -$11, -4, 1, 2, 0, 0, 0, 0, 0
+ spritePiece -1, -$1B, 1, 2, 2, 0, 0, 0, 0
+ spritePiece -9, -$B, 4, 4, 4, 0, 0, 0, 0
+Map_6c0f_41_End
+
+Map_6c0f_42:	spriteHeader
+ spritePiece -$15, 4, 1, 2, 0, 0, 0, 0, 0
+ spritePiece -$D, -$C, 4, 4, 2, 0, 0, 0, 0
+Map_6c0f_42_End
+
+Map_6c0f_43:	spriteHeader
+ spritePiece 0, -$1E, 1, 2, 0, 0, 0, 0, 0
+ spritePiece -$10, -6, 1, 2, 2, 0, 0, 0, 0
+ spritePiece -8, -$E, 4, 4, 4, 0, 0, 0, 0
+Map_6c0f_43_End
+
+Map_6c0f_44:	spriteHeader
+ spritePiece -$14, -7, 1, 2, 0, 0, 0, 0, 0
+ spritePiece -$C, -$F, 4, 4, 2, 0, 0, 0, 0
+Map_6c0f_44_End
+
+Map_6c0f_45:	spriteHeader
+ spritePiece -1, -$1C, 1, 2, 0, 0, 0, 0, 0
+ spritePiece -$11, -4, 1, 2, 2, 0, 0, 0, 0
+ spritePiece -9, -$C, 4, 4, 4, 0, 0, 0, 0
+Map_6c0f_45_End
+
+Map_6c0f_46:	spriteHeader
+ spritePiece -$10, -$10, 4, 4, 0, 0, 0, 0, 0
+ spritePiece -$16, -$10, 2, 4, $10, 0, 0, 0, 0
+Map_6c0f_46_End
+
+Map_6c0f_47:	spriteHeader
+ spritePiece -$10, -$10, 4, 4, 0, 0, 0, 0, 0
+ spritePiece -$16, -8, 2, 2, $10, 0, 0, 0, 0
+Map_6c0f_47_End
+
+Map_6c0f_48:	spriteHeader
+ spritePiece -$10, -$10, 4, 4, 0, 0, 0, 0, 0
+ spritePiece -$16, -8, 2, 2, $10, 0, 0, 0, 0
+Map_6c0f_48_End
+
+Map_6c0f_49:	spriteHeader
+ spritePiece -$10, -$10, 4, 4, 0, 0, 0, 0, 0
+ spritePiece -$16, -8, 2, 2, $10, 0, 1, 0, 0
+Map_6c0f_49_End
+
+Map_6c0f_50:	spriteHeader
+ spritePiece -$10, -$10, 4, 4, 0, 0, 0, 0, 0
+ spritePiece -$16, -$10, 2, 4, $10, 0, 0, 0, 0
+Map_6c0f_50_End
+
+Map_6c0f_51:	spriteHeader
+ spritePiece -$10, -$10, 4, 4, 0, 0, 0, 0, 0
+ spritePiece -$16, -$10, 2, 4, $10, 1, 1, 0, 0
+Map_6c0f_51_End
+
+Map_6c0f_52:	spriteHeader
+ spritePiece -6, -$1C, 1, 2, 0, 0, 0, 0, 0
+ spritePiece -$10, -$C, 3, 4, 2, 0, 0, 0, 0
+ spritePiece -$18, -2, 3, 4, $E, 0, 0, 0, 0
+Map_6c0f_52_End
+
+Map_6c0f_53:	spriteHeader
+ spritePiece -8, -$1C, 2, 2, 0, 0, 0, 0, 0
+ spritePiece -$10, -$C, 3, 4, 4, 0, 0, 0, 0
+ spritePiece -$11, 4, 2, 2, $10, 0, 0, 0, 0
+Map_6c0f_53_End
+
+Map_6c0f_54:	spriteHeader
+ spritePiece -6, -$1C, 1, 2, 0, 0, 0, 0, 0
+ spritePiece -$10, -$C, 3, 4, 2, 0, 0, 0, 0
+ spritePiece -$11, 4, 2, 2, $E, 0, 0, 0, 0
+Map_6c0f_54_End
+
+Map_6c0f_55:	spriteHeader
+ spritePiece -8, -$1C, 2, 2, 0, 0, 0, 0, 0
+ spritePiece -$10, -$C, 3, 4, 4, 0, 0, 0, 0
+ spritePiece -$11, 4, 2, 2, $10, 0, 0, 0, 0
+Map_6c0f_55_End
+
+Map_6c0f_56:	spriteHeader
+ spritePiece -6, -$1C, 1, 2, 0, 0, 0, 0, 0
+ spritePiece -$10, -$C, 3, 4, 2, 0, 0, 0, 0
+ spritePiece -$16, -4, 3, 4, $E, 0, 0, 0, 0
+Map_6c0f_56_End
+
+Map_6c0f_57:	spriteHeader
+ spritePiece -8, -$1C, 2, 2, 0, 0, 0, 0, 0
+ spritePiece -$10, -$C, 3, 4, 4, 0, 0, 0, 0
+ spritePiece -$E, -$17, 3, 4, $10, 1, 1, 0, 0
+Map_6c0f_57_End
+
+Map_6c0f_58:	spriteHeader
+ spritePiece -$10, -$10, 3, 2, 0, 0, 0, 0, 0
+ spritePiece -$10, 0, 4, 2, 6, 0, 0, 0, 0
+ spritePiece -$10, 6, 4, 2, $E, 0, 0, 0, 0
+Map_6c0f_58_End
+
+Map_6c0f_59:	spriteHeader
+ spritePiece -$10, -$10, 3, 2, 0, 0, 0, 0, 0
+ spritePiece -$10, 0, 4, 2, 6, 0, 0, 0, 0
+ spritePiece -8, 6, 2, 2, $E, 0, 0, 0, 0
+Map_6c0f_59_End
+
+Map_6c0f_60:	spriteHeader
+ spritePiece -$10, -$10, 3, 2, 0, 0, 0, 0, 0
+ spritePiece -$10, 0, 4, 2, 6, 0, 0, 0, 0
+ spritePiece -8, 6, 2, 2, $E, 0, 0, 0, 0
+Map_6c0f_60_End
+
+Map_6c0f_61:	spriteHeader
+ spritePiece -$10, -$10, 3, 2, 0, 0, 0, 0, 0
+ spritePiece -$10, 0, 4, 2, 6, 0, 0, 0, 0
+ spritePiece -8, 6, 2, 2, $E, 0, 0, 0, 0
+Map_6c0f_61_End
+
+Map_6c0f_62:	spriteHeader
+ spritePiece -$10, -$10, 3, 2, 0, 0, 0, 0, 0
+ spritePiece -$10, 0, 4, 2, 6, 0, 0, 0, 0
+ spritePiece -$10, 6, 4, 2, $E, 0, 0, 0, 0
+Map_6c0f_62_End
+
+Map_6c0f_63:	spriteHeader
+ spritePiece -$10, -$10, 3, 2, 0, 0, 0, 0, 0
+ spritePiece -$10, 0, 4, 2, 6, 0, 0, 0, 0
+ spritePiece -$10, 6, 4, 2, $E, 0, 0, 0, 0
+Map_6c0f_63_End
+
+Map_6c0f_64:	spriteHeader
+ spritePiece -$14, -8, 3, 4, 0, 0, 0, 0, 0
+ spritePiece 4, -8, 2, 2, $C, 0, 0, 0, 0
+ spritePiece 0, -2, 3, 4, $10, 1, 0, 0, 0
+Map_6c0f_64_End
+
+Map_6c0f_65:	spriteHeader
+ spritePiece -$14, -8, 3, 4, 0, 0, 0, 0, 0
+ spritePiece 4, -8, 2, 2, $C, 0, 0, 0, 0
+ spritePiece 4, 1, 2, 2, $10, 1, 0, 0, 0
+Map_6c0f_65_End
+
+Map_6c0f_66:	spriteHeader
+ spritePiece -$14, -8, 3, 4, 0, 0, 0, 0, 0
+ spritePiece 4, -8, 2, 2, $C, 0, 0, 0, 0
+ spritePiece 4, 1, 2, 2, $10, 1, 0, 0, 0
+Map_6c0f_66_End
+
+Map_6c0f_67:	spriteHeader
+ spritePiece -$14, -8, 3, 4, 0, 0, 0, 0, 0
+ spritePiece 4, -8, 2, 2, $C, 0, 0, 0, 0
+ spritePiece 4, 1, 2, 2, $10, 1, 0, 0, 0
+Map_6c0f_67_End
+
+Map_6c0f_68:	spriteHeader
+ spritePiece -$14, -8, 3, 4, 0, 0, 0, 0, 0
+ spritePiece 4, -8, 2, 2, $C, 0, 0, 0, 0
+ spritePiece -2, -4, 3, 4, $10, 1, 0, 0, 0
+Map_6c0f_68_End
+
+Map_6c0f_69:	spriteHeader
+ spritePiece -$14, -8, 3, 4, 0, 0, 0, 0, 0
+ spritePiece 4, -8, 2, 2, $C, 0, 0, 0, 0
+ spritePiece 6, -4, 3, 4, $10, 0, 1, 0, 0
+Map_6c0f_69_End
+
+Map_6c0f_70:	spriteHeader
+ spritePiece -$10, -$10, 4, 4, 0, 0, 0, 0, 0
+Map_6c0f_70_End
+
+Map_6c0f_71:	spriteHeader
+ spritePiece -$10, -$10, 4, 4, 0, 0, 0, 0, 0
+Map_6c0f_71_End
+
+Map_6c0f_72:	spriteHeader
+ spritePiece -$10, -$10, 4, 4, 0, 0, 0, 0, 0
+Map_6c0f_72_End
+
+Map_6c0f_73:	spriteHeader
+ spritePiece -$24, -8, 3, 2, 0, 0, 0, 0, 0
+Map_6c0f_73_End
+
+Map_6c0f_74:	spriteHeader
+ spritePiece -$24, -8, 3, 2, 0, 0, 0, 0, 0
+Map_6c0f_74_End
+
+Map_6c0f_75:	spriteHeader
+ spritePiece -$24, -8, 3, 2, 0, 0, 0, 0, 0
+Map_6c0f_75_End
+
+Map_6c0f_76:	spriteHeader
+ spritePiece -$24, -8, 3, 2, 0, 0, 0, 0, 0
+Map_6c0f_76_End
+
+Map_6c0f_77:	spriteHeader
+ spritePiece -$1F, 7, 3, 2, 0, 0, 0, 0, 0
+Map_6c0f_77_End
+
+Map_6c0f_78:	spriteHeader
+ spritePiece -$1F, 7, 3, 2, 0, 0, 0, 0, 0
+Map_6c0f_78_End
+
+Map_6c0f_79:	spriteHeader
+ spritePiece -$1F, 7, 3, 2, 0, 0, 0, 0, 0
+Map_6c0f_79_End
+
+Map_6c0f_80:	spriteHeader
+ spritePiece -$1F, 7, 3, 2, 0, 0, 0, 0, 0
+Map_6c0f_80_End
+
+Map_6c0f_81:	spriteHeader
+ spritePiece -8, $C, 2, 4, 0, 0, 0, 0, 0
+Map_6c0f_81_End
+
+Map_6c0f_82:	spriteHeader
+ spritePiece -8, $C, 2, 4, 0, 0, 0, 0, 0
+Map_6c0f_82_End
+
+Map_6c0f_83:	spriteHeader
+ spritePiece -8, $C, 2, 4, 0, 0, 0, 0, 0
+Map_6c0f_83_End
+
+Map_6c0f_84:	spriteHeader
+ spritePiece -8, $C, 2, 4, 0, 0, 0, 0, 0
+Map_6c0f_84_End
+
+Map_6c0f_85:	spriteHeader
+ spritePiece 7, 7, 2, 4, 0, 0, 0, 0, 0
+Map_6c0f_85_End
+
+Map_6c0f_86:	spriteHeader
+ spritePiece 7, 7, 2, 4, 0, 0, 0, 0, 0
+Map_6c0f_86_End
+
+Map_6c0f_87:	spriteHeader
+ spritePiece 7, 7, 2, 4, 0, 0, 0, 0, 0
+Map_6c0f_87_End
+
+Map_6c0f_88:	spriteHeader
+ spritePiece 7, 7, 2, 4, 0, 0, 0, 0, 0
+Map_6c0f_88_End
+
+Map_6c0f_89:	spriteHeader
+ spritePiece -8, -$18, 2, 2, 0, 0, 0, 0, 0
+ spritePiece -$10, -8, 3, 4, 4, 0, 0, 0, 0
+Map_6c0f_89_End
+
+Map_6c0f_90:	spriteHeader
+ spritePiece -8, -$18, 2, 2, 0, 0, 0, 0, 0
+ spritePiece -$10, -8, 3, 4, 4, 0, 0, 0, 0
+Map_6c0f_90_End
+
+Map_6c0f_91:	spriteHeader
+ spritePiece -7, -$10, 3, 4, 0, 0, 0, 0, 0
+Map_6c0f_91_End
+
+Map_6c0f_92:	spriteHeader
+ spritePiece -$10, -$10, 4, 4, 0, 0, 0, 0, 0
+Map_6c0f_92_End
+
+Map_6c0f_93:	spriteHeader
+ spritePiece -$10, -$10, 4, 4, 0, 0, 0, 0, 0
+Map_6c0f_93_End
+
+Map_6c0f_94:	spriteHeader
+ spritePiece -$10, -$10, 4, 4, 0, 0, 0, 0, 0
+ spritePiece -$16, -$1C, 4, 2, $10, 0, 0, 0, 0
+Map_6c0f_94_End
+
+Map_6c0f_95:	spriteHeader
+ spritePiece -$10, -$10, 4, 4, 0, 0, 0, 0, 0
+ spritePiece -$16, -$1C, 4, 2, $10, 1, 0, 0, 0
+Map_6c0f_95_End
+
+Map_6c0f_96:	spriteHeader
+ spritePiece -$10, -$C, 4, 4, 0, 0, 0, 0, 0
+Map_6c0f_96_End
+
+Map_6c0f_97:	spriteHeader
+ spritePiece -$10, -$C, 4, 4, 0, 0, 0, 0, 0
+Map_6c0f_97_End
+
+Map_6c0f_98:	spriteHeader
+ spritePiece -$10, -$C, 4, 4, 0, 0, 0, 0, 0
+Map_6c0f_98_End
+
+Map_6c0f_99:	spriteHeader
+ spritePiece -8, -$10, 3, 2, 0, 0, 0, 0, 0
+ spritePiece -$10, 0, 4, 2, 6, 0, 0, 0, 0
+Map_6c0f_99_End
+
+Map_6c0f_100:	spriteHeader
+ spritePiece -8, -$10, 3, 2, 0, 0, 0, 0, 0
+ spritePiece -8, 0, 3, 2, 6, 0, 0, 0, 0
+Map_6c0f_100_End
+
+Map_6c0f_101:	spriteHeader
+ spritePiece -8, -$10, 3, 2, 0, 0, 0, 0, 0
+ spritePiece -8, 0, 3, 2, 6, 0, 0, 0, 0
+Map_6c0f_101_End
+
+Map_6c0f_102:	spriteHeader
+ spritePiece -8, -$10, 3, 2, 0, 0, 0, 0, 0
+ spritePiece -8, 0, 3, 2, 6, 0, 0, 0, 0
+Map_6c0f_102_End
+
+Map_6c0f_103:	spriteHeader
+ spritePiece -$10, -$10, 3, 2, 0, 0, 0, 0, 0
+ spritePiece -$10, 0, 4, 2, 6, 0, 0, 0, 0
+Map_6c0f_103_End
+
+Map_6c0f_104:	spriteHeader
+ spritePiece -$10, -$10, 3, 2, 0, 0, 0, 0, 0
+ spritePiece -$10, 0, 4, 2, 6, 0, 0, 0, 0
+Map_6c0f_104_End
+
+Map_6c0f_105:	spriteHeader
+ spritePiece -$10, -8, 1, 2, 0, 0, 0, 0, 0
+ spritePiece -8, -$10, 3, 4, 2, 0, 0, 0, 0
+Map_6c0f_105_End
+
+Map_6c0f_106:	spriteHeader
+ spritePiece -8, -$10, 3, 2, 0, 0, 0, 0, 0
+ spritePiece -$10, 0, 4, 2, 6, 0, 0, 0, 0
+Map_6c0f_106_End
+
+Map_6c0f_107:	spriteHeader
+ spritePiece -$10, -$10, 4, 4, 0, 0, 0, 0, 0
+Map_6c0f_107_End
+
+Map_6c0f_108:	spriteHeader
+ spritePiece -$14, -$10, 4, 4, 0, 0, 0, 0, 0
+ spritePiece $C, -$10, 1, 4, $10, 0, 0, 0, 0
+Map_6c0f_108_End
+
+Map_6c0f_109:	spriteHeader
+ spritePiece -$14, -$10, 4, 4, 0, 0, 0, 0, 0
+ spritePiece $C, -$10, 1, 4, $10, 0, 0, 0, 0
+Map_6c0f_109_End
+
+Map_6c0f_110:	spriteHeader
+ spritePiece -$14, -8, 2, 2, 0, 0, 0, 0, 0
+ spritePiece -4, -$10, 3, 4, 4, 0, 0, 0, 0
+Map_6c0f_110_End
+
+Map_6c0f_111:	spriteHeader
+ spritePiece -$10, -$10, 2, 4, 0, 0, 0, 0, 0
+ spritePiece 0, -$10, 2, 4, 0, 1, 0, 0, 0
+Map_6c0f_111_End
+
+Map_6c0f_112:	spriteHeader
+ spritePiece 4, -8, 2, 2, 0, 1, 0, 0, 0
+ spritePiece -$14, -$10, 3, 4, 4, 1, 0, 0, 0
+Map_6c0f_112_End
+
+Map_6c0f_113:	spriteHeader
+ spritePiece -$10, -$10, 2, 4, 0, 0, 0, 0, 0
+ spritePiece 0, -8, 2, 2, 8, 0, 0, 0, 0
+Map_6c0f_113_End
+
+Map_6c0f_114:	spriteHeader
+ spritePiece 0, -$10, 2, 4, 0, 1, 0, 0, 0
+ spritePiece -$10, -8, 2, 2, 8, 1, 0, 0, 0
+Map_6c0f_114_End
+
+Map_6c0f_115:	spriteHeader
+ spritePiece -$14, -8, 2, 2, 0, 0, 0, 0, 0
+ spritePiece -4, -$10, 3, 4, 4, 0, 0, 0, 0
+Map_6c0f_115_End
+
+Map_6c0f_116:	spriteHeader
+ spritePiece -$10, -$10, 4, 4, 0, 0, 0, 0, 0
+Map_6c0f_116_End
+
+Map_6c0f_117:	spriteHeader
+ spritePiece -$F, -$10, 3, 4, 0, 0, 0, 0, 0
+Map_6c0f_117_End
+
+Map_6c0f_118:	spriteHeader
+ spritePiece -8, -$1C, 2, 2, 0, 0, 0, 0, 0
+ spritePiece -$F, -$C, 3, 4, 4, 0, 0, 0, 0
+Map_6c0f_118_End
+
+Map_6c0f_119:	spriteHeader
+ spritePiece -$E, -$E, 3, 4, 0, 0, 0, 0, 0
+Map_6c0f_119_End
+
+Map_6c0f_120:	spriteHeader
+ spritePiece -$10, -$C, 3, 4, 0, 0, 0, 0, 0
+Map_6c0f_120_End
+
+Map_6c0f_121:	spriteHeader
+ spritePiece -$E, -$D, 3, 4, 0, 0, 0, 0, 0
+Map_6c0f_121_End
+
+Map_6c0f_122:	spriteHeader
+ spritePiece -$E, -$E, 3, 4, 0, 0, 0, 0, 0
+Map_6c0f_122_End
+
+Map_6c0f_123:	spriteHeader
+ spritePiece -$E, -$E, 3, 4, 0, 0, 0, 0, 0
+Map_6c0f_123_End
+
+Map_6c0f_124:	spriteHeader
+ spritePiece -$F, -$10, 3, 4, 0, 0, 0, 0, 0
+Map_6c0f_124_End
+
+Map_6c0f_125:	spriteHeader
+ spritePiece -$10, -$13, 3, 4, 0, 0, 0, 0, 0
+Map_6c0f_125_End
+
+Map_6c0f_126:	spriteHeader
+ spritePiece -$F, -$14, 3, 4, 0, 0, 0, 0, 0
+Map_6c0f_126_End
+
+Map_6c0f_127:	spriteHeader
+ spritePiece -$D, -$C, 3, 2, 0, 0, 0, 0, 0
+ spritePiece -$D, 4, 2, 2, 6, 0, 0, 0, 0
+Map_6c0f_127_End
+
+Map_6c0f_128:	spriteHeader
+ spritePiece -$10, -$E, 2, 4, 0, 0, 0, 0, 0
+ spritePiece 0, -$14, 1, 4, 8, 0, 0, 0, 0
+Map_6c0f_128_End
+
+Map_6c0f_129:	spriteHeader
+ spritePiece -$20, -8, 3, 2, 0, 0, 0, 0, 0
+Map_6c0f_129_End
+
+Map_6c0f_130:	spriteHeader
+ spritePiece -$20, -8, 3, 2, 0, 0, 0, 0, 0
+Map_6c0f_130_End
+
+Map_6c0f_131:	spriteHeader
+ spritePiece -$20, -8, 3, 2, 0, 0, 0, 0, 0
+Map_6c0f_131_End
+
+Map_6c0f_132:	spriteHeader
+ spritePiece -$20, -8, 3, 2, 0, 0, 0, 0, 0
+Map_6c0f_132_End
+
+Map_6c0f_133:	spriteHeader
+ spritePiece -$C, -$18, 3, 2, 0, 0, 0, 0, 0
+ spritePiece -$C, -8, 4, 2, 6, 0, 0, 0, 0
+Map_6c0f_133_End
+
+Map_6c0f_134:	spriteHeader
+ spritePiece -$C, -$18, 3, 2, 0, 0, 0, 0, 0
+ spritePiece -$C, -8, 4, 2, 6, 0, 0, 0, 0
+Map_6c0f_134_End
+
+	even
+Tails_Dyn_Script:
+DPLC_92bf: mappingsTable
+	mappingsTableEntry.w	DPLC_92bf_0
+	mappingsTableEntry.w	DPLC_92bf_1
+	mappingsTableEntry.w	DPLC_92bf_2
+	mappingsTableEntry.w	DPLC_92bf_3
+	mappingsTableEntry.w	DPLC_92bf_4
+	mappingsTableEntry.w	DPLC_92bf_5
+	mappingsTableEntry.w	DPLC_92bf_6
+	mappingsTableEntry.w	DPLC_92bf_7
+	mappingsTableEntry.w	DPLC_92bf_8
+	mappingsTableEntry.w	DPLC_92bf_9
+	mappingsTableEntry.w	DPLC_92bf_10
+	mappingsTableEntry.w	DPLC_92bf_11
+	mappingsTableEntry.w	DPLC_92bf_12
+	mappingsTableEntry.w	DPLC_92bf_13
+	mappingsTableEntry.w	DPLC_92bf_14
+	mappingsTableEntry.w	DPLC_92bf_15
+	mappingsTableEntry.w	DPLC_92bf_16
+	mappingsTableEntry.w	DPLC_92bf_17
+	mappingsTableEntry.w	DPLC_92bf_18
+	mappingsTableEntry.w	DPLC_92bf_19
+	mappingsTableEntry.w	DPLC_92bf_20
+	mappingsTableEntry.w	DPLC_92bf_21
+	mappingsTableEntry.w	DPLC_92bf_22
+	mappingsTableEntry.w	DPLC_92bf_23
+	mappingsTableEntry.w	DPLC_92bf_24
+	mappingsTableEntry.w	DPLC_92bf_25
+	mappingsTableEntry.w	DPLC_92bf_26
+	mappingsTableEntry.w	DPLC_92bf_27
+	mappingsTableEntry.w	DPLC_92bf_28
+	mappingsTableEntry.w	DPLC_92bf_29
+	mappingsTableEntry.w	DPLC_92bf_30
+	mappingsTableEntry.w	DPLC_92bf_31
+	mappingsTableEntry.w	DPLC_92bf_32
+	mappingsTableEntry.w	DPLC_92bf_33
+	mappingsTableEntry.w	DPLC_92bf_34
+	mappingsTableEntry.w	DPLC_92bf_35
+	mappingsTableEntry.w	DPLC_92bf_36
+	mappingsTableEntry.w	DPLC_92bf_37
+	mappingsTableEntry.w	DPLC_92bf_38
+	mappingsTableEntry.w	DPLC_92bf_39
+	mappingsTableEntry.w	DPLC_92bf_40
+	mappingsTableEntry.w	DPLC_92bf_41
+	mappingsTableEntry.w	DPLC_92bf_42
+	mappingsTableEntry.w	DPLC_92bf_43
+	mappingsTableEntry.w	DPLC_92bf_44
+	mappingsTableEntry.w	DPLC_92bf_45
+	mappingsTableEntry.w	DPLC_92bf_46
+	mappingsTableEntry.w	DPLC_92bf_47
+	mappingsTableEntry.w	DPLC_92bf_48
+	mappingsTableEntry.w	DPLC_92bf_49
+	mappingsTableEntry.w	DPLC_92bf_50
+	mappingsTableEntry.w	DPLC_92bf_51
+	mappingsTableEntry.w	DPLC_92bf_52
+	mappingsTableEntry.w	DPLC_92bf_53
+	mappingsTableEntry.w	DPLC_92bf_54
+	mappingsTableEntry.w	DPLC_92bf_55
+	mappingsTableEntry.w	DPLC_92bf_56
+	mappingsTableEntry.w	DPLC_92bf_57
+	mappingsTableEntry.w	DPLC_92bf_58
+	mappingsTableEntry.w	DPLC_92bf_59
+	mappingsTableEntry.w	DPLC_92bf_60
+	mappingsTableEntry.w	DPLC_92bf_61
+	mappingsTableEntry.w	DPLC_92bf_62
+	mappingsTableEntry.w	DPLC_92bf_63
+	mappingsTableEntry.w	DPLC_92bf_64
+	mappingsTableEntry.w	DPLC_92bf_65
+	mappingsTableEntry.w	DPLC_92bf_66
+	mappingsTableEntry.w	DPLC_92bf_67
+	mappingsTableEntry.w	DPLC_92bf_68
+	mappingsTableEntry.w	DPLC_92bf_69
+	mappingsTableEntry.w	DPLC_92bf_70
+	mappingsTableEntry.w	DPLC_92bf_71
+	mappingsTableEntry.w	DPLC_92bf_72
+	mappingsTableEntry.w	DPLC_92bf_73
+	mappingsTableEntry.w	DPLC_92bf_74
+	mappingsTableEntry.w	DPLC_92bf_75
+	mappingsTableEntry.w	DPLC_92bf_76
+	mappingsTableEntry.w	DPLC_92bf_77
+	mappingsTableEntry.w	DPLC_92bf_78
+	mappingsTableEntry.w	DPLC_92bf_79
+	mappingsTableEntry.w	DPLC_92bf_80
+	mappingsTableEntry.w	DPLC_92bf_81
+	mappingsTableEntry.w	DPLC_92bf_82
+	mappingsTableEntry.w	DPLC_92bf_83
+	mappingsTableEntry.w	DPLC_92bf_84
+	mappingsTableEntry.w	DPLC_92bf_85
+	mappingsTableEntry.w	DPLC_92bf_86
+	mappingsTableEntry.w	DPLC_92bf_87
+	mappingsTableEntry.w	DPLC_92bf_88
+	mappingsTableEntry.w	DPLC_92bf_89
+	mappingsTableEntry.w	DPLC_92bf_90
+	mappingsTableEntry.w	DPLC_92bf_91
+	mappingsTableEntry.w	DPLC_92bf_92
+	mappingsTableEntry.w	DPLC_92bf_93
+	mappingsTableEntry.w	DPLC_92bf_94
+	mappingsTableEntry.w	DPLC_92bf_95
+	mappingsTableEntry.w	DPLC_92bf_96
+	mappingsTableEntry.w	DPLC_92bf_97
+	mappingsTableEntry.w	DPLC_92bf_98
+	mappingsTableEntry.w	DPLC_92bf_99
+	mappingsTableEntry.w	DPLC_92bf_100
+	mappingsTableEntry.w	DPLC_92bf_101
+	mappingsTableEntry.w	DPLC_92bf_102
+	mappingsTableEntry.w	DPLC_92bf_103
+	mappingsTableEntry.w	DPLC_92bf_104
+	mappingsTableEntry.w	DPLC_92bf_105
+	mappingsTableEntry.w	DPLC_92bf_106
+	mappingsTableEntry.w	DPLC_92bf_107
+	mappingsTableEntry.w	DPLC_92bf_108
+	mappingsTableEntry.w	DPLC_92bf_109
+	mappingsTableEntry.w	DPLC_92bf_110
+	mappingsTableEntry.w	DPLC_92bf_111
+	mappingsTableEntry.w	DPLC_92bf_112
+	mappingsTableEntry.w	DPLC_92bf_113
+	mappingsTableEntry.w	DPLC_92bf_114
+	mappingsTableEntry.w	DPLC_92bf_115
+	mappingsTableEntry.w	DPLC_92bf_116
+	mappingsTableEntry.w	DPLC_92bf_117
+	mappingsTableEntry.w	DPLC_92bf_118
+	mappingsTableEntry.w	DPLC_92bf_119
+	mappingsTableEntry.w	DPLC_92bf_120
+	mappingsTableEntry.w	DPLC_92bf_121
+	mappingsTableEntry.w	DPLC_92bf_122
+	mappingsTableEntry.w	DPLC_92bf_123
+	mappingsTableEntry.w	DPLC_92bf_124
+	mappingsTableEntry.w	DPLC_92bf_125
+	mappingsTableEntry.w	DPLC_92bf_126
+	mappingsTableEntry.w	DPLC_92bf_127
+	mappingsTableEntry.w	DPLC_92bf_128
+	mappingsTableEntry.w	DPLC_92bf_129
+	mappingsTableEntry.w	DPLC_92bf_130
+	mappingsTableEntry.w	DPLC_92bf_131
+	mappingsTableEntry.w	DPLC_92bf_132
+	mappingsTableEntry.w	DPLC_92bf_133
+	mappingsTableEntry.w	DPLC_92bf_134
+
+DPLC_92bf_0:	dplcHeader
+DPLC_92bf_0_End
+
+DPLC_92bf_1:	dplcHeader
+ dplcEntry 6, 0
+ dplcEntry 6, 6
+DPLC_92bf_1_End
+
+DPLC_92bf_2:	dplcHeader
+ dplcEntry 6, $C
+ dplcEntry 6, 6
+DPLC_92bf_2_End
+
+DPLC_92bf_3:	dplcHeader
+ dplcEntry 6, $12
+ dplcEntry 6, 6
+DPLC_92bf_3_End
+
+DPLC_92bf_4:	dplcHeader
+ dplcEntry 6, $18
+ dplcEntry 6, 6
+DPLC_92bf_4_End
+
+DPLC_92bf_5:	dplcHeader
+ dplcEntry $C, $1E
+DPLC_92bf_5_End
+
+DPLC_92bf_6:	dplcHeader
+ dplcEntry $C, $2A
+DPLC_92bf_6_End
+
+DPLC_92bf_7:	dplcHeader
+ dplcEntry 6, $36
+ dplcEntry 6, $3C
+DPLC_92bf_7_End
+
+DPLC_92bf_8:	dplcHeader
+ dplcEntry 6, $36
+ dplcEntry 6, $42
+DPLC_92bf_8_End
+
+DPLC_92bf_9:	dplcHeader
+ dplcEntry 8, $48
+DPLC_92bf_9_End
+
+DPLC_92bf_10:	dplcHeader
+ dplcEntry $C, $50
+DPLC_92bf_10_End
+
+DPLC_92bf_11:	dplcHeader
+ dplcEntry $C, $5C
+DPLC_92bf_11_End
+
+DPLC_92bf_12:	dplcHeader
+ dplcEntry 6, $68
+DPLC_92bf_12_End
+
+DPLC_92bf_13:	dplcHeader
+ dplcEntry $C, $6E
+DPLC_92bf_13_End
+
+DPLC_92bf_14:	dplcHeader
+ dplcEntry 6, $7A
+ dplcEntry 8, $80
+ dplcEntry 6, $CA
+DPLC_92bf_14_End
+
+DPLC_92bf_15:	dplcHeader
+ dplcEntry 6, $88
+ dplcEntry 8, $8E
+ dplcEntry 6, $D0
+DPLC_92bf_15_End
+
+DPLC_92bf_16:	dplcHeader
+ dplcEntry 6, $96
+ dplcEntry 6, $9C
+ dplcEntry 6, $D6
+DPLC_92bf_16_End
+
+DPLC_92bf_17:	dplcHeader
+ dplcEntry 6, $A2
+ dplcEntry 6, $A8
+ dplcEntry 6, $DC
+DPLC_92bf_17_End
+
+DPLC_92bf_18:	dplcHeader
+ dplcEntry 6, $7A
+ dplcEntry 8, $AE
+ dplcEntry 6, $CA
+DPLC_92bf_18_End
+
+DPLC_92bf_19:	dplcHeader
+ dplcEntry 6, $88
+ dplcEntry 8, $B6
+ dplcEntry 6, $D0
+DPLC_92bf_19_End
+
+DPLC_92bf_20:	dplcHeader
+ dplcEntry 6, $96
+ dplcEntry 6, $BE
+ dplcEntry 6, $D6
+DPLC_92bf_20_End
+
+DPLC_92bf_21:	dplcHeader
+ dplcEntry 6, $A2
+ dplcEntry 6, $C4
+ dplcEntry 6, $DC
+DPLC_92bf_21_End
+
+DPLC_92bf_22:	dplcHeader
+ dplcEntry 2, $E2
+ dplcEntry 4, $E4
+ dplcEntry $C, $E8
+DPLC_92bf_22_End
+
+DPLC_92bf_23:	dplcHeader
+ dplcEntry 4, $F4
+ dplcEntry $C, $F8
+ dplcEntry 4, $104
+DPLC_92bf_23_End
+
+DPLC_92bf_24:	dplcHeader
+ dplcEntry 4, $108
+ dplcEntry 4, $10C
+ dplcEntry $C, $110
+DPLC_92bf_24_End
+
+DPLC_92bf_25:	dplcHeader
+ dplcEntry 2, $11C
+ dplcEntry $10, $11E
+ dplcEntry 2, $12E
+DPLC_92bf_25_End
+
+DPLC_92bf_26:	dplcHeader
+ dplcEntry 2, $E2
+ dplcEntry 4, $E4
+ dplcEntry $C, $130
+DPLC_92bf_26_End
+
+DPLC_92bf_27:	dplcHeader
+ dplcEntry 4, $F4
+ dplcEntry $C, $13C
+ dplcEntry 4, $148
+DPLC_92bf_27_End
+
+DPLC_92bf_28:	dplcHeader
+ dplcEntry 4, $108
+ dplcEntry 4, $10C
+ dplcEntry $C, $14C
+DPLC_92bf_28_End
+
+DPLC_92bf_29:	dplcHeader
+ dplcEntry 2, $11C
+ dplcEntry $10, $158
+ dplcEntry 2, $168
+DPLC_92bf_29_End
+
+DPLC_92bf_30:	dplcHeader
+ dplcEntry 8, $16A
+ dplcEntry 8, $172
+ dplcEntry 8, $1CA
+DPLC_92bf_30_End
+
+DPLC_92bf_31:	dplcHeader
+ dplcEntry 8, $17A
+ dplcEntry 8, $182
+ dplcEntry 8, $1D2
+DPLC_92bf_31_End
+
+DPLC_92bf_32:	dplcHeader
+ dplcEntry 8, $18A
+ dplcEntry 8, $192
+ dplcEntry 8, $1DA
+DPLC_92bf_32_End
+
+DPLC_92bf_33:	dplcHeader
+ dplcEntry 8, $19A
+ dplcEntry 8, $1A2
+ dplcEntry 8, $1E2
+DPLC_92bf_33_End
+
+DPLC_92bf_34:	dplcHeader
+ dplcEntry 8, $16A
+ dplcEntry 8, $1AA
+ dplcEntry 8, $1CA
+DPLC_92bf_34_End
+
+DPLC_92bf_35:	dplcHeader
+ dplcEntry 8, $17A
+ dplcEntry 8, $1B2
+ dplcEntry 8, $1D2
+DPLC_92bf_35_End
+
+DPLC_92bf_36:	dplcHeader
+ dplcEntry 8, $18A
+ dplcEntry 8, $1BA
+ dplcEntry 8, $1DA
+DPLC_92bf_36_End
+
+DPLC_92bf_37:	dplcHeader
+ dplcEntry 8, $19A
+ dplcEntry 8, $1C2
+ dplcEntry 8, $1E2
+DPLC_92bf_37_End
+
+DPLC_92bf_38:	dplcHeader
+ dplcEntry 2, $1EA
+ dplcEntry $10, $1EC
+DPLC_92bf_38_End
+
+DPLC_92bf_39:	dplcHeader
+ dplcEntry 4, $1FC
+ dplcEntry 2, $200
+ dplcEntry $10, $202
+DPLC_92bf_39_End
+
+DPLC_92bf_40:	dplcHeader
+ dplcEntry 2, $212
+ dplcEntry $10, $214
+DPLC_92bf_40_End
+
+DPLC_92bf_41:	dplcHeader
+ dplcEntry 2, $224
+ dplcEntry 2, $226
+ dplcEntry $10, $228
+DPLC_92bf_41_End
+
+DPLC_92bf_42:	dplcHeader
+ dplcEntry 2, $1EA
+ dplcEntry $10, $238
+DPLC_92bf_42_End
+
+DPLC_92bf_43:	dplcHeader
+ dplcEntry 2, $248
+ dplcEntry 2, $200
+ dplcEntry $10, $24A
+DPLC_92bf_43_End
+
+DPLC_92bf_44:	dplcHeader
+ dplcEntry 2, $212
+ dplcEntry $10, $25A
+DPLC_92bf_44_End
+
+DPLC_92bf_45:	dplcHeader
+ dplcEntry 2, $26A
+ dplcEntry 2, $224
+ dplcEntry $10, $26C
+DPLC_92bf_45_End
+
+DPLC_92bf_46:	dplcHeader
+ dplcEntry $10, $27C
+ dplcEntry 8, $29C
+DPLC_92bf_46_End
+
+DPLC_92bf_47:	dplcHeader
+ dplcEntry $10, $28C
+ dplcEntry 4, $2A4
+DPLC_92bf_47_End
+
+DPLC_92bf_48:	dplcHeader
+ dplcEntry $10, $27C
+ dplcEntry 4, $2A8
+DPLC_92bf_48_End
+
+DPLC_92bf_49:	dplcHeader
+ dplcEntry $10, $28C
+ dplcEntry 4, $2A4
+DPLC_92bf_49_End
+
+DPLC_92bf_50:	dplcHeader
+ dplcEntry $10, $27C
+ dplcEntry 8, $2AC
+DPLC_92bf_50_End
+
+DPLC_92bf_51:	dplcHeader
+ dplcEntry $10, $28C
+ dplcEntry 8, $2AC
+DPLC_92bf_51_End
+
+DPLC_92bf_52:	dplcHeader
+ dplcEntry 2, $2B4
+ dplcEntry $C, $2B6
+ dplcEntry $C, $2D2
+DPLC_92bf_52_End
+
+DPLC_92bf_53:	dplcHeader
+ dplcEntry 4, $2C2
+ dplcEntry $C, $2C6
+ dplcEntry 4, $2DE
+DPLC_92bf_53_End
+
+DPLC_92bf_54:	dplcHeader
+ dplcEntry 2, $2B4
+ dplcEntry $C, $2B6
+ dplcEntry 4, $2E2
+DPLC_92bf_54_End
+
+DPLC_92bf_55:	dplcHeader
+ dplcEntry 4, $2C2
+ dplcEntry $C, $2C6
+ dplcEntry 4, $2E6
+DPLC_92bf_55_End
+
+DPLC_92bf_56:	dplcHeader
+ dplcEntry 2, $2B4
+ dplcEntry $C, $2B6
+ dplcEntry $C, $2EA
+DPLC_92bf_56_End
+
+DPLC_92bf_57:	dplcHeader
+ dplcEntry 4, $2C2
+ dplcEntry $C, $2C6
+ dplcEntry $C, $2EA
+DPLC_92bf_57_End
+
+DPLC_92bf_58:	dplcHeader
+ dplcEntry 6, $2F6
+ dplcEntry 8, $2FC
+ dplcEntry 8, $312
+DPLC_92bf_58_End
+
+DPLC_92bf_59:	dplcHeader
+ dplcEntry 6, $304
+ dplcEntry 8, $30A
+ dplcEntry 4, $31E
+DPLC_92bf_59_End
+
+DPLC_92bf_60:	dplcHeader
+ dplcEntry 6, $2F6
+ dplcEntry 8, $2FC
+ dplcEntry 4, $31A
+DPLC_92bf_60_End
+
+DPLC_92bf_61:	dplcHeader
+ dplcEntry 6, $304
+ dplcEntry 8, $30A
+ dplcEntry 4, $31E
+DPLC_92bf_61_End
+
+DPLC_92bf_62:	dplcHeader
+ dplcEntry 6, $2F6
+ dplcEntry 8, $2FC
+ dplcEntry 8, $322
+DPLC_92bf_62_End
+
+DPLC_92bf_63:	dplcHeader
+ dplcEntry 6, $304
+ dplcEntry 8, $30A
+ dplcEntry 8, $322
+DPLC_92bf_63_End
+
+DPLC_92bf_64:	dplcHeader
+ dplcEntry $C, $32A
+ dplcEntry 4, $336
+ dplcEntry $C, $2D2
+DPLC_92bf_64_End
+
+DPLC_92bf_65:	dplcHeader
+ dplcEntry $C, $33A
+ dplcEntry 4, $346
+ dplcEntry 4, $2DE
+DPLC_92bf_65_End
+
+DPLC_92bf_66:	dplcHeader
+ dplcEntry $C, $32A
+ dplcEntry 4, $336
+ dplcEntry 4, $2E2
+DPLC_92bf_66_End
+
+DPLC_92bf_67:	dplcHeader
+ dplcEntry $C, $33A
+ dplcEntry 4, $346
+ dplcEntry 4, $2E6
+DPLC_92bf_67_End
+
+DPLC_92bf_68:	dplcHeader
+ dplcEntry $C, $32A
+ dplcEntry 4, $336
+ dplcEntry $C, $2EA
+DPLC_92bf_68_End
+
+DPLC_92bf_69:	dplcHeader
+ dplcEntry $C, $33A
+ dplcEntry 4, $346
+ dplcEntry $C, $2EA
+DPLC_92bf_69_End
+
+DPLC_92bf_70:	dplcHeader
+ dplcEntry $10, $34A
+DPLC_92bf_70_End
+
+DPLC_92bf_71:	dplcHeader
+ dplcEntry $10, $35A
+DPLC_92bf_71_End
+
+DPLC_92bf_72:	dplcHeader
+ dplcEntry $10, $36A
+DPLC_92bf_72_End
+
+DPLC_92bf_73:	dplcHeader
+ dplcEntry 6, $CA
+DPLC_92bf_73_End
+
+DPLC_92bf_74:	dplcHeader
+ dplcEntry 6, $D0
+DPLC_92bf_74_End
+
+DPLC_92bf_75:	dplcHeader
+ dplcEntry 6, $D6
+DPLC_92bf_75_End
+
+DPLC_92bf_76:	dplcHeader
+ dplcEntry 6, $DC
+DPLC_92bf_76_End
+
+DPLC_92bf_77:	dplcHeader
+ dplcEntry 6, $37A
+DPLC_92bf_77_End
+
+DPLC_92bf_78:	dplcHeader
+ dplcEntry 6, $380
+DPLC_92bf_78_End
+
+DPLC_92bf_79:	dplcHeader
+ dplcEntry 6, $386
+DPLC_92bf_79_End
+
+DPLC_92bf_80:	dplcHeader
+ dplcEntry 6, $38C
+DPLC_92bf_80_End
+
+DPLC_92bf_81:	dplcHeader
+ dplcEntry 8, $1CA
+DPLC_92bf_81_End
+
+DPLC_92bf_82:	dplcHeader
+ dplcEntry 8, $1D2
+DPLC_92bf_82_End
+
+DPLC_92bf_83:	dplcHeader
+ dplcEntry 8, $1DA
+DPLC_92bf_83_End
+
+DPLC_92bf_84:	dplcHeader
+ dplcEntry 8, $1E2
+DPLC_92bf_84_End
+
+DPLC_92bf_85:	dplcHeader
+ dplcEntry 8, $392
+DPLC_92bf_85_End
+
+DPLC_92bf_86:	dplcHeader
+ dplcEntry 8, $39A
+DPLC_92bf_86_End
+
+DPLC_92bf_87:	dplcHeader
+ dplcEntry 8, $3A2
+DPLC_92bf_87_End
+
+DPLC_92bf_88:	dplcHeader
+ dplcEntry 8, $3AA
+DPLC_92bf_88_End
+
+DPLC_92bf_89:	dplcHeader
+ dplcEntry 4, $3B2
+ dplcEntry $C, $3B6
+DPLC_92bf_89_End
+
+DPLC_92bf_90:	dplcHeader
+ dplcEntry 4, $3B2
+ dplcEntry $C, $3C2
+DPLC_92bf_90_End
+
+DPLC_92bf_91:	dplcHeader
+ dplcEntry $C, $3CE
+DPLC_92bf_91_End
+
+DPLC_92bf_92:	dplcHeader
+ dplcEntry $10, $3DA
+DPLC_92bf_92_End
+
+DPLC_92bf_93:	dplcHeader
+ dplcEntry $10, $3EA
+DPLC_92bf_93_End
+
+DPLC_92bf_94:	dplcHeader
+ dplcEntry $10, $3FA
+ dplcEntry 8, $40A
+DPLC_92bf_94_End
+
+DPLC_92bf_95:	dplcHeader
+ dplcEntry $10, $3FA
+ dplcEntry 8, $40A
+DPLC_92bf_95_End
+
+DPLC_92bf_96:	dplcHeader
+ dplcEntry $10, $412
+DPLC_92bf_96_End
+
+DPLC_92bf_97:	dplcHeader
+ dplcEntry $10, $422
+DPLC_92bf_97_End
+
+DPLC_92bf_98:	dplcHeader
+ dplcEntry $10, $432
+DPLC_92bf_98_End
+
+DPLC_92bf_99:	dplcHeader
+ dplcEntry 6, $442
+ dplcEntry 8, $448
+DPLC_92bf_99_End
+
+DPLC_92bf_100:	dplcHeader
+ dplcEntry 6, $442
+ dplcEntry 6, $450
+DPLC_92bf_100_End
+
+DPLC_92bf_101:	dplcHeader
+ dplcEntry 6, $442
+ dplcEntry 6, $456
+DPLC_92bf_101_End
+
+DPLC_92bf_102:	dplcHeader
+ dplcEntry 6, $442
+ dplcEntry 6, $45C
+DPLC_92bf_102_End
+
+DPLC_92bf_103:	dplcHeader
+ dplcEntry 6, $462
+ dplcEntry 8, $468
+DPLC_92bf_103_End
+
+DPLC_92bf_104:	dplcHeader
+ dplcEntry 6, $470
+ dplcEntry 8, $476
+DPLC_92bf_104_End
+
+DPLC_92bf_105:	dplcHeader
+ dplcEntry 2, $47E
+ dplcEntry $C, $480
+DPLC_92bf_105_End
+
+DPLC_92bf_106:	dplcHeader
+ dplcEntry 6, $48C
+ dplcEntry 8, $492
+DPLC_92bf_106_End
+
+DPLC_92bf_107:	dplcHeader
+ dplcEntry $10, $49A
+DPLC_92bf_107_End
+
+DPLC_92bf_108:	dplcHeader
+ dplcEntry $10, $4AA
+ dplcEntry 4, $4BA
+DPLC_92bf_108_End
+
+DPLC_92bf_109:	dplcHeader
+ dplcEntry $10, $4BE
+ dplcEntry 4, $4CE
+DPLC_92bf_109_End
+
+DPLC_92bf_110:	dplcHeader
+ dplcEntry 4, $4D2
+ dplcEntry $C, $4D6
+DPLC_92bf_110_End
+
+DPLC_92bf_111:	dplcHeader
+ dplcEntry 8, $4E2
+ dplcEntry 8, $4E2
+DPLC_92bf_111_End
+
+DPLC_92bf_112:	dplcHeader
+ dplcEntry 4, $4D2
+ dplcEntry $C, $4D6
+DPLC_92bf_112_End
+
+DPLC_92bf_113:	dplcHeader
+ dplcEntry 8, $4EA
+ dplcEntry 4, $4F2
+DPLC_92bf_113_End
+
+DPLC_92bf_114:	dplcHeader
+ dplcEntry 8, $4EA
+ dplcEntry 4, $4F2
+DPLC_92bf_114_End
+
+DPLC_92bf_115:	dplcHeader
+ dplcEntry 4, $4F6
+ dplcEntry $C, $4FA
+DPLC_92bf_115_End
+
+DPLC_92bf_116:	dplcHeader
+ dplcEntry $10, $506
+DPLC_92bf_116_End
+
+DPLC_92bf_117:	dplcHeader
+ dplcEntry $C, $516
+DPLC_92bf_117_End
+
+DPLC_92bf_118:	dplcHeader
+ dplcEntry 4, $522
+ dplcEntry $C, $526
+DPLC_92bf_118_End
+
+DPLC_92bf_119:	dplcHeader
+ dplcEntry $C, $532
+DPLC_92bf_119_End
+
+DPLC_92bf_120:	dplcHeader
+ dplcEntry $C, $53E
+DPLC_92bf_120_End
+
+DPLC_92bf_121:	dplcHeader
+ dplcEntry $C, $54A
+DPLC_92bf_121_End
+
+DPLC_92bf_122:	dplcHeader
+ dplcEntry $C, $556
+DPLC_92bf_122_End
+
+DPLC_92bf_123:	dplcHeader
+ dplcEntry $C, $562
+DPLC_92bf_123_End
+
+DPLC_92bf_124:	dplcHeader
+ dplcEntry $C, $56E
+DPLC_92bf_124_End
+
+DPLC_92bf_125:	dplcHeader
+ dplcEntry $C, $57A
+DPLC_92bf_125_End
+
+DPLC_92bf_126:	dplcHeader
+ dplcEntry $C, $586
+DPLC_92bf_126_End
+
+DPLC_92bf_127:	dplcHeader
+ dplcEntry 6, $592
+ dplcEntry 4, $598
+DPLC_92bf_127_End
+
+DPLC_92bf_128:	dplcHeader
+ dplcEntry 8, $59C
+ dplcEntry 4, $5A4
+DPLC_92bf_128_End
+
+DPLC_92bf_129:	dplcHeader
+ dplcEntry 6, $CA
+DPLC_92bf_129_End
+
+DPLC_92bf_130:	dplcHeader
+ dplcEntry 6, $D0
+DPLC_92bf_130_End
+
+DPLC_92bf_131:	dplcHeader
+ dplcEntry 6, $D6
+DPLC_92bf_131_End
+
+DPLC_92bf_132:	dplcHeader
+ dplcEntry 6, $DC
+DPLC_92bf_132_End
+
+DPLC_92bf_133:	dplcHeader
+ dplcEntry $E, $5A8
+DPLC_92bf_133_End
+
+DPLC_92bf_134:	dplcHeader
+ dplcEntry 6, $5A8
+ dplcEntry 8, $5B6
+DPLC_92bf_134_End
+
+	even
 loc_70874:
 		dc.w	$0001
 		dc.w	$537A
@@ -45646,6 +46348,121 @@ Sfx_E0: 	include	"sound/SFX/E0 - Spin Dash Rev.asm"
 	finishBank
 
 ; end of 'ROM'
+; ===========================================================================
+; ----------------------------------------------------------------------------
+; Object 7F - Vine switch that you hang off in MCZ
+; ----------------------------------------------------------------------------
+; Sprite_297E4:
+Obj7F:
+	moveq	#0,d0
+	move.b	routine(a0),d0
+	move.w	Obj7F_Index(pc,d0.w),d1
+	jmp	Obj7F_Index(pc,d1.w)
+; ===========================================================================
+; off_297F2:
+Obj7F_Index:	offsetTable
+		offsetTableEntry.w Obj7F_Init	; 0
+		offsetTableEntry.w Obj7F_Main	; 2
+; ===========================================================================
+; loc_297F6:
+Obj7F_Init:
+	addq.b	#2,routine(a0)
+	move.l	#Obj7F_MapUnc_29938,mappings(a0)
+	move.w	#$040E,art_tile(a0)	;#make_art_tile(ArtTile_ArtNem_VineSwitch,3,0),art_tile(a0)
+	jsr	Adjust2PArtPointer
+	move.b	#1<<2,render_flags(a0)
+	move.b	#8,width_pixels(a0)
+	move.b	#4,priority(a0)
+; loc_2981E:
+Obj7F_Main:
+	lea	objoff_30(a0),a2
+	lea	(MainCharacter).w,a1 ; a1=character
+	move.w	(Ctrl_1).w,d0
+	bsr.s	Obj7F_Action
+	lea	(Sidekick).w,a1 ; a1=character
+	addq.w	#1,a2
+	move.w	(Ctrl_2).w,d0
+	bsr.s	Obj7F_Action
+	jmp	MarkObjGone
+; ===========================================================================
+; loc_2983C:
+Obj7F_Action:
+	tst.b	(a2)
+	beq.s	loc_29890
+	andi.b	#button_B_mask|button_C_mask|button_A_mask,d0
+	beq.w	return_29936
+	clr.b	obj_control(a1)
+	clr.b	(a2)
+	move.b	#18,2(a2)
+	andi.w	#(button_up_mask|button_down_mask|button_left_mask|button_right_mask)<<8,d0
+	beq.s	+
+	move.b	#60,2(a2)
++
+	move.w	#-$300,y_vel(a1)
+	move.b	subtype(a0),d0
+	andi.w	#$F,d0
+	lea	(ButtonVine_Trigger).w,a3
+	lea	(a3,d0.w),a3
+	bclr	#0,(a3)
+	move.b	#0,mapping_frame(a0)
+	tst.w	objoff_30(a0)
+	beq.s	+
+	move.b	#1,mapping_frame(a0)
++
+	bra.w	return_29936
+; ===========================================================================
+
+loc_29890:
+	tst.b	2(a2)
+	beq.s	+
+	subq.b	#1,2(a2)
+	bne.w	return_29936
++
+	move.w	x_pos(a1),d0
+	sub.w	x_pos(a0),d0
+	addi.w	#$C,d0
+	cmpi.w	#$18,d0
+	bhs.w	return_29936
+	move.w	y_pos(a1),d1
+	sub.w	y_pos(a0),d1
+	subi.w	#$28,d1
+	cmpi.w	#$10,d1
+	bhs.w	return_29936
+	tst.b	obj_control(a1)
+	bmi.s	return_29936
+	cmpi.b	#4,routine(a1)
+	bhs.s	return_29936
+	tst.w	(Debug_placement_mode).w
+	bne.s	return_29936
+	clr.w	x_vel(a1)
+	clr.w	y_vel(a1)
+	clr.w	inertia(a1)
+	move.w	x_pos(a0),x_pos(a1)
+	move.w	y_pos(a0),y_pos(a1)
+	addi.w	#$30,y_pos(a1)
+	move.b	#$1F,anim(a1)		;hanging animation
+	move.b	#1,obj_control(a1)
+	move.b	#1,(a2)
+	move.b	subtype(a0),d0
+	andi.w	#$F,d0
+	lea	(ButtonVine_Trigger).w,a3
+	bset	#0,(a3,d0.w)
+	move.w	#SndID_Blip,d0
+	jsr	(PlaySound).l
+	move.b	#0,mapping_frame(a0)
+	tst.w	objoff_30(a0)
+	beq.s	return_29936
+	move.b	#1,mapping_frame(a0)
+
+return_29936:
+	rts
+; ===========================================================================
+; ----------------------------------------------------------------------------
+; sprite mappings (not implemented
+; ----------------------------------------------------------------------------
+Obj7F_MapUnc_29938:	include "mappings/sprite/obj7F.asm"
+; ===========================================================================
+
 	if PaddingOptimization=0
 		cnop	-1,2<<lastbit(*-1)
 		even
