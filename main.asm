@@ -14452,8 +14452,8 @@ ObjPtr_Oil:		dc.l	Obj07			; Oil Ocean in OOZ
 			dc.l	Obj_Null
 			dc.l	Obj7D			; Points that can be gotten at the end of an act (leftover from S1)
 			dc.l	Obj_Null
-			dc.l	Obj_Null
-			dc.l	Obj_Null
+			dc.l	Obj_Null		;dust hill hanging vines switch
+			dc.l	Obj_Null		;hanging vine that moves down
 			dc.l	Obj_Null
 			dc.l	Obj_Null
 			dc.l	Obj_Null
@@ -42906,7 +42906,8 @@ ArtUnc_OOZSquareBall2:	binclude	"art/uncompressed/Square rotating around ball in
 ; Oil in OOZ					; ArtUnc_2BCEA: ArtUnc_2C4EA:
 ArtUnc_Oil1:	binclude	"art/uncompressed/Oil - 1.bin"
 ArtUnc_Oil2:	binclude	"art/uncompressed/Oil - 2.bin"
-
+;---------------------------------------------------------------------------------------
+; Uncompressed art
 CPz_Dyn_Background:		 ; loc_2CCEA:
 		binclude	"data\cpz\backgnd.dat"
 NGHz_Water_Falls_1:		 ; loc_2CEEA:
@@ -43384,12 +43385,14 @@ Unknow_Data_0x04EE00: ; loc_4EE00:
 ; Patterns for Sonic  ; ArtUnc_50000:
 ;---------------------------------------------------------------------------------------
 ArtUnc_Sonic:	binclude	"art/uncompressed/Sonic's art.bin"
+		even
 ;--------------------------------------------------------------------------------------
 ; Sprite Mappings
 ; Sonic			; MapUnc_614C0: Sonic_Mappings:
 ;--------------------------------------------------------------------------------------
 MapUnc_Sonic:	binclude	"mappings/sprite/Sonic.bin"
 Tails_Sprites:	binclude	"data\sprites\tails.dat"
+		even
 ;--------------------------------------------------------------------------------------
 ; Sprite Dynamic Pattern Reloading
 ; Sonic DPLCs			; MapRUnc_6DA4C: Sonic_Dyn_Script:
