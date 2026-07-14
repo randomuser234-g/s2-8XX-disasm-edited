@@ -47,6 +47,8 @@ PaddingOptimization = 0|AllOptimizations
 useFullWaterTables = 0
 ;	| If 1, zone offset tables for water levels cover all level slots instead of only slots 8-$F
 ;	| Set to 1 if you've shifted level IDs around or you want water in levels with a level slot below 8
+debugbuild = 1
+;	| If 1, level select,debug mode and slow mo available no cheats needed
 
 ; >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 ; AS-specific macros and assembler settings
@@ -2951,7 +2953,13 @@ loc_38EE:
 		bsr.w	LoadPLC2
 		move.w	#0,(Correct_cheat_entries).w
 		move.w	#0,(Correct_cheat_entries_2).w
+	if debugbuild=1
 		move.b	#1,(Level_select_flag).w	; enable "level select" flag without using the cheat
+		move.b	#1,(Debug_options_flag).w	; enable "level select" flag without using the cheat
+		move.b	#1,(Slow_motion_flag).w	; enable "level select" flag without using the cheat
+	else
+		nop
+	endif
 		move.w	#4,(Sonic_Pos_Record_Index).w
 		move.w	#0,(Sonic_Pos_Record_Buf).w
 		move.w	(VDP_Reg1_val).w,d0
@@ -13301,6 +13309,12 @@ GotThrough_Reset:
 
 ; One value per act. That value is the level/act number of the level to load when
 ; that act finishes.
+;note that when playing normally, the level order is originally this
+;1 Neo Green Hill
+;2 Chemical Plant
+;3 Hill Top
+;4 Green Hill
+;END
 ; -------------------------------------------------------------------------------
 word_BF9A: zoneOrderedTable 2,2
 	zoneTableEntry.w  green_hill_zone_act_2		; GHZ1
@@ -13989,6 +14003,8 @@ loc_CAC8:
 Touch_ChkHurt2:
 		tst.b	(Invincibility_flag).w			 ; Invincibility Running ?
 		bne.s	Touch_ChkHurt2_No_Hurt	  ; loc_CAFC
+		tst.w	invulnerable_time(a1)			; is Sonic invulnerable from being hurt?
+		bne.s	Touch_ChkHurt2_No_Hurt			;if yes, don't get hurt
 		cmpi.b	#4,$24(a1)
 		bhs.s	Touch_ChkHurt2_No_Hurt	  ; loc_CAFC
 		move.l	$C(a1),d3
@@ -14451,16 +14467,16 @@ ObjPtr_Oil:		dc.l	Obj07			; Oil Ocean in OOZ
 			dc.l	Obj_0x74_Invisible_Block		  ; loc_1561A
 			dc.l	Obj_0x75_Spikeball_Chain		  ; loc_1CE48
 			dc.l	Obj_0x76_Platform_Spikes		  ; loc_1d078
-			dc.l	Obj_0x77_Bridge		   ; loc_1d208
+			dc.l	Obj_0x77_Bridge		   ; loc_1d208		;dhz horizontal drawbridge
 			dc.l	Obj_0x78_Rotating_Platforms		  ; loc_1d3C0
 			dc.l	Obj_0x79_Lamp_Post		; loc_13B54
 			dc.l	Obj_0x7A_Platform_Horizontal	  ; loc_1d594
 			dc.l	Obj_0x7B_Spring_Tubes			  ; loc_1d74C
 			dc.l	Obj_Null
 			dc.l	Obj7D			; Points that can be gotten at the end of an act (leftover from S1)
-			dc.l	Obj_Null
+			dc.l	Obj7E		;hanging vine that moves down, used to be Obj80
 			dc.l	Obj7F		;dust hill (DHZ) hanging vines switch
-			dc.l	Obj_Null		;hanging vine that moves down Obj80
+			dc.l	Obj_Null
 			dc.l	Obj_Null
 			dc.l	Obj_Null
 			dc.l	Obj_Null
@@ -16368,7 +16384,7 @@ loc_E2CA:
 		move.l	a0,(Obj_load_addr_right_P2).w
 		move.l	(Obj_load_addr_left).w,A0
 		subi.w	#$80,d6
-		blo.s	loc_E2EE
+		blo.s	loc_E2EE	;bcs.s in final s2 game
 loc_E2DC:
 		cmp.w	(a0),d6
 		bls.s	loc_E2EE
@@ -16402,12 +16418,12 @@ Load_Object_Pos_Sub_02: ;loc_E310:
 		move.w	d6,(Camera_X_pos_last).w
 		move.l	(Obj_load_addr_left).w,A0
 		subi.w	#$80,d6
-		blo.s	loc_E372
+		blo.s	loc_E372	;also bcs.s in final s2
 loc_E346:
 		cmp.w	-6(a0),d6
 		bge.s	loc_E372
 		subq.w	#6,a0
-		tst.b	4(a0)
+		tst.b	4(a0)	;2 in final
 		bpl.s	loc_E35C
 		subq.b	#1,1(a2)
 		move.b	1(a2),d2
@@ -16417,7 +16433,7 @@ loc_E35C:
 		subq.w	#6,a0
 		bra.s	loc_E346
 loc_E366:
-		tst.b	4(a0)
+		tst.b	4(a0)	;also 2 in final
 		bpl.s	loc_E370
 		addq.b	#1,1(a2)
 loc_E370:
@@ -16429,7 +16445,7 @@ loc_E372:
 loc_E37E:
 		cmp.w	-6(a0),d6
 		bgt.s	loc_E390
-		tst.b	-2(a0)
+		tst.b	-2(a0)	;also 2
 		bpl.s	loc_E38C
 		subq.b	#1,(a2)
 loc_E38C:
@@ -16445,7 +16461,7 @@ loc_E396:
 loc_E3A2:
 		cmp.w	(a0),d6
 		bls.s	loc_E3B6
-		tst.b	4(a0)
+		tst.b	4(a0)	;2 in final
 		bpl.s	loc_E3B0
 		move.b	(a2),d2
 		addq.b	#1,(a2)
@@ -16460,7 +16476,7 @@ loc_E3B6:
 loc_E3C4:
 		cmp.w	(a0),d6
 		bls.s	loc_E3d6
-		tst.b	4(a0)
+		tst.b	4(a0)	;2 in final
 		bpl.s	loc_E3d2
 		addq.b	#1,1(a2)
 loc_E3d2:
@@ -16564,7 +16580,7 @@ loc_E4FC:
 loc_E506:
 		cmp.b	-6(a0),d6
 		bne.s	loc_E51A
-		tst.b	-2(a0)
+		tst.b	-2(a0)	;-4 in final
 		bpl.s	loc_E516
 		subq.b	#1,1(a5)
 loc_E516:
@@ -20066,29 +20082,31 @@ return_1090A:
 
 ; loc_1090C:
 Sonic_ResetOnFloor:
-		btst	#4,$22(a0)
+		cmpi.b	#2,id(a0)	;is this Tails?
+		beq.w	Tails_ResetTailsOnFloor	;if yes, do tails code
+		btst	#4,status(a0)
 		beq.s	loc_1091A
 		nop
 		nop
 		nop
 
 loc_1091A:
-		bclr	#5,$22(a0)
-		bclr	#1,$22(a0)
-		bclr	#4,$22(a0)
-		btst	#2,$22(a0)
+		bclr	#5,status(a0)
+		bclr	#1,status(a0)
+		bclr	#4,status(a0)
+		btst	#2,status(a0)
 		beq.s	loc_10950
-		bclr	#2,$22(a0)
-		move.b	#$13,$16(a0)
-		move.b	#9,$17(a0)
-		move.b	#0,$1C(a0)
-		subq.w	#5,$C(a0)
+		bclr	#2,status(a0)
+		move.b	#$13,y_radius(a0)
+		move.b	#9,x_radius(a0)
+		move.b	#0,anim(a0)
+		subq.w	#5,y_pos(a0)
 
 loc_10950:
-		move.b	#0,$3C(a0)
+		move.b	#0,jumping(a0)
 		move.w	#0,(Chain_Bonus_counter).w
-		move.b	#0,$27(a0)
-		move.b	#0,$29(a0)
+		move.b	#0,flip_angle(a0)
+		move.b	#0,flip_turned(a0)
 		rts
 ; End of function Sonic_ResetOnFloor
 
@@ -22365,27 +22383,27 @@ loc_11A64:
 ; [ Begin ]
 ;===============================================================================
 Tails_ResetTailsOnFloor: ; loc_11A66:
-		btst	#$04,$0022(a0)
+		btst	#4,status(a0)
 		beq.s	loc_11A74
 		nop
 		nop
 		nop
 loc_11A74:
-		bclr	#$05,$0022(a0)
-		bclr	#1,$0022(a0)
-		bclr	#$04,$0022(a0)
-		btst	#2,$0022(a0)
+		bclr	#$05,status(a0)
+		bclr	#1,status(a0)
+		bclr	#$04,status(a0)
+		btst	#2,status(a0)
 		beq.s	loc_11AAA
-		bclr	#2,$0022(a0)
-		move.b	#$0F,$0016(a0)
-		move.b	#$09,$0017(a0)
-		move.b	#0,$001C(a0)
+		bclr	#2,status(a0)
+		move.b	#$0F,y_radius(a0)
+		move.b	#$09,x_radius(a0)
+		move.b	#0,anim(a0)
 		subq.w	#1,y_pos(a0)
 loc_11AAA:
-		move.b	#0,$003C(a0)
+		move.b	#0,jumping(a0)
 		move.w	#0,(Chain_Bonus_counter).w
-		move.b	#0,$0027(a0)
-		move.b	#0,$0029(a0)
+		move.b	#0,flip_angle(a0)
+		move.b	#0,flip_turned(a0)
 		rts
 ;===============================================================================
 ; Sub Routine Tails_ResetTailsOnFloor
@@ -22728,7 +22746,8 @@ Tails_Animate_Wait: ; loc_11E58:
 		dc.b	$05,$05,$05,$05,$05,$05,$05,$05,$05,$05,$05,$05,$05,$05,$05,$05
 		dc.b	$06,$07,$08,$07,$08,$07,$08,$07,$08,$07,$08,$06,$FE,$1C
 Tails_Animate_Balance_NoArt: ; loc_11E96:
-		dc.b	$1F,$01,$02,$03,$04,$05,$06,$07,$08,$FF
+		dc.b   9,$69,$69,$6A,$6A,$69,$69,$6A,$6A,$69,$69,$6A,$6A,$69,$69,$6A
+		dc.b $6A,$69,$69,$6A,$6A,$69,$6A,$FF
 Tails_Animate_LookUp: ; loc_11EA0:
 		dc.b	$3F,$04,$FF
 Tails_Animate_Duck: ; loc_11EA3:
@@ -22742,7 +22761,7 @@ Tails_Animate_0x0B: ; loc_11EAE:
 Tails_Animate_0x0C: ; loc_11EB4:
 		dc.b	$07,$09,$FD,$05
 Tails_Animate_Stop: ; loc_11EB8:
-		dc.b	$07,$01,$02,$FF
+		dc.b	$07,$67,$68,$FF
 Tails_Animate_Fly: ; loc_11EBC:
 		dc.b	$07,$5E,$5F,$FF
 Tails_Animate_0x0F: ; loc_11EC0:
@@ -38932,7 +38951,7 @@ loc_21376:
 ;===============================================================================
 Touch_Hurt: ; loc_2137A:
 		nop
-		tst.w	$30(a0)
+		tst.w	invulnerable_time(a0)
 		bne.s	loc_21376
 		move.l	A1,A2
 
@@ -46368,7 +46387,7 @@ Obj7F_Index:	offsetTable
 Obj7F_Init:
 	addq.b	#2,routine(a0)
 	move.l	#Obj7F_MapUnc_29938,mappings(a0)
-	move.w	#$040E,art_tile(a0)	;#make_art_tile(ArtTile_ArtNem_VineSwitch,3,0),art_tile(a0)
+	move.w	#$340E,art_tile(a0)	;#make_art_tile(ArtTile_ArtNem_VineSwitch,3,0),art_tile(a0)
 	jsr	Adjust2PArtPointer
 	move.b	#1<<2,render_flags(a0)
 	move.b	#8,width_pixels(a0)
@@ -46458,9 +46477,286 @@ return_29936:
 	rts
 ; ===========================================================================
 ; ----------------------------------------------------------------------------
-; sprite mappings (not implemented
+; sprite mappings
 ; ----------------------------------------------------------------------------
 Obj7F_MapUnc_29938:	include "mappings/sprite/obj7F.asm"
+; ===========================================================================
+; ===========================================================================
+; ----------------------------------------------------------------------------
+; Object 80 - Vine that you hang off and it moves down from MCZ
+; ----------------------------------------------------------------------------
+; Sprite_2997C:
+;S2F_Obj80: ;this was in sonic 2 final, object 80
+Obj7E:
+	moveq	#0,d0
+	move.b	routine(a0),d0
+	move.w	Obj7E_Index(pc,d0.w),d1
+	jmp	Obj7E_Index(pc,d1.w)
+; ===========================================================================
+; off_2998A:
+Obj7E_Index:	offsetTable
+		offsetTableEntry.w Obj7E_Init		; 0 - Init
+		offsetTableEntry.w Obj7E_MCZ_Main	; 2 - MCZ Vine
+		offsetTableEntry.w Obj7E_WFZ_Main	; 4 - WFZ Hook
+; ===========================================================================
+; loc_29990:
+Obj7E_Init:
+	addq.b	#2,routine(a0)
+	move.b	#1<<2,render_flags(a0)
+	move.b	#$10,width_pixels(a0)
+	move.b	#4,priority(a0)
+	move.b	#$80,y_radius(a0)
+	bset	#4,render_flags(a0)
+	move.w	y_pos(a0),objoff_3C(a0)
+	cmpi.b	#blue_lake_zone,(Current_Zone).w	;changed to blue lake since that's the zone slot in the final game, this zone is unused, so this code probably won't be used
+	bne.s	Obj7E_MCZ_Init
+	addq.b	#2,routine(a0)
+	move.l	#Obj7E_MapUnc_29DD0,mappings(a0)
+	;move.w	#make_art_tile(ArtTile_ArtNem_WfzHook_Fudge,1,0),art_tile(a0)
+	move.w	#$13FA,art_tile(a0)
+	jsr	Adjust2PArtPointer
+	move.w	#$A0,objoff_2E(a0)
+	move.b	subtype(a0),d0
+	move.b	d0,d1
+	andi.b	#$F,d0
+	beq.s	+
+	move.w	#$60,objoff_2E(a0)
++
+	move.b	subtype(a0),d0
+	move.w	#2,objoff_3A(a0)
+	andi.b	#$70,d1
+	beq.s	+
+	move.w	objoff_2E(a0),d0
+	move.w	d0,objoff_38(a0)
+	move.b	#1,objoff_36(a0)
+	add.w	d0,y_pos(a0)
+	lsr.w	#4,d0
+	addq.w	#1,d0
+	move.b	d0,mapping_frame(a0)
++
+	bra.w	Obj7E_WFZ_Main
+; ===========================================================================
+; loc_29A1C:
+Obj7E_MCZ_Init:
+	move.l	#Obj7E_MapUnc_29C64,mappings(a0)
+	;move.w	#make_art_tile(ArtTile_ArtNem_VinePulley,3,0),art_tile(a0)
+	move.w	#$341E,art_tile(a0)
+	jsr	Adjust2PArtPointer
+	move.w	#$B0,objoff_2E(a0)
+	move.b	subtype(a0),d0
+	bpl.s	+
+	move.b	#1,objoff_34(a0)
++
+	move.w	#2,objoff_3A(a0)
+	andi.b	#$70,d0
+	beq.s	Obj7E_MCZ_Main
+	move.w	objoff_2E(a0),d0
+	move.w	d0,objoff_38(a0)
+	move.b	#1,objoff_36(a0)
+	add.w	d0,y_pos(a0)
+	lsr.w	#5,d0
+	addq.w	#1,d0
+	move.b	d0,mapping_frame(a0)
+; loc_29A66:
+Obj7E_MCZ_Main:
+	tst.b	objoff_36(a0)
+	beq.s	loc_29A74
+	tst.w	objoff_30(a0)
+	bne.s	loc_29A8A
+	bra.s	loc_29A7A
+; ===========================================================================
+
+loc_29A74:
+	tst.w	objoff_30(a0)
+	beq.s	loc_29A8A
+
+loc_29A7A:
+	move.w	objoff_38(a0),d2
+	cmp.w	objoff_2E(a0),d2
+	beq.s	loc_29AAE
+	add.w	objoff_3A(a0),d2
+	bra.s	loc_29A94
+; ===========================================================================
+
+loc_29A8A:
+	move.w	objoff_38(a0),d2
+	beq.s	loc_29AAE
+	sub.w	objoff_3A(a0),d2
+
+loc_29A94:
+	move.w	d2,objoff_38(a0)
+	move.w	objoff_3C(a0),d0
+	add.w	d2,d0
+	move.w	d0,y_pos(a0)
+	move.w	d2,d0
+	beq.s	+
+	lsr.w	#5,d0
+	addq.w	#1,d0
++
+	move.b	d0,mapping_frame(a0)
+
+loc_29AAE:
+	lea	objoff_30(a0),a2
+	lea	(MainCharacter).w,a1 ; a1=character
+	move.w	(Ctrl_1).w,d0
+	bsr.s	Obj7E_Action
+	lea	(Sidekick).w,a1 ; a1=character
+	addq.w	#1,a2
+	move.w	(Ctrl_2).w,d0
+	bsr.s	Obj7E_Action
+	jmp	MarkObjGone
+; ===========================================================================
+; loc_29ACC:
+Obj7E_Action:
+	tst.b	(a2)
+	beq.w	loc_29B5E
+	btst	#7,render_flags(a1)
+	beq.s	loc_29B42
+	cmpi.b	#4,routine(a1)
+	bhs.s	loc_29B42
+	andi.b	#button_B_mask|button_C_mask|button_A_mask,d0
+	beq.w	loc_29B50
+	clr.b	obj_control(a1)
+	clr.b	(a2)
+	move.b	#18,2(a2)
+	andi.w	#(button_up_mask|button_down_mask|button_left_mask|button_right_mask)<<8,d0
+	beq.w	+
+	move.b	#60,2(a2)
++
+	btst	#(button_left+8),d0
+	beq.s	+
+	move.w	#-$200,x_vel(a1)
++
+	btst	#(button_right+8),d0
+	beq.s	+
+	move.w	#$200,x_vel(a1)
++
+	move.w	#-$380,y_vel(a1)
+	bset	#1,status(a1)
+	tst.b	objoff_34(a0)
+	beq.s	+	; rts
+	move.b	subtype(a0),d0
+	andi.w	#$F,d0
+	lea	(ButtonVine_Trigger).w,a3
+	lea	(a3,d0.w),a3
+	bclr	#0,(a3)
++
+	rts
+; ===========================================================================
+
+loc_29B42:
+	clr.b	obj_control(a1)
+	clr.b	(a2)
+	move.b	#60,2(a2)
+	rts
+; ===========================================================================
+
+loc_29B50:
+	move.w	y_pos(a0),y_pos(a1)
+	addi.w	#$94,y_pos(a1)
+	rts
+; ===========================================================================
+
+loc_29B5E:
+	tst.b	2(a2)
+	beq.s	+
+	subq.b	#1,2(a2)
+	bne.w	return_29BF8
++
+	move.w	x_pos(a1),d0
+	sub.w	x_pos(a0),d0
+	addi.w	#$10,d0
+	cmpi.w	#$20,d0
+	bhs.w	return_29BF8
+	move.w	y_pos(a1),d1
+	sub.w	y_pos(a0),d1
+	subi.w	#$88,d1
+	cmpi.w	#$18,d1
+	bhs.w	return_29BF8
+	tst.b	obj_control(a1)
+	bmi.s	return_29BF8
+	cmpi.b	#4,routine(a1)
+	bhs.s	return_29BF8
+	tst.w	(Debug_placement_mode).w
+	bne.s	return_29BF8
+	clr.w	x_vel(a1)
+	clr.w	y_vel(a1)
+	clr.w	inertia(a1)
+	move.w	x_pos(a0),x_pos(a1)
+	move.w	y_pos(a0),y_pos(a1)
+	addi.w	#$94,y_pos(a1)
+	move.b	#$1F,anim(a1)
+	move.b	#1,obj_control(a1)
+	move.b	#1,(a2)
+	tst.b	objoff_34(a0)
+	beq.s	return_29BF8
+	move.b	subtype(a0),d0
+	andi.w	#$F,d0
+	lea	(ButtonVine_Trigger).w,a3
+	bset	#0,(a3,d0.w)
+	move.w	#SndID_Blip,d0
+	jsr	(PlaySound).l
+
+return_29BF8:
+	rts
+; ===========================================================================
+; loc_29BFA:
+Obj7E_WFZ_Main:
+	tst.b	objoff_36(a0)
+	beq.s	loc_29C08
+	tst.w	objoff_30(a0)
+	bne.s	loc_29C1E
+	bra.s	loc_29C0E
+; ===========================================================================
+
+loc_29C08:
+	tst.w	objoff_30(a0)
+	beq.s	loc_29C1E
+
+loc_29C0E:
+	move.w	objoff_38(a0),d2
+	cmp.w	objoff_2E(a0),d2
+	beq.s	loc_29C42
+	add.w	objoff_3A(a0),d2
+	bra.s	loc_29C28
+; ===========================================================================
+
+loc_29C1E:
+	move.w	objoff_38(a0),d2
+	beq.s	loc_29C42
+	sub.w	objoff_3A(a0),d2
+
+loc_29C28:
+	move.w	d2,objoff_38(a0)
+	move.w	objoff_3C(a0),d0
+	add.w	d2,d0
+	move.w	d0,y_pos(a0)
+	move.w	d2,d0
+	beq.s	+
+	lsr.w	#4,d0
+	addq.w	#1,d0
++
+	move.b	d0,mapping_frame(a0)
+
+loc_29C42:
+	lea	objoff_30(a0),a2
+	lea	(MainCharacter).w,a1 ; a1=character
+	move.w	(Ctrl_1).w,d0
+	bsr.w	Obj7E_Action
+	lea	(Sidekick).w,a1 ; a1=character
+	addq.w	#1,a2
+	move.w	(Ctrl_2).w,d0
+	bsr.w	Obj7E_Action
+	jmp	MarkObjGone
+; ===========================================================================
+; ----------------------------------------------------------------------------
+; sprite mappings
+; ----------------------------------------------------------------------------
+Obj7E_MapUnc_29C64:	include "mappings/sprite/obj7E_a.asm"
+; ----------------------------------------------------------------------------
+; sprite mappings
+; ----------------------------------------------------------------------------
+Obj7E_MapUnc_29DD0:	include "mappings/sprite/obj7E_b.asm"
 ; ===========================================================================
 
 	if PaddingOptimization=0
