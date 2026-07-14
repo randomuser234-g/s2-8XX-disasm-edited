@@ -47075,11 +47075,10 @@ Sonic_CheckGoSuper:
 		beq.s	.nosuper	; if yes,branch
 		tst.b	(Super_Sonic_flag).w	; is Sonic already Super?
 		bne.s	.nosuper		; if yes, no more turning
-		;cmpi.b	#6,(Emerald_count).w	;have all 6 emeralds?
-		;blo.s	.nosuper		;if less, branch
-		move.w	#50,(Ring_count).w	; does Sonic have at least 50 rings?
-		;cmpi.w	#50,(Ring_count).w	; does Sonic have at least 50 rings?
-		;blo.w	.nosuper	;if not, don't go super
+		cmpi.b	#6,(Emerald_count).w	;have all 6 emeralds?
+		blo.s	.nosuper		;if less, branch
+		cmpi.w	#50,(Ring_count).w	; does Sonic have at least 50 rings?
+		blo.w	.nosuper	;if not, don't go super
 		tst.b	(Update_HUD_timer).w	; has Sonic reached the end of the act?
 		beq.s	.nosuper		; if yes, don't go super
 		move.b	#1,(Super_Sonic_flag).w
