@@ -2100,9 +2100,11 @@ Pal_CPzCyc3: ; loc_2482: ; $0D - Chemical Plant Rotating Palette
 ; ===========================================================================
 ; loc_24A2:
 PalCycle_SuperSonic:
-		tst.b	(Super_Sonic_palette).w
+		move.b	(Super_Sonic_palette).w,d0
 		beq.s	return_24DE
 		bmi.s	loc_24E0
+		subq.b	#1,d0
+		bne.w	PalCycle_SuperSonic_revert	; branch for values greater than 1
 		subq.b	#1,(Palette_timer).w
 		bpl.s	return_24DE
 		move.b	#3,(Palette_timer).w
@@ -2117,6 +2119,26 @@ loc_24d2:
 		lea	(Normal_palette+4).w,a1
 		move.l	(a0,d0.w),(a1)+
 		move.l	4(a0,d0.w),(a1)
+		cmpi.b	#chemical_plant_zone,(Current_Zone).w
+		beq.s	.cpz
+		cmpi.b	#hidden_palace_zone,(Current_Zone).w
+		beq.s	.hpz
+		cmpi.b	#neo_green_hill_zone,(Current_Zone).w
+		beq.s	.ngh
+		bra.s	return_24DE
+.cpz:
+		lea	(pal_2516_CP).l,a0
+		bra.s	.palettepicked
+.hpz:
+		lea	(pal_2516_HP).l,a0
+		bra.s	.palettepicked
+.ngh:
+		lea	(pal_2516_NGH).l,a0
+
+.palettepicked:	lea	(Underwater_palette+4).w,a1
+		move.l	(a0,d0.w),(a1)+
+		move.l	4(a0,d0.w),(a1)
+
 
 return_24DE:
 		rts
@@ -2130,13 +2152,70 @@ loc_24E0:
 		move.w	(Palette_frame).w,d0
 		addq.w	#8,(Palette_frame).w
 		cmpi.w	#$78,(Palette_frame).w
-		blo.s	loc_2508
+		bls.s	loc_2508
 		move.w	#$30,(Palette_frame).w
 
 loc_2508:
 		lea	(Normal_palette+4).w,a1
 		move.l	(a0,d0.w),(a1)+
 		move.l	4(a0,d0.w),(a1)
+		cmpi.b	#chemical_plant_zone,(Current_Zone).w
+		beq.s	.cpz
+		cmpi.b	#hidden_palace_zone,(Current_Zone).w
+		beq.s	.hpz
+		cmpi.b	#neo_green_hill_zone,(Current_Zone).w
+		beq.s	.ngh
+		bra.s	.end
+.cpz:
+		lea	(pal_2516_CP).l,a0
+		bra.s	.palettepicked
+.hpz:
+		lea	(pal_2516_HP).l,a0
+		bra.s	.palettepicked
+.ngh:
+		lea	(pal_2516_NGH).l,a0
+
+.palettepicked:	lea	(Underwater_palette+4).w,a1
+		move.l	(a0,d0.w),(a1)+
+		move.l	4(a0,d0.w),(a1)
+
+.end:
+		rts
+PalCycle_SuperSonic_revert:
+		subq.b	#1,(Palette_timer).w	;run the fade in backwards
+		bpl.s	.end
+		move.b	#3,(Palette_timer).w
+		lea	(pal_2516).l,a0
+		move.w	(Palette_frame).w,d0
+		subq.w	#8,(Palette_frame).w
+		bcc.s	.notfirstframe			; branch, if it isn't the first frame
+		move.w	#0,(Palette_frame).w
+		move.b	#0,(Super_Sonic_palette).w	; stop palette cycle
+.notfirstframe:
+		lea	(Normal_palette+4).w,a1
+		move.l	(a0,d0.w),(a1)+
+		move.l	4(a0,d0.w),(a1)
+		cmpi.b	#chemical_plant_zone,(Current_Zone).w
+		beq.s	.cpz
+		cmpi.b	#hidden_palace_zone,(Current_Zone).w
+		beq.s	.hpz
+		cmpi.b	#neo_green_hill_zone,(Current_Zone).w
+		beq.s	.ngh
+		bra.s	.end
+.cpz:
+		lea	(pal_2516_CP).l,a0
+		bra.s	.palettepicked
+.hpz:
+		lea	(pal_2516_HP).l,a0
+		bra.s	.palettepicked
+.ngh:
+		lea	(pal_2516_NGH).l,a0
+
+.palettepicked:	lea	(Underwater_palette+4).w,a1
+		move.l	(a0,d0.w),(a1)+
+		move.l	4(a0,d0.w),(a1)
+
+.end:
 		rts
 ; ===========================================================================
 
@@ -2150,6 +2229,35 @@ pal_2516:
 		dc.w	$00EE,$06EE,$0AEE,$0EEE,$00EE,$04EE,$08EE,$0CEE
 		dc.w	$00EE,$06EE,$0AEE,$0EEE,$00EE,$08EE,$0CEE,$0EEE
 
+pal_2516_CP:
+		dc.w	$0E08,$0E28,$0E2A,$0E4C,$0C2A,$0E4A,$0E4C,$0E6E
+		dc.w	$0A4C,$0E6C,$0E6E,$0E8E,$0A6E,$0E8E,$0E8E,$0E8E
+		dc.w	$0A6E,$0E8E,$0E8E,$0E8E,$0A6E,$0E8E,$0E8E,$0E8E
+		dc.w	$0A6E,$0E8E,$0E8E,$0E8E,$0A6E,$0E8E,$0E8E,$0E8E
+		dc.w	$0C8E,$0EAE,$0EAE,$0EAE,$0C8E,$0EAE,$0EAE,$0EAE
+		dc.w	$0EAE,$0EAE,$0EAE,$0EAE,$0EAE,$0EAE,$0EAE,$0EAE
+		dc.w	$0EAE,$0EAE,$0EAE,$0EAE,$0EAE,$0EAE,$0EAE,$0EAE
+		dc.w	$0EAE,$0EAE,$0EAE,$0EAE,$0EAE,$0EAE,$0EAE,$0EAE
+
+pal_2516_NGH:
+		dc.w	$0A24,$0C44,$0E46,$0E68,$0C46,$0E66,$0E68,$0E8A
+		dc.w	$0E68,$0E88,$0E8A,$0EAC,$0E68,$0E88,$0E8A,$0EAC
+		dc.w	$0E88,$0EAA,$0EAC,$0ECC,$0E88,$0EAA,$0EAC,$0ECC
+		dc.w	$0EA8,$0ECC,$0ECC,$0ECC,$0EA8,$0ECC,$0ECC,$0ECC
+		dc.w	$0EA8,$0ECC,$0ECC,$0ECC,$0ECA,$0ECC,$0ECC,$0ECC
+		dc.w	$0ECC,$0ECC,$0ECC,$0ECC,$0ECC,$0ECC,$0ECC,$0ECC
+		dc.w	$0ECC,$0ECC,$0ECC,$0ECC,$0ECC,$0ECC,$0ECC,$0ECC
+		dc.w	$0ECA,$0ECC,$0ECC,$0ECC,$0EA8,$0ECC,$0ECC,$0ECC
+
+pal_2516_HP:
+		dc.w	$0A20,$0A40,$0A60,$0A80,$0842,$0862,$0A82,$0AA2
+		dc.w	$0664,$0884,$0AA4,$0AC4,$0684,$0886,$0AC6,$0AE6	
+		dc.w	$0686,$08C8,$0AE8,$0AF8,$0686,$09EA,$0AFA,$0AF8
+		dc.w	$06A4,$08E9,$0AFA,$0AF8,$06A6,$0AE9,$0AFA,$0AF8
+		dc.w	$06A4,$0CE9,$0AFA,$0AF8,$06C6,$0AE9,$0AFA,$0AF8
+		dc.w	$05C8,$08E9,$0AFA,$0AF8,$05C8,$06E9,$09FA,$0AF8
+		dc.w	$05C8,$04E9,$07FA,$0AF8,$05C8,$02E9,$05FA,$09F8
+		dc.w	$06C6,$04E9,$07FA,$0AF8,$06A6,$06E9,$09FA,$0AF8
 ; ===========================================================================
 ; ---------------------------------------------------------------------------
 ; Subroutine to fade in from black
@@ -2812,7 +2920,7 @@ loc_36BE:
 		move.w	#-$A,(PalCycle_Frame).w
 		move.w	#0,(PalCycle_Timer).w
 		move.w	#0,(unk_F662).w
-		move.w	#0,(unk_F660).w
+		move.w	#0,(Super_Sonic_frame_count).w	;originally unk_F660
 		move.w	#180,(Demo_Time_left).w
 		move.w	(VDP_Reg1_val).w,d0
 		ori.b	#$40,d0
@@ -3030,24 +3138,23 @@ TitleScreen_SkipC:
 		beq.w	Demo_Mode
 		andi.b	#button_start_mask,(Ctrl_1_Press).w
 		beq.w	TitleScreen_Loop
-TitScreen_TestForB:
-		btst	#button_B,(Ctrl_1_Held).w
-		beq.w	TitScreen_TestForC
-		move.b	#1,(Player_option).w
-		bra.w	Title_ChkLevSel
-TitScreen_TestForC:
-		btst	#button_C,(Ctrl_1_Held).w
-		beq.w	TitScreen_NoButton
-		move.b	#2,(Player_option).w
-		bra.w	Title_ChkLevSel
-TitScreen_NoButton:
-		move.b	#0,(Player_option).w
+;TitScreen_TestForB:		;code not used anymore
+;		btst	#button_B,(Ctrl_1_Held).w
+;		beq.w	TitScreen_TestForC
+;		move.b	#1,(Player_option).w
+;		bra.w	Title_ChkLevSel
+;TitScreen_TestForC:
+;		btst	#button_C,(Ctrl_1_Held).w
+;		beq.w	TitScreen_NoButton
+;		move.b	#2,(Player_option).w
+;		bra.w	Title_ChkLevSel
+;TitScreen_NoButton:
+;		move.b	#0,(Player_option).w
 ; loc_39F2:
 Title_ChkLevSel:
-		tst.b	(Level_select_flag).w
-		beq.w	PlayLevel
-		btst	#button_A,(Ctrl_1_Held).w
-		beq.w	PlayLevel
+		;no check for level select here as it's something different
+		move.b	#0,(Menu_page).w	;go to first page
+		move.w	#$1,(Level_select_zone).w	;go to first selectable item
 
 LevSelEnter:
 		move.b	#MusID_LevelSel,d0
@@ -3078,6 +3185,13 @@ LevelSelect_Loop:
 		bne.s	LevelSelect_Loop
 		andi.b	#button_A_mask+button_B_mask+button_C_mask+button_start_mask,(Ctrl_1_Press).w
 		beq.s	LevelSelect_Loop
+		cmpi.b	#0,(Menu_page).w	;on the first page?
+		beq.s	.optionselect		;if yes, load options
+		bra.s	.notoptionselect	;otherwise, load the level select
+.optionselect:
+		move.w	(Level_select_zone).w,d0
+		jmp	OptionSelect
+.notoptionselect:
 		move.w	#0,(Two_player_mode).w
 		btst	#button_B,(Ctrl_1_Held).w
 		beq.s	loc_3A7C
@@ -3089,6 +3203,7 @@ loc_3A7C:
 		bne.s	LevelSelect_PressStart
 		btst	#button_A,(Ctrl_1_Press).w
 		bne.s	LevelSelect_Loop
+SoundTestSelection:
 		move.w	(Sound_test_sound).w,d0
 		addi.w	#$80,d0
 		bsr.w	PlaySound
@@ -3197,7 +3312,7 @@ loc_3B68:
 		rts
 Run_Demo_Mode: ; loc_3B8E:
 		andi.b	#button_start_mask,(Ctrl_1_Press).w
-		bne.w	TitScreen_TestForB		;originally Title_ChkLevSel
+		bne.w	Title_ChkLevSel	
 		tst.w	(Demo_Time_left).w
 		bne.w	loc_3B68
 		move.b	#SndID_SpindashRev,d0	; Bug: This should be using MusID_Stop
@@ -3317,7 +3432,13 @@ return_3CC2:
 ; ===========================================================================
 ; loc_3CC4:
 LevelSelect_TextLoad:
+		cmpi.b	#0,(Menu_page).w	;options is loaded?
+		beq.s	.optionstext		;load options text
 		lea	(Level_Select_Text).l,a1
+		bra.s	.textloaded
+.optionstext:
+		lea	(Option_Text).l,a1
+.textloaded:
 		lea	(VDP_data_port).l,a6
 		move.l	#$608C0003,d4
 		move.w	#$8680,d3
@@ -3335,7 +3456,13 @@ loc_3CDC:
 		lsl.w	#7,d0
 		swap	d0
 		add.l	d0,d4
+		cmpi.b	#0,(Menu_page).w	;options is loaded?
+		beq.s	.optionstext		;load options text
 		lea	(Level_Select_Text).l,a1
+		bra.s	.textloaded
+.optionstext:
+		lea	(Option_Text).l,a1
+.textloaded:
 		mulu.w	#27,d1
 		adda.w	d1,a1
 		move.w	#$C680,d3
@@ -3420,6 +3547,51 @@ Level_Select_Text: ; loc_3d7C: ; Level Select Menu Text
 		dc.b	"DEATH EGG ZONE      STAGE 0"
 		dc.b	"                    STAGE 1"
 		dc.b	"SPECIAL STAGE              "
+		dc.b	"SOUND SELECT               "
+
+		charset
+		even
+
+; ===========================================================================
+
+Option_Text: ; loc_3d7C: ; Options Menu Text
+
+		charset ' ', $FF
+		charset '0','9',$00
+		charset '$', $0A
+		charset '-', $0B
+		charset '=', $0C
+		charset '>', $0D
+		;charset '>', $0E ; there are two right arrows in the font for some reason
+		charset 'Y','Z',$0F ; Y and Z come before A-X
+		charset 'A','X',$11
+
+		dc.b	"      -PLAYER SELECT-      "
+		dc.b	"      SONIC AND TAILS      "
+		dc.b	"        SONIC ALONE        "
+		dc.b	"        TAILS ALONE        "
+		dc.b	"                           "
+		dc.b	"    -TWO PLAYER VERSUS-    "
+		dc.b	"      GREEN HILL ZONE      "
+		dc.b	"      DUST HILL ZONE       "
+		dc.b	"      CASINO NIGHT ZONE    "
+		dc.b	"                           "
+		dc.b	"    -ADDITIONAL OPTIONS-   "
+		dc.b	"    PROTOTYPE ZONE ORDER   "
+		dc.b	"     LARGER ZONE ORDER     "
+		dc.b	"                           "
+		dc.b	"                           "
+		dc.b	"                           "
+		dc.b	"                           "
+		dc.b	"                           "
+		dc.b	"                           "
+		dc.b	"                           "
+		dc.b	"                           "
+		dc.b	"-IF CHEAT ENABLED PRESS A- "
+		dc.b	"   -WHEN STARTING FOR-     "
+		dc.b	"     -LEVEL SELECT-        "
+		dc.b	"                           "
+		dc.b	"START GAME                 "
 		dc.b	"SOUND SELECT               "
 
 		charset
@@ -3803,6 +3975,7 @@ Level_FromCheckpoint:
 		move.b	d0,(unk_FE2F).w
 		move.w	d0,(Debug_placement_mode).w
 		move.w	d0,(Level_Inactive_flag).w
+		move.b	d0,(Super_Sonic_flag).w
 		bsr.w	OscillateNumInit
 		move.b	#1,(Update_HUD_score).w
 		move.b	#1,(Update_HUD_rings).w
@@ -12662,6 +12835,8 @@ loc_B560:
 		move.w	#SndID_Ring,d0
 		jmp	(PlayMusic).l			 ; loc_14C0
 Monitor_Shoes: ; loc_B56A:
+	tst.b	(Super_Sonic_flag).w	; is Sonic already Super?
+	bne.s	loc_B5d2	; if yes, don't touch speed
 		move.b	#1,(Speed_shoes).w
 		move.w	#$4B0,(MainCharacter+$34).w
 		move.w	#$C00,(Sonic_top_speed).w
@@ -12675,6 +12850,8 @@ Monitor_Shield: ; loc_B592:
 		move.w	#SndID_Shield,d0
 		jmp	(PlayMusic).l			 ; loc_14C0
 Monitor_Invincibility: ; loc_B5A8:
+	tst.b	(Super_Sonic_flag).w	; is Sonic already Super?
+	bne.s	loc_B5d2		; if yes, don't touch invinc
 		move.b	#1,(Invincibility_flag).w
 		move.w	#$4B0,(MainCharacter+$32).w
 		move.b	#$35,(InvincibilityStars).w
@@ -13286,7 +13463,14 @@ loc_BF66:
 		add.w	d0,d0
 		add.b	(Current_Act).w,d0
 		add.w	d0,d0
+		cmpi.b	#1,(Expanded_zone_option)	;expanded zone order selected?
+		bne.s	.normalzoneorder		;if not, play the normal zone order
+.expandedzoneorder:
+		move.w	word_BF9A_expanded(pc,d0),d0
+		bra.s	.zoneorderdecided
+.normalzoneorder:
 		move.w	word_BF9A(pc,d0),d0
+.zoneorderdecided:
 		move.w	d0,(Current_ZoneAndAct).w
 		clr.b	(Last_star_pole_hit).w
 		tst.b	(Enter_SpecialStage_flag).w
@@ -13310,10 +13494,10 @@ GotThrough_Reset:
 ; One value per act. That value is the level/act number of the level to load when
 ; that act finishes.
 ;note that when playing normally, the level order is originally this
-;1 Neo Green Hill
-;2 Chemical Plant
-;3 Hill Top
-;4 Green Hill
+;1 Neo Green Hill 1+2
+;2 Chemical Plant 1+2
+;3 Hill Top	  1+2
+;4 Green Hill	  1+2
 ;END
 ; -------------------------------------------------------------------------------
 word_BF9A: zoneOrderedTable 2,2
@@ -13352,6 +13536,58 @@ word_BF9A: zoneOrderedTable 2,2
 	zoneTableEntry.w  death_egg_zone_act_2		; DEZ1
 	zoneTableEntry.w  green_hill_zone_act_1		; DEZ2
 	zoneTableEnd
+; -------------------------------------------------------------------------------
+; -------------------------------------------------------------------------------
+; Edited game level order
+
+; One value per act. That value is the level/act number of the level to load when
+; that act finishes.
+; this is how the order is now (this is subject to change as more zones become playable)
+;1 Neo Green Hill 1+2
+;2 Oil Ocean 	  1+2
+;3 Dust Hill	  1+2
+;4 Chemical Plant 1+2
+;5 Metropolis	  1+2+3
+;6 Hill Top	  1+2
+;7 Green Hill	  1+2
+;END
+word_BF9A_expanded: zoneOrderedTable 2,2
+	zoneTableEntry.w  green_hill_zone_act_2		; GHZ1
+	zoneTableEntry.w  wood_zone_act_1		; GHZ2
+	zoneTableEntry.w  green_hill_zone_act_1		; OWZ1
+	zoneTableEntry.w  green_hill_zone_act_1		; OWZ2
+	zoneTableEntry.w  wood_zone_act_2		; WZ1
+	zoneTableEntry.w  metropolis_zone_act_1		; WZ2
+	zoneTableEntry.w  green_hill_zone_act_1		; SSZ1
+	zoneTableEntry.w  green_hill_zone_act_1		; SSZ2
+	zoneTableEntry.w  metropolis_zone_act_2		; MTZ1
+	zoneTableEntry.w  metropolis_zone_act_3		; MTZ2
+	zoneTableEntry.w  hill_top_zone_act_1		; MTZ3
+	zoneTableEntry.w  green_hill_zone_act_1		; MTZ4
+	zoneTableEntry.w  green_hill_zone_act_1		; BLZ1
+	zoneTableEntry.w  green_hill_zone_act_1		; BLZ2
+	zoneTableEntry.w  hill_top_zone_act_2		; HTZ1
+	zoneTableEntry.w  green_hill_zone_act_1		; HTZ2
+	zoneTableEntry.w  hidden_palace_zone_act_2	; HPZ1
+	zoneTableEntry.w  oil_ocean_zone_act_1		; HPZ2
+	zoneTableEntry.w  green_hill_zone_act_1		; RWZ1
+	zoneTableEntry.w  green_hill_zone_act_1		; RWZ2
+	zoneTableEntry.w  oil_ocean_zone_act_2		; OOZ1
+	zoneTableEntry.w  dust_hill_zone_act_1		; OOZ2
+	zoneTableEntry.w  dust_hill_zone_act_2		; DHZ1
+	zoneTableEntry.w  chemical_plant_zone_act_1	; DHZ2
+	zoneTableEntry.w  casino_night_zone_act_2	; CNZ1
+	zoneTableEntry.w  chemical_plant_zone_act_1	; CNZ2
+	zoneTableEntry.w  chemical_plant_zone_act_2	; CPZ1
+	zoneTableEntry.w  metropolis_zone_act_1		; CPZ2
+	zoneTableEntry.w  genocide_city_zone_act_2	; GCZ1
+	zoneTableEntry.w  neo_green_hill_zone_act_1	; GCZ2
+	zoneTableEntry.w  neo_green_hill_zone_act_2	; NGHZ1
+	zoneTableEntry.w  oil_ocean_zone_act_1		; NGHZ2
+	zoneTableEntry.w  death_egg_zone_act_2		; DEZ1
+	zoneTableEntry.w  green_hill_zone_act_1		; DEZ2
+	zoneTableEnd
+
 loc_BFDE:
 		moveq	#$20,d1
 		move.w	$32(a0),d0
@@ -17630,19 +17866,39 @@ Obj0D_Init:
 		move.b	#4,1(a0)
 		move.b	#$18,$19(a0)
 		move.b	#4,$18(a0)
+		move.b	#0,(Two_player_winner).w
 ; loc_F256: End_Panel_Sub_02:
 Obj0D_Main:
 		move.w	(MainCharacter+8).w,d0
 		sub.w	8(a0),d0
-		blo.s	+
+		blo.s	.check2p
 		cmpi.w	#$20,d0		; is Sonic within $20 pixels of the signpost?
-		bhs.s	+		; if not,branch
+		bhs.s	.check2p	; if not,branch
 		move.w	#SndID_Signpost,d0
 		jsr	(PlayMusic).l
 		clr.b	(Update_HUD_timer).w		; stop timer
 		move.w	(Camera_Max_X_pos).w,(Camera_Min_X_pos).w	; lock screen position
 		addq.b	#2,routine(a0)
-+
+		tst.w	(Two_player_mode).w	;2p versus mode?
+		beq.s	.nopass		 ; if not, don't check for 2p tails
+		move.b	#1,(Two_player_winner).w
+		rts
+.check2p:
+		;2p signpost code
+		tst.w	(Two_player_mode).w	;2p versus mode?
+		beq.s	.nopass		 ; if not, don't check for 2p tails
+		move.w	(Sidekick+8).w,d0
+		sub.w	8(a0),d0
+		blo.s	.nopass
+		cmpi.w	#$20,d0		; is Tails within $20 pixels of the signpost?
+		bhs.s	.nopass		; if not,branch
+		move.w	#SndID_Signpost,d0
+		jsr	(PlayMusic).l
+		clr.b	(Update_HUD_timer).w		; stop timer
+		move.w	(Camera_Max_X_pos).w,(Camera_Min_X_pos).w	; lock screen position
+		addq.b	#2,routine(a0)
+		move.b	#2,(Two_player_winner).w
+.nopass:
 		rts
 ; ===========================================================================
 ; loc_F280: End_Panel_Sub_03:
@@ -17655,7 +17911,11 @@ Obj0D_Spin:
 		bne.s	Obj0D_ChkSparkle	; if not,branch
 		addq.b	#2,routine(a0)
 		cmpi.b	#2,(Player_mode).w	;playing as tails?	
-		bne.s	Obj0D_ChkSparkle	;if not, branch
+		beq.s	.playingastails		;if yes, branch
+		cmpi.b	#2,(Two_player_winner).w	;this is set?
+		beq.s	.playingastails		;if yes, Tails won
+		bra.s	Obj0D_ChkSparkle	;if not, branch
+	.playingastails:
 		addq.b	#1,anim(a0)		;tails signpost
 ; loc_F29C:
 Obj0D_ChkSparkle:
@@ -18570,6 +18830,7 @@ Obj01_Init:
 		move.w	#$80,(Sonic_deceleration).w	; set Sonic's deceleration
 		move.b	#$C,$3E(a0)
 		move.b	#$D,$3F(a0)
+		move.b	#0,(Super_Sonic_flag).w
 		move.b	#0,$2C(a0)
 		move.b	#4,$2D(a0)
 		move.w	#0,(Sonic_Pos_Record_Index).w
@@ -18610,6 +18871,7 @@ loc_Fd08:
 ; loc_Fd22: Sonic_ControlsLock:
 Obj01_ControlsLock:
 		bsr.s	Sonic_Display
+		jsr	Sonic_Super
 		bsr.w	Sonic_RecordPos
 		bsr.w	Sonic_Water
 		move.b	(Primary_Angle).w,$36(a0)
@@ -18707,6 +18969,12 @@ Obj01_ChkShoes:	; Checks if Sonic should still have the speed shoes
 		move.w	#$600,(Sonic_top_speed).w
 		move.w	#$C,(Sonic_acceleration).w
 		move.w	#$80,(Sonic_deceleration).w
+		tst.b	(Super_Sonic_flag).w
+		beq.s	Obj01_RmvSpeed
+		move.w	#$A00,(Sonic_top_speed).w
+		move.w	#$30,(Sonic_acceleration).w
+		move.w	#$100,(Sonic_deceleration).w
+Obj01_RmvSpeed:
 		move.b	#0,(Speed_shoes).w
 		move.w	#MusID_SlowDown,d0	; restore music tempo
 		jmp	(PlayMusic).l
@@ -18788,8 +19056,17 @@ Obj01_InWater:
 		bsr.w	ResumeMusic
 		move.b	#$A,(BreathingBubbles).w	; load Obj0A (Sonic's breathing bubbles) at $FFFFB340
 		move.b	#$81,(BreathingBubbles+$28).w
-	cmpa.w	#MainCharacter,a0		;is tails player 1
-	bne.s	.donttouchspeed			;if not, don't touch speed
+		cmpa.w	#MainCharacter,a0		;is tails player 1
+		bne.s	.donttouchspeed			;if not, don't touch speed
+		tst.b	(Super_Sonic_flag).w	; is Sonic already Super?
+		beq.s	.normalspeed		; if yes, use super underwater speeds
+		move.w	#$500,(Sonic_top_speed).w
+		move.w	#$18,(Sonic_acceleration).w
+		move.w	#$80,(Sonic_deceleration).w
+		bra.s	.donttouchspeed
+.normalspeed
+		tst.b	(Speed_shoes).w	; is Sonic already Super?
+		bne.s	.donttouchspeed		; if yes, use super underwater speeds
 		move.w	#$300,(Sonic_top_speed).w
 		move.w	#6,(Sonic_acceleration).w
 		move.w	#$40,(Sonic_deceleration).w
@@ -18805,10 +19082,19 @@ Obj01_InWater:
 ; loc_FEA8: Sonic_NotInWater:
 Obj01_OutWater:
 		bclr	#6,$22(a0)	; clear underwater flag
-		beq.s	return_FE54	; if already cleared,branch
+		beq.w	return_FE54	; if already cleared,branch
 		bsr.w	ResumeMusic
-	cmpa.w	#MainCharacter,a0		;is tails player 1
-	bne.s	.donttouchspeed			;if not, don't touch speed
+		cmpa.w	#MainCharacter,a0		;is tails player 1
+		bne.s	.donttouchspeed			;if not, don't touch speed
+		tst.b	(Super_Sonic_flag).w	; is Sonic already Super?
+		beq.s	.normalspeed		; if yes, use super underwater speeds
+		move.w	#$A00,(Sonic_top_speed).w
+		move.w	#$30,(Sonic_acceleration).w
+		move.w	#$100,(Sonic_deceleration).w
+		bra.s	.donttouchspeed
+.normalspeed:
+		tst.b	(Speed_shoes).w	; is Sonic already Super?
+		bne.s	.donttouchspeed		; if yes, use super underwater speeds
 		move.w	#$600,(Sonic_top_speed).w
 		move.w	#$C,(Sonic_acceleration).w
 		move.w	#$80,(Sonic_deceleration).w
@@ -18995,6 +19281,10 @@ Sonic_Duck:
 ; ---------------------------------------------------------------------------
 ; sub_1006E:
 Obj01_UpdateSpeedOnGround:
+	tst.b	(Super_Sonic_flag).w
+	beq.w	+
+	move.w	#$C,d5
++
 		move.b	(Ctrl_1_Held_Logical).w,d0
 		andi.b	#button_left_mask+button_right_mask,d0
 		bne.s	Obj01_Traction
@@ -19545,10 +19835,14 @@ Sonic_Jump:
 		cmpi.w	#6,d1		; does Sonic have enough room to jump?
 		blt.w	return_1051A	; if not,branch
 		move.w	#$680,d2
+		tst.b	(Super_Sonic_flag).w
+		beq.s	.chkwater
+		move.w	#$800,d2	; set higher jump speed if super
+.chkwater:
 		btst	#6,$22(a0)	; is Sonic underwater?
-		beq.s	+		; if not,branch
+		beq.s	.notunderwater	; if not,branch
 		move.w	#$380,d2	; reduce jump speed
-+
+.notunderwater:
 		moveq	#0,d0
 		move.b	$26(a0),d0
 		subi.b	#$40,d0
@@ -19604,12 +19898,15 @@ Sonic_JumpHeight:
 
 loc_1053A:
 		cmp.w	$12(a0),d1	; is Sonic going up faster than d1?
-		ble.s	return_1054E	; if not,branch
+		ble.s	.sonicmidair	; if not,branch
 		move.b	(Ctrl_1_Held_Logical).w,d0
 		andi.b	#button_A_mask+button_B_mask+button_C_mask,d0		; is A/B/C pressed?
 		bne.s	return_1054E	; if yes,branch
 		move.w	d1,$12(a0)	; immediately reduce Sonic's upward speed to d1
-
+		bra.s	return_1054E
+.sonicmidair:
+		jsr	Sonic_CheckGoSuper
+		rts
 return_1054E:
 		rts
 ; ---------------------------------------------------------------------------
@@ -19660,6 +19957,10 @@ Sonic_UpdateSpindash:
 		move.b	#0,spindash_flag(a0)
 		move.w	#$2000,(Horiz_scroll_delay_val).w
 		move.w	#$800,inertia(a0)
+		tst.b	(Super_Sonic_flag).w
+		beq.s	.notsuper
+		move.w	#$B00,inertia(a0)
+.notsuper
 		btst	#0,status(a0)
 		beq.s	loc_105d2
 		neg.w	inertia(a0)
@@ -26588,7 +26889,7 @@ loc_1562C:
 		addq.b	#2,routine(a0)
 		move.l	#Obj74_MapUnc_156B2,mappings(a0) ; loc_156B2
 		move.w	#$8680,art_tile(a0)
-		bsr.w	Adjust2PArtPointer	   ; loc_DC30
+		jsr	Adjust2PArtPointer	   ; loc_DC30
 		ori.b	#$04,$0001(a0)
 		move.b	$0028(a0),d0
 		move.b	d0,d1
@@ -39015,7 +39316,16 @@ Hurt_NoRings: ; loc_2141A:
 KillSonic: ; loc_21422:
 		tst.w	(Debug_placement_mode).w
 		bne.s	Kill_NoDeath	; loc_21476
+		cmpa.w	#MainCharacter,a0	;did player 1 die?
+		bne.w	.dontremovesuper;if not, don't remove buffs
 		move.b	#0,(Invincibility_flag).w
+		move.b	#0,(Speed_shoes).w	; clear speed shoes
+		tst.b	(Super_Sonic_flag).w	; is Sonic already Super?
+		beq.w	.dontremovesuper		; if not, branch
+		move.b	#2,(Super_Sonic_palette).w	; Remove rotating palette
+		move.w	#$28,(Palette_frame).w
+		move.b	#0,(Super_Sonic_flag).w
+		.dontremovesuper:
 		move.b	#6,$24(a0)
 		bsr.w	J_Sonic_ResetOnFloor_00	; loc_214FC
 		bset	#1,$22(a0)
@@ -46758,6 +47068,78 @@ Obj7E_MapUnc_29C64:	include "mappings/sprite/obj7E_a.asm"
 ; ----------------------------------------------------------------------------
 Obj7E_MapUnc_29DD0:	include "mappings/sprite/obj7E_b.asm"
 ; ===========================================================================
+		include	"OptionSelect.asm"
+Sonic_CheckGoSuper:
+		move.b	(Ctrl_1_Press_Logical).w,d0
+		andi.b	#button_A_mask+button_B_mask+button_C_mask,d0		; is A/B/C pressed?
+		beq.s	.nosuper	; if yes,branch
+		tst.b	(Super_Sonic_flag).w	; is Sonic already Super?
+		bne.s	.nosuper		; if yes, no more turning
+		;cmpi.b	#6,(Emerald_count).w	;have all 6 emeralds?
+		;blo.s	.nosuper		;if less, branch
+		move.w	#50,(Ring_count).w	; does Sonic have at least 50 rings?
+		;cmpi.w	#50,(Ring_count).w	; does Sonic have at least 50 rings?
+		;blo.w	.nosuper	;if not, don't go super
+		tst.b	(Update_HUD_timer).w	; has Sonic reached the end of the act?
+		beq.s	.nosuper		; if yes, don't go super
+		move.b	#1,(Super_Sonic_flag).w
+		move.b	#1,(Super_Sonic_palette).w
+		move.w	#$A00,(Sonic_top_speed).w
+		move.w	#$30,(Sonic_acceleration).w
+		move.w	#$100,(Sonic_deceleration).w
+		move.w	#0,invincibility_time(a0)
+		move.b	#1,(Invincibility_flag).w	; make Sonic invincible
+		move.w	#MusID_Invinc,d0
+		jmp	(PlayMusic).l			 ; loc_14C0
+.nosuper:
+		rts
+; ---------------------------------------------------------------------------
+; Subroutine doing the extra logic for Super Sonic
+; ---------------------------------------------------------------------------
+
+; ||||||||||||||| S U B R O U T I N E |||||||||||||||||||||||||||||||||||||||
+
+; loc_1ABA6:
+Sonic_Super:
+	tst.b	(Super_Sonic_flag).w	; Ignore all this code if not Super Sonic
+	beq.w	return_1AC3C
+	tst.b	(Update_HUD_timer).w
+	beq.s	Sonic_RevertToNormal ; ?
+	subq.w	#1,(Super_Sonic_frame_count).w
+	bpl.w	return_1AC3C
+	move.w	#60,(Super_Sonic_frame_count).w	; Reset frame counter to 60
+	tst.w	(Ring_count).w
+	beq.s	Sonic_RevertToNormal
+	ori.b	#1,(Update_HUD_rings).w
+	cmpi.w	#1,(Ring_count).w
+	beq.s	+
+	cmpi.w	#10,(Ring_count).w
+	beq.s	+
+	cmpi.w	#100,(Ring_count).w
+	bne.s	++
++
+	ori.b	#$80,(Update_HUD_rings).w
++
+	subq.w	#1,(Ring_count).w
+	bne.s	return_1AC3C
+; loc_1ABF2:
+Sonic_RevertToNormal:
+	move.b	#2,(Super_Sonic_palette).w	; Remove rotating palette
+	move.w	#$28,(Palette_frame).w
+	move.b	#0,(Super_Sonic_flag).w
+	move.w	#1,invincibility_time(a0)	; Remove invincibility
+	move.w	#$600,(Sonic_top_speed).w
+	move.w	#$C,(Sonic_acceleration).w
+	move.w	#$80,(Sonic_deceleration).w
+	btst	#6,status(a0)	; Check if underwater, return if not
+	beq.s	return_1AC3C
+	move.w	#$300,(Sonic_top_speed).w
+	move.w	#6,(Sonic_acceleration).w
+	move.w	#$40,(Sonic_deceleration).w
+
+return_1AC3C:
+	rts
+; End of subroutine Sonic_Super
 
 	if PaddingOptimization=0
 		cnop	-1,2<<lastbit(*-1)

@@ -826,7 +826,7 @@ Palette_frame:			ds.w	1
 Palette_timer:			ds.b	1
 Super_Sonic_palette:		ds.b	1
 
-unk_F660:			ds.w	1	; Cleared once, never used
+Super_Sonic_frame_count:	ds.w	1	; originally unk_F660
 unk_F662:			ds.w	1	; Cleared once, never used
 				ds.b	2	; $FFFFF664-$FFFFF665 ; seems unused
 PalCycle_Timer2:		ds.w	1
@@ -1037,7 +1037,7 @@ Current_Air:			ds.b	1
 Current_Special_Stage:		ds.b	1
 				ds.b	1	; $FFFFFE17 ; seems unused
 Continue_count:			ds.b	1	; only cleared, never used
-				ds.b	1	; $FFFFFE19 ; seems unused
+Super_Sonic_flag:		ds.b	1	; $FFFFFE19 ; was unused
 Time_Over_flag:			ds.b	1
 Extra_life_flags:		ds.b	1
 
@@ -1133,7 +1133,10 @@ Sound_test_sound:		ds.w	1
 Next_Extra_life_score:		ds.l	1
 Player_option:			ds.b	1	; player option
 Player_mode:			ds.b	1	; player option
-				ds.b	$A	; $FFFFFFC5-$FFFFFFCF ; seems unused
+Two_player_winner:		ds.b	1	; who won in versus game
+Menu_page:			ds.b	1	; what page the menu screen is on
+Expanded_zone_option:		ds.b	1	;toggle expanded zone order
+				ds.b	$7	; $FFFFFFC5-$FFFFFFCF ; seems unused
 
 Level_select_flag:		ds.b	1
 Slow_motion_flag:		ds.b	1
