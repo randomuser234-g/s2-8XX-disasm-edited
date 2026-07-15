@@ -47,7 +47,7 @@ PaddingOptimization = 0|AllOptimizations
 useFullWaterTables = 0
 ;	| If 1, zone offset tables for water levels cover all level slots instead of only slots 8-$F
 ;	| Set to 1 if you've shifted level IDs around or you want water in levels with a level slot below 8
-debugbuild = 1
+debugbuild = 0
 ;	| If 1, level select,debug mode and slow mo available no cheats needed
 
 ; >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -22868,6 +22868,9 @@ loc_11C6A:
 		andi.b	#$FC,$0001(a0)
 		eor.b	d1,d2
 		or.b	d2,$0001(a0)
+;pushing was missing from tails_animate
+		btst	#5,$22(a0)
+		bne.w	loc_11d6A
 		lsr.b	#$04,d0
 		andi.b	#$06,d0
 		move.w	$0014(a0),d2
@@ -22929,7 +22932,7 @@ loc_11d12:
 		rts
 loc_11d26:
 		addq.b	#1,d0
-		bne.s	loc_11d6A
+		bne.s	loc_11DA0	;what would be TAnim_GetTailFrame, pointed to push instead? (loc_11d6A) Now it is 11DA0, which is the tails tails frame
 		move.w	$0014(a0),d2
 		bpl.s	loc_11d32
 		neg.w	d2
@@ -22951,9 +22954,9 @@ loc_11d4E:
 		andi.b	#$FC,$0001(a0)
 		or.b	d1,$0001(a0)
 		bra.w	loc_11BF0
-loc_11d6A:
-		addq.b	#1,d0
-		bne.s	loc_11DA0
+loc_11d6A:	;TAnim_Push
+		;addq.b	#1,d0		;these lines didn't exist in sonic's code
+		;bne.s	loc_11DA0
 		move.w	$0014(a0),d2
 		bmi.s	loc_11d76
 		neg.w	d2
@@ -23040,7 +23043,7 @@ Tails_Animate_Roll: ; loc_11E46:
 Tails_Animate_Roll2: ; loc_11E4B:
 		dc.b	$01,$48,$47,$46,$FF
 Tails_Animate_Push_NoArt: ; loc_11E50:
-		dc.b	$FD,$09,$0A,$0B,$0C,$0D,$0E,$FF
+		dc.b	$FD,$63,$64,$65,$66,$FF,$FF,$FF,$FF,$FF
 Tails_Animate_Wait: ; loc_11E58:
 		dc.b	$07,$01,$01,$01,$01,$01,$01,$01,$01,$01,$01,$03,$02,$01,$01,$01
 		dc.b	$01,$01,$01,$01,$01,$03,$02,$01,$01,$01,$01,$01,$01,$01,$01,$01
@@ -35488,7 +35491,7 @@ loc_1d77C:
 		dc.w	loc_1d784-loc_1d77C
 		dc.w	loc_1d7BA-loc_1d77C
 loc_1d780:
-		dc.w	$F000,$F600
+		dc.w	-$1000,-$0A80
 loc_1d784:
 		addq.b	#2,routine(a0)
 		move.l	#Obj7B_MapUnc_1D920,mappings(a0) ; loc_1D920
