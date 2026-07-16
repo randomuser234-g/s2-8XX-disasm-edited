@@ -18902,6 +18902,8 @@ Obj01_Init:
 		move.b	#$C,$3E(a0)
 		move.b	#$D,$3F(a0)
 		move.b	#0,(Super_Sonic_flag).w
+		subi.w	#$20,x_pos(a0)	;added
+		addi.w	#4,y_pos(a0)	;added these lines
 		move.b	#0,$2C(a0)
 		move.b	#4,$2D(a0)
 		move.w	#0,(Sonic_Pos_Record_Index).w
@@ -18909,8 +18911,15 @@ Obj01_Init:
 
 loc_FCd4:
 		bsr.w	Sonic_RecordPos
-		move.w	#0,(a1,d0.w)
-		dbf	d2,loc_FCd4
+		;move.w	#0,(a1,d0.w)
+		;dbf	d2,loc_FCd4
+
+	subq.w	#4,a1	;changed the commented out lines above into this
+	move.l	#0,(a1)
+	dbf	d2,loc_FCd4
+
+	addi.w	#$20,x_pos(a0)
+	subi.w	#4,y_pos(a0)
 
 ; ---------------------------------------------------------------------------
 ; Normal state for Sonic
@@ -19070,7 +19079,10 @@ Sonic_RecordPos:
 		move.w	$C(a0),(a1)+
 		addq.b	#4,(Sonic_Pos_Record_Index+1).w
 		lea	(Sonic_Stat_Record_Buf).w,a1
-		move.w	(Ctrl_1).w,(a1,d0.w)
+		;move.w	(Ctrl_1).w,(a1,d0.w)	;this latter code was changed otherwise tails has bug where he is both going left while attempting to stand at same time, clearing left while going left causing stuck on one frame
+		lea	(a1,d0.w),a1
+		move.w	(Ctrl_1_Logical).w,(a1)+
+		move.w	status(a0),(a1)+ ; Copies `status` AND the byte after it...
 		rts
 ; End of function Sonic_RecordPos
 
@@ -21469,7 +21481,7 @@ TailsCPU_Normal_FollowRight:
 ; Tails is happy where he is
 ; loc_1BDBA:
 TailsCPU_Normal_Stand:
-	bclr	#0,status(a0)
+	bclr	#0,status(a0)		;somehow it is acting like he is standing even when moving left
 	move.b	d4,d0
 	andi.b	#1,d0
 	beq.s	TailsCPU_Normal_FilterAction
@@ -26773,8 +26785,10 @@ loc_14CBC:
 		andi.w	#$FF80,d0
 		sub.w	(Camera_X_pos_coarse).w,d0
 		cmpi.w	#$280,d0
-		bhi.w	DeleteObject
+		bhi.w	.deletobj
 		rts
+.deletobj:
+		jmp	DeleteObject
 ; loc_14CDC:
 Obj13_ChkDel2:
 		move.w	8(a0),d0
