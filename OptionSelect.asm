@@ -59,10 +59,12 @@ OptionSelect:
 	.startgame:
 		cmpi.w	#$19,d0		; have you selected item $13 (start game)?
 		bne.w	.soundtest	; if not, go to sound test
-		btst	#button_A,(Ctrl_1_Held).w	;A button used?	
-		beq.w	.nolevsel			;if not, don't enter level select
 		tst.b	(Level_select_flag).w ; check if level select code is on
-		bne.w	.levsel	; if yes, do level select
+		beq.w	.nolevsel	; if no, then no access to level select
+		btst	#button_A,(Ctrl_1_Held).w	;A button used?	
+		bne.w	.levsel			;if yes, enter level select
+		btst	#button_A,(Ctrl_2_Held).w	;A button used?	
+		bne.w	.levsel			;if yes, enter level select
 	.nolevsel:
 		move.w	#0,(Two_player_mode).w
 		jmp	PlayLevel
@@ -70,6 +72,10 @@ OptionSelect:
 	.soundtest:
 		cmpi.w	#$1A,d0		; have you selected item $14 (sound test)?
 		bne.w	.donothing	; if not, do nothing
+		btst	#button_A,(Ctrl_1_Press).w	;was A pressed?
+		bne.s	.donothing		;if not, branch
+		btst	#button_A,(Ctrl_2_Press).w	;was A pressed?
+		bne.s	.donothing		;if not, branch
 		bra.w	.soundtestsel
 	.donothing:
 		jmp	LevelSelect_Loop

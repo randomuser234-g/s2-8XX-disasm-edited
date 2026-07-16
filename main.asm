@@ -1190,7 +1190,10 @@ PauseGame:
 		tst.w	(Game_paused).w
 		bne.s	+
 		btst	#button_start,(Ctrl_1_Press).w
-		beq.s	Pause_DoNothing
+		bne.s	+
+		btst	#button_start,(Ctrl_2_Press).w
+		bne.s	+
+		bra.s	Pause_DoNothing
 +
 		move.w	#1,(Game_paused).w
 		move.b	#MusID_Pause,(Sound_Queue.Music0).w
@@ -1200,7 +1203,11 @@ Pause_Loop:
 		bsr.w	WaitForVint
 		;moved check to pause_chkbc
 		btst	#button_A,(Ctrl_1_Press).w
-		beq.s	Pause_ChkBC
+		bne.s	.apressed
+		btst	#button_A,(Ctrl_2_Press).w
+		bne.s	.apressed
+		bra.s	Pause_ChkBC
+.apressed:
 		move.b	#GameModeID_TitleScreen,(Game_Mode).w
 		nop
 		bra.s	Pause_Resume
@@ -1216,7 +1223,10 @@ Pause_ChkBC:
 ; loc_1528:
 Pause_ChkStart:
 		btst	#button_start,(Ctrl_1_Press).w
-		beq.s	Pause_Loop
+		bne.s	Pause_Resume
+		btst	#button_start,(Ctrl_2_Press).w
+		bne.s	Pause_Resume
+		bra.s	Pause_Loop
 ; loc_1530:
 Pause_Resume:
 		move.b	#MusID_Unpause,(Sound_Queue.Music0).w
@@ -3137,7 +3147,10 @@ TitleScreen_SkipC:
 		tst.w	(Demo_Time_left).w
 		beq.w	Demo_Mode
 		andi.b	#button_start_mask,(Ctrl_1_Press).w
-		beq.w	TitleScreen_Loop
+		bne.s	Title_ChkLevSel
+		andi.b	#button_start_mask,(Ctrl_2_Press).w
+		bne.s	Title_ChkLevSel
+		bra.w	TitleScreen_Loop
 ;TitScreen_TestForB:		;code not used anymore
 ;		btst	#button_B,(Ctrl_1_Held).w
 ;		beq.w	TitScreen_TestForC
@@ -3184,7 +3197,11 @@ LevelSelect_Loop:
 		tst.l	(Plc_Buffer).w
 		bne.s	LevelSelect_Loop
 		andi.b	#button_A_mask+button_B_mask+button_C_mask+button_start_mask,(Ctrl_1_Press).w
-		beq.s	LevelSelect_Loop
+		bne.s	.buttonconfirmed
+		andi.b	#button_A_mask+button_B_mask+button_C_mask+button_start_mask,(Ctrl_2_Press).w
+		bne.s	.buttonconfirmed
+		bra.s	LevelSelect_Loop
+.buttonconfirmed:
 		cmpi.b	#0,(Menu_page).w	;on the first page?
 		beq.s	.optionselect		;if yes, load options
 		bra.s	.notoptionselect	;otherwise, load the level select
@@ -3194,7 +3211,11 @@ LevelSelect_Loop:
 .notoptionselect:
 		move.w	#0,(Two_player_mode).w
 		btst	#button_B,(Ctrl_1_Held).w
-		beq.s	loc_3A7C
+		bne.s	.enable2p
+		btst	#button_B,(Ctrl_2_Held).w
+		bne.s	.enable2p
+		bra.s	loc_3A7C
+.enable2p:
 		move.w	#1,(Two_player_mode).w
 
 loc_3A7C:
@@ -3203,11 +3224,13 @@ loc_3A7C:
 		bne.s	LevelSelect_PressStart
 		btst	#button_A,(Ctrl_1_Press).w
 		bne.s	LevelSelect_Loop
+		btst	#button_A,(Ctrl_2_Press).w
+		bne.s	LevelSelect_Loop
 SoundTestSelection:
 		move.w	(Sound_test_sound).w,d0
 		addi.w	#$80,d0
 		bsr.w	PlaySound
-		bra.s	LevelSelect_Loop
+		bra.w	LevelSelect_Loop
 ; ===========================================================================
 ; loc_3A9C:
 LevelSelect_PressStart:
@@ -3315,7 +3338,8 @@ Run_Demo_Mode: ; loc_3B8E:
 		bne.w	Title_ChkLevSel	
 		tst.w	(Demo_Time_left).w
 		bne.w	loc_3B68
-		move.b	#SndID_SpindashRev,d0	; Bug: This should be using MusID_Stop
+		;move.b	#SndID_SpindashRev,d0	; Bug: This should be using MusID_Stop
+		;move.b	#MusID_Stop,d0
 		bsr.w	PlaySound
 		move.w	(Demo_number).w,d0
 		andi.w	#7,d0
@@ -3367,14 +3391,22 @@ LevelSelect_Controls:
 		move.b	(Ctrl_1_Press).w,d1
 		andi.b	#button_up_mask+button_down_mask,d1
 		bne.s	loc_3C3E
+		move.b	(Ctrl_2_Press).w,d1		;player 2 controls?
+		andi.b	#button_up_mask+button_down_mask,d1	;press up/down?
+		bne.s	loc_3C3E				;if yes, branch
 		subq.w	#1,(LevSel_HoldTimer).w
 		bpl.s	LevelSelect_Controls2
 
 loc_3C3E:
 		move.w	#$B,(LevSel_HoldTimer).w
 		move.b	(Ctrl_1_Held).w,d1
+		andi.b	#button_up_mask+button_down_mask,d1	;up/down?
+		bne.s	.updownheld				;if yes, branch
+		move.b	(Ctrl_2_Held).w,d1
 		andi.b	#button_up_mask+button_down_mask,d1
-		beq.s	LevelSelect_Controls2
+		bne.s	.updownheld
+		bra.s	LevelSelect_Controls2
+.updownheld:
 		move.w	(Level_select_zone).w,d0
 		btst	#button_up,d1
 		beq.s	loc_3C5E
@@ -3402,7 +3434,12 @@ LevelSelect_Controls2:
 		move.w	(Sound_test_sound).w,d0
 		move.b	(Ctrl_1_Press).w,d1
 		andi.b	#button_left_mask+button_right_mask,d1
-		beq.s	loc_3CAA
+		bne.s	.leftrightpressed
+		move.b	(Ctrl_2_Press).w,d1
+		andi.b	#button_left_mask+button_right_mask,d1
+		bne.s	.leftrightpressed
+		bra.s	loc_3CAA
+.leftrightpressed:
 		btst	#button_left,d1
 		beq.s	loc_3C9A
 		subq.b	#1,d0
@@ -3419,7 +3456,11 @@ loc_3C9A:
 
 loc_3CAA:
 		btst	#button_A,(Ctrl_1_Press).w
-		beq.s	loc_3CBA
+		bne.s	.abuttonconfirmed
+		btst	#button_A,(Ctrl_2_Press).w
+		bne.s	.abuttonconfirmed
+		bra.s	loc_3CBA
+.abuttonconfirmed:
 		addi.b	#$10,d0
 		andi.b	#$7F,d0
 
