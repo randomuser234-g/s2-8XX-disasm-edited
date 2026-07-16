@@ -751,8 +751,8 @@ Camera_X_pos_copy:		ds.l	1
 Camera_Y_pos_copy:		ds.l	1
 Tails_Min_X_pos			ds.w	1	; 
 Tails_Max_X_pos			ds.w	1	; 
+Tails_Min_Y_pos			ds.w	1	; $FFFFEEFE-$FFFFEEFF ; was unused
 Tails_Max_Y_pos			ds.w	1	; $FFFFEEF8-$FFFFEEFD ; was unused
-				ds.b	2	; $FFFFEEFE-$FFFFEEFF ; seems unused
 
 Camera_RAM_End:
 

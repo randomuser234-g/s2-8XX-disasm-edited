@@ -3911,6 +3911,7 @@ SonicAndTails:
 		move.w	(MainCharacter+x_pos).w,(Sidekick+x_pos).w
 		move.w	(MainCharacter+y_pos).w,(Sidekick+y_pos).w
 		subi.w	#32,(Sidekick+x_pos).w
+		addi.w	#4,(Sidekick+y_pos).w
 		rts
 ;--------------------------------------------------------------------------------------------------------------
 SonicAlone:
@@ -3921,7 +3922,7 @@ SonicAlone:
 ;--------------------------------------------------------------------------------------------------------------
 TailsAlone:
 		move.b	#2,(MainCharacter).w
-		subi.w	#32,(MainCharacter+x_pos).w
+		addi.w	#4,(MainCharacter+y_pos).w
 		rts
 ;--------------------------------------------------------------------------------------------------------------
 
@@ -4776,12 +4777,27 @@ End_Level_Art_Load: ; loc_4CC0: ; Test for load end level sprites...
 		move.w	(Camera_Max_X_pos).w,d1
 		subi.w	#$100,d1
 		cmp.w	d1,d0
+		blt.s	End_Level_Art_Load_2P ; loc_4CF6
+		tst.b	(Update_HUD_timer).w
+		beq.s	End_Level_Art_Load_2P ; loc_4CF6
+		cmp.w	(Camera_Min_X_pos).w,d1
+		beq.s	End_Level_Art_Load_2P ; loc_4CF6
+		move.w	d1,(Camera_Min_X_pos).w
+		moveq	#PLCID_Signpost,d0
+		bra.w	LoadPLC2		; loc_176E
+End_Level_Art_Load_2P:
+		tst.w	(Two_player_mode).w
+		beq.s	Skip_End_Level_Art_Load
+		move.w	(Camera_X_pos_P2).w,d0
+		move.w	(Tails_Max_X_pos).w,d1
+		subi.w	#$100,d1
+		cmp.w	d1,d0
 		blt.s	Skip_End_Level_Art_Load ; loc_4CF6
 		tst.b	(Update_HUD_timer).w
 		beq.s	Skip_End_Level_Art_Load ; loc_4CF6
-		cmp.w	(Camera_Min_X_pos).w,d1
+		cmp.w	(Tails_Min_X_pos).w,d1
 		beq.s	Skip_End_Level_Art_Load ; loc_4CF6
-		move.w	d1,(Camera_Min_X_pos).w
+		move.w	d1,(Tails_Min_X_pos).w
 		moveq	#PLCID_Signpost,d0
 		bra.w	LoadPLC2		; loc_176E
 Skip_End_Level_Art_Load: ; loc_4CF6:
@@ -5347,6 +5363,7 @@ LevelSizeLoad:
 		move.l	d0,(unk_EEC0).w
 		move.l	(a0)+,d0
 		move.l	d0,(Camera_Min_Y_pos).w
+		move.l	d0,(Tails_Min_Y_pos).w		;also Tails_Min_Y_pos
 		move.l	d0,(unk_EEC4).w
 		move.w	#$1010,(Horiz_block_crossed_flag).w
 		move.w	#$60,(Camera_Y_pos_bias).w
@@ -17846,7 +17863,12 @@ Obj0D:
 		andi.w	#$FF80,d0
 		sub.w	(Camera_X_pos_coarse).w,d0
 		cmpi.w	#$280,d0
-		bhi.w	DeleteObject
+		bhi.w	.2pspawning
+		bra.w	DisplaySprite
+.2pspawning:
+		tst.w	(Two_player_mode).w	;2p versus mode?
+		beq.w	DeleteObject		 ; if not, don't check for 2p tails
+		;no checks for deleting object, it will always exist
 		bra.w	DisplaySprite
 ; ===========================================================================
 ; off_F224:
@@ -17895,7 +17917,7 @@ Obj0D_Main:
 		move.w	#SndID_Signpost,d0
 		jsr	(PlayMusic).l
 		clr.b	(Update_HUD_timer).w		; stop timer
-		move.w	(Camera_Max_X_pos).w,(Camera_Min_X_pos).w	; lock screen position
+		move.w	(Tails_Max_X_pos).w,(Tails_Min_X_pos).w	; lock screen position
 		addq.b	#2,routine(a0)
 		move.b	#2,(Two_player_winner).w
 .nopass:
@@ -17961,6 +17983,8 @@ Obj0D_RingSparklePositions:
 ; ===========================================================================
 ; loc_F31C: End_Panel_Sub_04:
 Obj0D_SonicRun:
+		tst.w	(Two_player_mode)	;2p mode?
+		bne.s	++			;if yes, Sonic doesn't run to right
 		tst.w	(Debug_placement_mode).w
 		bne.w	return_F3B6
 		btst	#1,(MainCharacter+$22).w
@@ -19936,10 +19960,11 @@ Sonic_CheckSpindash:
 		andi.b	#button_A_mask+button_B_mask+button_C_mask,d0
 		beq.w	return_10592
 		move.b	#9,anim(a0)
-		move.w	#SndID_Roll,d0
+		move.w	#SndID_SpindashRev,d0	;final spindash ported
 		jsr	(PlaySound).l
 		addq.l	#4,sp
 		move.b	#1,spindash_flag(a0)
+		move.w	#0,spindash_counter(a0)
 
 return_10592:
 		rts
@@ -19955,11 +19980,14 @@ Sonic_UpdateSpindash:
 		move.b	#2,anim(a0)
 		addq.w	#5,y_pos(a0)
 		move.b	#0,spindash_flag(a0)
-		move.w	#$2000,(Horiz_scroll_delay_val).w
-		move.w	#$800,inertia(a0)
+		move.w	#$1C00,(Horiz_scroll_delay_val).w
+		moveq	#0,d0
+		move.b	spindash_counter(a0),d0
+		add.w	d0,d0
+		move.w	SpindashSpeeds(pc,d0.w),inertia(a0)
 		tst.b	(Super_Sonic_flag).w
 		beq.s	.notsuper
-		move.w	#$B00,inertia(a0)
+		addi.w	#$300,inertia(a0)
 .notsuper
 		btst	#0,status(a0)
 		beq.s	loc_105d2
@@ -19967,14 +19995,41 @@ Sonic_UpdateSpindash:
 
 loc_105d2:
 		bset	#2,status(a0)
+		move.w	#SndID_SpindashRelease,d0	;final spindash ported
+		jsr	(PlaySound).l
 		rts
+; ===========================================================================
+; word_1AD0C:
+SpindashSpeeds:
+	dc.w  $800	; 0
+	dc.w  $880	; 1
+	dc.w  $900	; 2
+	dc.w  $980	; 3
+	dc.w  $A00	; 4
+	dc.w  $A80	; 5
+	dc.w  $B00	; 6
+	dc.w  $B80	; 7
+	dc.w  $C00	; 8
 ; ===========================================================================
 ; loc_105DA:
 Sonic_ChargingSpindash:
+	tst.w	spindash_counter(a0)
+	beq.s	.afterspincount
+	move.w	spindash_counter(a0),d0
+	lsr.w	#5,d0
+	sub.w	d0,spindash_counter(a0)
+	bcc.s	.afterspincount
+	move.w	#0,spindash_counter(a0)
+.afterspincount:
 		move.b	(Ctrl_1_Press_Logical).w,d0
 		andi.b	#button_A_mask+button_B_mask+button_C_mask,d0
 		beq.w	loc_105E8
-		nop
+		move.w	#SndID_SpindashRev,d0	;final spindash ported
+		jsr	(PlaySound).l
+		addi.w	#$200,spindash_counter(a0)
+		cmpi.w	#$800,spindash_counter(a0)
+		blo.s	loc_105E8
+		move.w	#$800,spindash_counter(a0)
 
 loc_105E8:
 		addq.l	#4,sp
@@ -22136,11 +22191,11 @@ Tails_LevelBoundaries: ; loc_114FE:
 		asl.l	#$08,d0
 		add.l	d0,d1
 		swap	d1
-		move.w	(Camera_Min_X_pos).w,d0
+		move.w	(Tails_Min_X_pos).w,d0	;change from camera to tails specific
 		addi.w	#$0010,d0
 		cmp.w	d1,d0
 		bhi.s	loc_1156A
-		move.w	(Camera_Max_X_pos).w,d0
+		move.w	(Tails_Max_X_pos).w,d0
 		addi.w	#$0128,d0
 		tst.b	(Current_Boss_ID).w
 		bne.s	loc_1152C
@@ -22149,7 +22204,7 @@ loc_1152C:
 		cmp.w	d1,d0
 		bls.s	loc_1156A
 loc_11530:
-		move.w	(Camera_Max_Y_pos_now).w,d0
+		move.w	(Tails_Max_Y_pos).w,d0	;changed from Camera_max_y_pos_now
 		addi.w	#$00E0,d0
 		cmp.w	y_pos(a0),d0
 		blt.s	loc_11540
@@ -22316,10 +22371,11 @@ Tails_Spindash: ; loc_116d2:
 		andi.b	#button_A_mask+button_B_mask+button_C_mask,d0
 		beq.w	loc_11704
 		move.b	#$09,anim(a0)
-		move.w	#SndID_Roll,d0
+		move.w	#SndID_SpindashRev,d0
 		jsr	(PlaySound).l			  ; loc_14C6
 		addq.l	#$04,sp
 		move.b	#1,spindash_flag(a0)
+		move.w	#0,spindash_counter(a0)
 loc_11704:
 		rts
 loc_11706:
@@ -22331,22 +22387,53 @@ loc_11706:
 		move.b	#2,anim(a0)
 		addq.w	#$05,y_pos(a0)
 		move.b	#0,spindash_flag(a0)
-		move.w	#$2000,(Horiz_scroll_delay_val_P2).w
-		move.w	#$0800,inertia(a0)
+		move.w	#$1C00,(Horiz_scroll_delay_val_P2).w
+		moveq	#0,d0
+		move.b	spindash_counter(a0),d0
+		add.w	d0,d0
+		move.w	Tails_SpindashSpeeds(pc,d0.w),inertia(a0)
 		btst	#0,status(a0)
 		beq.s	loc_11744
 		neg.w	inertia(a0)
 loc_11744:
 		bset	#2,status(a0)
+		move.w	#SndID_SpindashRelease,d0
+		jsr	(PlaySound).l
 		rts
 loc_1174C:
+		tst.w	spindash_counter(a0)
+		beq.s	.afterspincount
+		move.w	spindash_counter(a0),d0
+		lsr.w	#5,d0
+		sub.w	d0,spindash_counter(a0)
+		bcc.s	.afterspincount
+		move.w	#0,spindash_counter(a0)
+
+.afterspincount:
 		move.b	(Ctrl_2_Press_Logical).w,d0
 		andi.b	#button_A_mask+button_B_mask+button_C_mask,d0
 		beq.w	loc_1175A
-		nop
+		move.w	#SndID_SpindashRev,d0	;final spindash ported
+		jsr	(PlaySound).l
+		addi.w	#$200,spindash_counter(a0)
+		cmpi.w	#$800,spindash_counter(a0)
+		blo.s	loc_1175A
+		move.w	#$800,spindash_counter(a0)
 loc_1175A:
 		addq.l	#$04,sp
 		rts
+; ===========================================================================
+; word_1C7CE:
+Tails_SpindashSpeeds:
+	dc.w  $800	; 0
+	dc.w  $880	; 1
+	dc.w  $900	; 2
+	dc.w  $980	; 3
+	dc.w  $A00	; 4
+	dc.w  $A80	; 5
+	dc.w  $B00	; 6
+	dc.w  $B80	; 7
+	dc.w  $C00	; 8
 ;===============================================================================
 ; Sub Routine Tails_Spindash
 ; [ End ]
@@ -22780,9 +22867,9 @@ Tails_GameOver: ; loc_11B4A:
 ;===============================================================================
 
 Tails_ResetLevel: ; loc_11B8E:
-		tst.w	$003A(a0)
+		tst.w	spindash_counter(a0)
 		beq.s	loc_11BA0
-		subq.w	#1,$003A(a0)
+		subq.w	#1,spindash_counter(a0)
 		bne.s	loc_11BA0
 		move.w	#$0001,(Level_Inactive_flag).w
 loc_11BA0:
@@ -26644,8 +26731,10 @@ Obj13_ChkDel2:
 		andi.w	#$FF80,d0
 		sub.w	(Camera_X_pos_coarse).w,d0
 		cmpi.w	#$280,d0
-		bhi.w	DeleteObject
+		bhi.w	.deletobj
 		bra.w	DisplaySprite
+.deletobj:
+		jmp	DeleteObject
 ; ===========================================================================
 ; ---------------------------------------------------------------------------
 ; Sprite mappings
@@ -27743,7 +27832,7 @@ Obj16_Slide:
 		move.b	#2,$1A(a0)
 		move.w	#0,$10(a0)
 		move.w	#0,$12(a0)
-		bsr.w	SingleObjLoad2
+		jsr	SingleObjLoad2
 		bne.s	return_16100
 		_move.b	#$1C,0(a1)		; load obj1C (scenery)
 		move.w	8(a0),8(a1)
@@ -35392,7 +35481,12 @@ loc_1d660:
 		andi.w	#$FF80,d0
 		sub.w	(Camera_X_pos_coarse).w,d0
 		cmpi.w	#$280,d0
-		bhi.s	loc_1d68C
+		bhi.s	.checkif2Pversus	;changed from loc_1d68C
+		bra.s	loc_1d686		;lines added
+.checkif2Pversus:
+		tst.w	(Two_player_mode).w	;2p mode?
+		beq.s	loc_1d68C		;if not, branch
+						;otherwise, distance checks are made moot
 loc_1d686:
 		jmp	(DisplaySprite).l			; (loc_d3C2)
 loc_1d68C:
