@@ -17859,16 +17859,14 @@ Obj0D:
 		jsr	Obj0D_Index(pc,d1.w)
 		lea	(Ani_obj0D).l,a1
 		bsr.w	AnimateSprite
+		tst.w	(Two_player_mode).w	;2p versus mode?
+		bne.w	.2pspawning		 ; if yes, don't check for camera
 		move.w	8(a0),d0
 		andi.w	#$FF80,d0
 		sub.w	(Camera_X_pos_coarse).w,d0
 		cmpi.w	#$280,d0
-		bhi.w	.2pspawning
-		bra.w	DisplaySprite
+		bhi.w	DeleteObject
 .2pspawning:
-		tst.w	(Two_player_mode).w	;2p versus mode?
-		beq.w	DeleteObject		 ; if not, don't check for 2p tails
-		;no checks for deleting object, it will always exist
 		bra.w	DisplaySprite
 ; ===========================================================================
 ; off_F224:
@@ -18012,7 +18010,10 @@ Obj0D_SonicRun:
 Load_EndOfAct:
 		tst.b	($FFFFB5C0).w
 		bne.s	return_F3B6
+		tst.w	(Two_player_mode).w	;2p versus mode?
+		bne.s	.is2pmode		 ; if yes, don't move camera
 		move.w	(Camera_Max_X_pos).w,(Camera_Min_X_pos).w
+.is2pmode:
 		clr.b	(Invincibility_flag).w
 		clr.b	(Update_HUD_timer).w
 		move.b	#$3A,($FFFFB5C0).w
@@ -18028,9 +18029,9 @@ Load_EndOfAct:
 		divu.w	#$F,d0
 		moveq	#$14,d1
 		cmp.w	d1,d0
-		blo.s	+
+		blo.s	.scorebonuses
 		move.w	d1,d0
-+
+.scorebonuses:
 		add.w	d0,d0
 		move.w	TimeBonuses(pc,d0.w),(Bonus_Countdown_1).w
 		move.w	(Ring_count).w,d0
@@ -20939,15 +20940,15 @@ JmpTo_KillSonic:	; JmpTo
 Obj02:
 	; a0=character
 	cmpa.w	#MainCharacter,a0
-	bne.s	++
+	bne.s	.isp2tails
 	tst.w	(Debug_placement_mode).w; is Debug Mode being used?
-	beq.s	+		; if not,branch
+	beq.s	.nodebug		; if not,branch
 	jmp	(DebugMode).l
-+
+.nodebug:
 	move.w	(Camera_Min_X_pos).w,(Tails_Min_X_pos).w
 	move.w	(Camera_Max_X_pos).w,(Tails_Max_X_pos).w
 	move.w	(Camera_Max_Y_pos).w,(Tails_Max_Y_pos).w
-+
+.isp2tails:
 		moveq	#0,d0
 		move.b	routine(a0),d0
 		move.w	Obj02_Index(pc,d0.w),d1
@@ -22816,7 +22817,7 @@ loc_11ADE:
 ; [ Begin ]
 ;===============================================================================
 Tails_HurtStop: ; loc_11AF4:
-		move.w	(Camera_Max_Y_pos_now).w,d0
+		move.w	(Tails_Max_Y_pos).w,d0
 		addi.w	#$00E0,d0
 		cmp.w	y_pos(a0),d0
 		blo.w	KillTails				 ; loc_12074
@@ -22858,9 +22859,12 @@ Tails_GameOver: ; loc_11B4A:
 	cmp.w	y_pos(a0),d0
 	bge.w	loc_11BA0
 	move.b	#2,routine(a0)
-	;tst.w	(Two_player_mode).w
-	;bne.s	Obj02_CheckGameOver_2Pmode
+	tst.w	(Two_player_mode).w
+	bne.s	Obj02_CheckGameOver_2Pmode
 	bra.w	TailsCPU_Despawn
+
+Obj02_CheckGameOver_2Pmode:
+	bra.w	CheckGameOver
 ;===============================================================================
 ; Sub Routine Tails_GameOver
 ; [ End ]
@@ -26732,7 +26736,7 @@ Obj13_ChkDel2:
 		sub.w	(Camera_X_pos_coarse).w,d0
 		cmpi.w	#$280,d0
 		bhi.w	.deletobj
-		bra.w	DisplaySprite
+		jmp	DisplaySprite
 .deletobj:
 		jmp	DeleteObject
 ; ===========================================================================
