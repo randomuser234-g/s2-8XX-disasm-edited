@@ -12922,9 +12922,14 @@ Monitor_Invincibility: ; loc_B5A8:
 loc_B5d2:
 		rts
 Monitor_SuperSonic: ; loc_B5d4:
-		move.b	#1,(Super_Sonic_palette).w
-		move.w	#SndID_Shield,d0
-		jmp	(PlayMusic).l			 ; loc_14C0
+		addi.w	#50,(Ring_count).w	; add 50 rings to the number of rings you have
+		ori.b	#1,(Update_HUD_rings).w ; update the ring counter
+		tst.b	(Super_Sonic_flag).w	; is Sonic already Super?
+		bne.s	.nosuper		; if yes, don't turn super again
+		lea	(MainCharacter).w,a0	;move sonic as target so transform animation works
+		jmp	Sonic_GoSuper	;'S' monitor turns Sonic super
+.nosuper:
+		rts
 loc_B5E4:
 		subq.w	#1,$1E(a0)
 		bmi.w	DeleteObject			; loc_d3B4
@@ -23573,7 +23578,7 @@ loc_1230C:
 		cmpi.w	#$C,d0
 		bhi.s	loc_12390
 		bne.s	loc_12372
-		move.w	#MusID_LevelSel,d0
+		move.w	#MusID_Drowning,d0		;originally LevelSel
 		jsr	(PlayMusic).l			 ; loc_14C0
 loc_12372:
 		subq.b	#1,$32(a0)
@@ -42402,7 +42407,7 @@ Debug_Null_End:
 
 Debug_GHZ: dbglistheader
 	dbglistobj $25,	Obj25_MapUnc_B036,	0,0,$26BC
-	dbglistobj $26,	Obj26_MapUnc_B6d2,	7,0,$680
+	dbglistobj $26,	Obj26_MapUnc_B6d2,	8,9,$680
 	dbglistobj $79,	Obj79_MapUnc_13D8E, 1,0,$47C
 	dbglistobj $03,	Obj03_MapUnc_147d0, 9,1,$26BC
 	dbglistobj $49,	Obj49_MapUnc_15404, 0,0,$23AE
@@ -46642,7 +46647,7 @@ MusicPoint2:	startBank
 		music_ptr	Mus_DEZ		; $88
 		music_ptr	Mus_SpecStg	; $89
 		music_ptr	Mus_LevelSel	; $8A
-		music_ptr	Mus_LevelSelDup	; $8B ; yes,the same song is referenced twice
+		music_ptr	Mus_Drowning	; $8B ; yes,the same song was referenced twice
 		music_ptr	Mus_FinalBoss	; $8C
 		music_ptr	Mus_CPZ		; $8D
 		music_ptr	Mus_Boss	; $8E
@@ -46664,8 +46669,8 @@ Mus_HPZ:	include		"sound/music/HPZ.asm"		; DHZ/MCZ 2-player theme in final
 Mus_NGHZ:	include		"sound/music/NGHZ.asm"
 Mus_DEZ:	include		"sound/music/DEZ.asm"		; Technically used in this build for the extra life jingle when collecting 100 or 200 rings,but labeled as DEZ regardless to prevent confusion
 Mus_SpecStg:	include		"sound/music/Special Stage.asm"
-Mus_LevelSel:
-Mus_LevelSelDup:	include		"sound/music/Level select.asm"
+Mus_LevelSel:	include		"sound/music/Level select.asm"
+Mus_Drowning:include		"sound/music/Drowning.asm"	
 Mus_FinalBoss:	include		"sound/music/Final boss.asm"
 Mus_CPZ:	include		"sound/music/CPZ.asm"
 Mus_Boss	include		"sound/music/Boss.asm"
@@ -47212,6 +47217,8 @@ Obj7E_MapUnc_29DD0:	include "mappings/sprite/obj7E_b.asm"
 ; ===========================================================================
 		include	"OptionSelect.asm"
 Sonic_CheckGoSuper:
+		tst.w	(Debug_placement_mode).w
+		bne.s	.nosuper
 		move.b	(Ctrl_1_Press_Logical).w,d0
 		andi.b	#button_A_mask+button_B_mask+button_C_mask,d0		; is A/B/C pressed?
 		beq.s	.nosuper	; if yes,branch
@@ -47223,6 +47230,10 @@ Sonic_CheckGoSuper:
 		blo.w	.nosuper	;if not, don't go super
 		tst.b	(Update_HUD_timer).w	; has Sonic reached the end of the act?
 		beq.s	.nosuper		; if yes, don't go super
+		bra.s	Sonic_GoSuper
+.nosuper:
+		rts
+Sonic_GoSuper:
 		move.b	#1,(Super_Sonic_flag).w
 		move.b	#1,(Super_Sonic_palette).w
 		move.w	#$A00,(Sonic_top_speed).w
@@ -47230,6 +47241,8 @@ Sonic_CheckGoSuper:
 		move.w	#$100,(Sonic_deceleration).w
 		move.w	#0,invincibility_time(a0)
 		move.b	#1,(Invincibility_flag).w	; make Sonic invincible
+		cmpi.w	#$C,(Current_Air).w	;more than 12 seconds of air left
+		bls.s	.nosuper	; if not, branch
 		move.w	#MusID_Invinc,d0
 		jmp	(PlayMusic).l			 ; loc_14C0
 .nosuper:
