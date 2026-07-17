@@ -331,7 +331,7 @@ GameClrRAM:
 		bsr.w	JoypadInit
 		; Strangely,this loads the title screen,and not the Sega screen,
 		; and the August 21st prototype suggests this was NOT done by the pirates...
-		move.b	#GameModeID_TitleScreen,(Game_Mode).w
+		move.b	#GameModeID_SegaScreen,(Game_Mode).w
 ; loc_38E:
 MainGameLoop:
 		move.b	(Game_Mode).w,d0
@@ -2985,14 +2985,22 @@ TitleScreen:
 
 		clearRAM Sprite_Table_Input,Sprite_Table_Input_End
 		clearRAM Object_RAM,Object_RAM_End
+		locVRAM	$300*8*8/2
+		lea	(Nem_CreditText).l,a0 ; load alphabet
+		bsr.w	NemDec
 		clearRAM Misc_Variables,Misc_Variables_End
 		clearRAM Camera_RAM,Camera_RAM_End
 		clearRAM Target_palette,Target_palette_End
-
+		clr.w	(Two_player_mode).w	;if 2 player mode isn't removed, this can crash when loading SONIC TEAM PRESENTS
 		; Leftover from Sonic 1,which had a "SONIC TEAM PRESENTS"
 		; screen load Sonic's palette for the font
 		moveq	#PalID_SonicTails,d0
 		bsr.w	PalLoad1
+		;add sonic team screen here
+		move.b	#$8A,(TitleScreen_Tails).w ; load "SONIC TEAM PRESENTS" object
+		jsr	(RunObjects).l
+		jsr	(BuildSprites).l
+		;end of added
 		bsr.w	Pal_FadeFromBlack
 
 		move.w	#$2700,sr
@@ -3053,7 +3061,7 @@ loc_3818:
 		bsr.w	PlayMusic
 		move.b	#0,(Debug_mode_flag).w
 		move.w	#0,(Two_player_mode).w
-		move.w	#$178,(Demo_Time_left).w
+		move.w	#$198,(Demo_Time_left).w	;extend from 178
 		lea	(TitleScreen_Tails).w,a1
 		moveq	#0,d0
 		move.w	#bytesToLcnt(object_size),d1	; hilarious,they actually fixed the bug that caused the "PRESS START BUTTON" text to not display in Sonic 1
@@ -3064,6 +3072,7 @@ loc_38EE:
 
 		move.b	#$E,(TitleScreen_Sonic).w
 		move.b	#$E,(TitleScreen_Tails).w
+		move.b	#$8B,(TitleCard_Zone).w
 		move.b	#1,(TitleScreen_Tails+mapping_frame).w
 		jsr	(RunObjects).l
 		jsr	(BuildSprites).l
@@ -3168,7 +3177,12 @@ Title_ChkLevSel:
 		;no check for level select here as it's something different
 		move.b	#0,(Menu_page).w	;go to first page
 		move.w	#$1,(Level_select_zone).w	;go to first selectable item
-
+		cmpi.b	#0,(Title_screen_option).w	;1 player?
+		beq.w	PlayLevel			;if yes, play level
+		cmpi.b	#1,(Title_screen_option).w	;1 player?
+		beq.w	LevSelEnter			;if yes, play level
+		move.b	#1,(Menu_page).w	;go to levelselect
+		move.w	#$0,(Level_select_zone).w	;go to first selectable item
 LevSelEnter:
 		move.b	#MusID_LevelSel,d0
 		bsr.w	PlayMusic
@@ -3226,6 +3240,10 @@ loc_3A7C:
 		bne.s	LevelSelect_Loop
 		btst	#button_A,(Ctrl_2_Press).w
 		bne.s	LevelSelect_Loop
+		btst	#button_start,(Ctrl_1_Press).w	;was start pressed?
+		bne.w	TitleScreen		;if not, branch
+		btst	#button_start,(Ctrl_2_Press).w	;was A pressed?
+		bne.w	TitleScreen		;if not, branch
 SoundTestSelection:
 		move.w	(Sound_test_sound).w,d0
 		addi.w	#$80,d0
@@ -3334,8 +3352,8 @@ loc_3B68:
 		move.b	#GameModeID_SegaScreen,(Game_Mode).w
 		rts
 Run_Demo_Mode: ; loc_3B8E:
-		andi.b	#button_start_mask,(Ctrl_1_Press).w
-		bne.w	Title_ChkLevSel	
+		;andi.b	#button_start_mask,(Ctrl_1_Press).w	;maybe don't allow inputs before demo mode, it is causing obj8B to not disappear
+		;bne.w	Title_ChkLevSel	
 		tst.w	(Demo_Time_left).w
 		bne.w	loc_3B68
 		;move.b	#SndID_SpindashRev,d0	; Bug: This should be using MusID_Stop
@@ -3628,9 +3646,9 @@ Option_Text: ; loc_3d7C: ; Options Menu Text
 		dc.b	"                           "
 		dc.b	"                           "
 		dc.b	"                           "
-		dc.b	"-IF CHEAT ENABLED PRESS A- "
-		dc.b	"   -WHEN STARTING FOR-     "
-		dc.b	"     -LEVEL SELECT-        "
+		dc.b	"                           "
+		dc.b	"                           "
+		dc.b	"                           "
 		dc.b	"                           "
 		dc.b	"START GAME                 "
 		dc.b	"SOUND SELECT               "
@@ -12367,7 +12385,7 @@ Obj37_MakeRings:
 		tst.w	d4
 		bmi.s	loc_AE12
 		move.w	d4,d0
-		bsr.w	CalcSine
+		jsr	CalcSine
 		move.w	d4,d2
 		lsr.w	#8,d2
 		asl.w	d2,d0
@@ -14786,7 +14804,7 @@ ObjPtr_Oil:		dc.l	Obj07			; Oil Ocean in OOZ
 			dc.l	Obj_Null
 			dc.l	Obj_Null
 			dc.l	Obj8A			; "SONIC TEAM PRESENTS"/credits (leftover from S1)
-			dc.l	Obj_Null
+			dc.l	Obj8B		;usually Obj0F, the title screen menu from final S2
 			dc.l	Obj_Null
 ; ===========================================================================
 ; ---------------------------------------------------------------------------
@@ -20083,6 +20101,7 @@ Sonic_ChargingSpindash:
 		move.b	(Ctrl_1_Press_Logical).w,d0
 		andi.b	#button_A_mask+button_B_mask+button_C_mask,d0
 		beq.w	loc_105E8
+		move.b	#0,anim_frame(a0)
 		move.w	#SndID_SpindashRev,d0	;final spindash ported
 		jsr	(PlaySound).l
 		addi.w	#$200,spindash_counter(a0)
@@ -22472,6 +22491,7 @@ loc_1174C:
 		move.b	(Ctrl_2_Press_Logical).w,d0
 		andi.b	#button_A_mask+button_B_mask+button_C_mask,d0
 		beq.w	loc_1175A
+		move.b	#0,anim_frame(a0)
 		move.w	#SndID_SpindashRev,d0	;final spindash ported
 		jsr	(PlaySound).l
 		addi.w	#$200,spindash_counter(a0)
@@ -26773,8 +26793,10 @@ Obj13_ChkDel:
 		andi.w	#$FF80,d0
 		sub.w	(Camera_X_pos_coarse).w,d0
 		cmpi.w	#$0280,d0
-		bhi.w	DeleteObject
+		bhi.w	.deleteobject
 		bra.w	DisplaySprite
+.deleteobject:
+		jmp	DeleteObject
 ; ===========================================================================
 
 loc_14CBC:
@@ -38943,20 +38965,20 @@ Obj8A_Index:	offsetTable
 ; loc_20752:
 Obj8A_Init:
 		addq.b	#2,routine(a0)
-		move.w	#$120,8(a0)
-		move.w	#$F0,$A(a0)
-		move.l	#Obj8A_MapUnc_207C6,4(a0)
-		move.w	#$5A0,2(a0)
+		move.w	#$120,x_pos(a0)
+		move.w	#$F0,x_sub(a0)
+		move.l	#Obj8A_MapUnc_207C6,mappings(a0)
+		move.w	#$5A0,art_tile(a0)
 		bsr.w	JmpTo37_Adjust2PArtPointer
 		move.w	(Ending_demo_number).w,d0
-		move.b	d0,$1A(a0)
-		move.b	#0,1(a0)
-		move.b	#0,$18(a0)
+		move.b	d0,mapping_frame(a0)
+		move.b	#0,render_flags(a0)
+		move.b	#0,priority(a0)
 		cmpi.b	#GameModeID_TitleScreen,(Game_Mode).w
 		bne.s	Obj8A_Display
-		move.w	#$300,2(a0)
+		move.w	#$300,art_tile(a0)
 		bsr.w	JmpTo37_Adjust2PArtPointer
-		move.b	#$A,$1A(a0)
+		move.b	#$A,mapping_frame(a0)
 		tst.b	(Hidden_credits_flag).w
 		beq.s	Obj8A_Display
 		cmpi.b	#button_down_mask+button_A_mask+button_B_mask+button_C_mask,(Ctrl_1_Held).w
@@ -47308,6 +47330,91 @@ Sonic_RevertToNormal:
 return_1AC3C:
 	rts
 ; End of subroutine Sonic_Super
+;graphic for SONIC TEAM PRESENTS, from sonic 1
+Nem_CreditText:	binclude	"art/nemesis/Ending - Credits.nem"
+		even
+; ===========================================================================
+; ----------------------------------------------------------------------------
+; Object 0F - Title screen menu
+; ----------------------------------------------------------------------------
+; Sprite_13600:
+;Obj0F:
+Obj8B:
+	cmpi.b	#GameModeID_TitleScreen,(Game_Mode).w	;on titlescreen?
+	bne.s	.deleteobject				;if not, delete object
+	btst	#button_start,(Ctrl_1_Press).w	;press start?
+	bne.s	.deleteobject				;if yes, delete object
+	btst	#button_start,(Ctrl_2_Press).w
+	bne.s	.deleteobject
+	bra.s	.continue
+.deleteobject:
+	jmp	DeleteObject
+.continue:
+	moveq	#0,d0
+	move.b	routine(a0),d0
+	move.w	Obj8B_Index(pc,d0.w),d1
+	jsr	Obj8B_Index(pc,d1.w)
+	jmp	DisplaySprite
+; ===========================================================================
+; off_13612: Obj0F_States:
+Obj8B_Index:	offsetTable
+		offsetTableEntry.w Obj8B_Init	; 0
+		offsetTableEntry.w Obj8B_Main	; 2
+; ===========================================================================
+; loc_13616:
+Obj8B_Init:
+	addq.b	#2,routine(a0) ; => Obj0F_Main
+	move.w	#$128,x_pos(a0)
+	move.w	#$150,x_sub(a0)
+	move.l	#Obj8B_MapUnc_13B70,mappings(a0)
+	move.w	#$0680,art_tile(a0)
+	jsr	Adjust2PArtPointer
+	andi.b	#1,(Title_screen_option).w
+	move.b	(Title_screen_option).w,mapping_frame(a0)
+
+; loc_13644:
+Obj8B_Main:
+	moveq	#0,d2
+	move.b	(Title_screen_option).w,d2
+	btst	#button_up,(Ctrl_1_Press).w	;press up?
+	bne.s	.buttonup				;if yes, move selection
+	btst	#button_up,(Ctrl_2_Press).w
+	bne.s	.buttonup
+	bra.s	.notbuttonup
+.buttonup:
+	move.w	#SndID_Blip,d0 ; selection blip sound
+	jsr	PlaySound
+	subq.b	#1,d2
+	bcc.s	.notbuttonup
+	move.b	#1,d2
+	tst.b	(Level_select_flag).w ; check if level select code is on
+	beq.w	.notbuttonup	; if no, then no access to level select
+	move.b	#2,d2
+.notbuttonup:
+	btst	#button_down,(Ctrl_1_Press).w	;press down?
+	bne.s	.buttondown				;if yes, move selection
+	btst	#button_down,(Ctrl_2_Press).w
+	bne.s	.buttondown
+	bra.s	.notbuttondown
+.buttondown:
+	move.w	#SndID_Blip,d0 ; selection blip sound
+	jsr	PlaySound
+	addq.b	#1,d2
+	tst.b	(Level_select_flag).w ; check if level select code is on
+	bne.w	.levselenabled	; if yes, then access to level select
+	cmpi.b	#2,d2
+	blo.s	.notbuttondown
+	moveq	#0,d2
+.levselenabled:
+	cmpi.b	#3,d2
+	blo.s	.notbuttondown
+	moveq	#0,d2
+.notbuttondown:
+	move.b	d2,mapping_frame(a0)
+	move.b	d2,(Title_screen_option).w
+	rts
+; ===========================================================================
+Obj8B_MapUnc_13B70:	include "mappings/sprite/obj8B.asm"
 
 	if PaddingOptimization=0
 		cnop	-1,2<<lastbit(*-1)

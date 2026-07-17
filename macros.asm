@@ -1,5 +1,13 @@
 ; >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 ; simplifying macros and functions
+; ---------------------------------------------------------------------------
+; Set a VRAM address via the VDP control port.
+; input: 16-bit VRAM address, control port (default is (vdp_control_port).l)
+; ---------------------------------------------------------------------------
+
+locVRAM:	macro loc,controlport=(VDP_control_port).l
+		move.l	#($40000000+(((loc)&$3FFF)<<16)+(((loc)&$C000)>>14)),controlport
+		endm
 
 ; makes a VDP address difference
 vdpCommDelta function addr,((addr&$3FFF)<<16)|((addr&$C000)>>14)

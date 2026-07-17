@@ -1129,7 +1129,8 @@ Oscillating_variables_End
 LevSel_HoldTimer:		ds.w	1
 Level_select_zone:		ds.w	1
 Sound_test_sound:		ds.w	1
-				ds.b	$3A	; $FFFFFF86-$FFFFFFBF ; seems unused
+Title_screen_option:		ds.b	1
+				ds.b	$39	; $FFFFFF86-$FFFFFFBF ; seems unused
 Next_Extra_life_score:		ds.l	1
 Player_option:			ds.b	1	; player option
 Player_mode:			ds.b	1	; player option

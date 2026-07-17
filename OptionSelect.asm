@@ -59,13 +59,6 @@ OptionSelect:
 	.startgame:
 		cmpi.w	#$19,d0		; have you selected item $13 (start game)?
 		bne.w	.soundtest	; if not, go to sound test
-		tst.b	(Level_select_flag).w ; check if level select code is on
-		beq.w	.nolevsel	; if no, then no access to level select
-		btst	#button_A,(Ctrl_1_Held).w	;A button used?	
-		bne.w	.levsel			;if yes, enter level select
-		btst	#button_A,(Ctrl_2_Held).w	;A button used?	
-		bne.w	.levsel			;if yes, enter level select
-	.nolevsel:
 		move.w	#0,(Two_player_mode).w
 		jmp	PlayLevel
 ;-----------------------------------------------------------------------------------------------------------
@@ -76,6 +69,10 @@ OptionSelect:
 		bne.s	.donothing		;if not, branch
 		btst	#button_A,(Ctrl_2_Press).w	;was A pressed?
 		bne.s	.donothing		;if not, branch
+		btst	#button_start,(Ctrl_1_Press).w	;was start pressed?
+		bne.s	.gototitle		;if not, branch
+		btst	#button_start,(Ctrl_2_Press).w	;was A pressed?
+		bne.s	.gototitle		;if not, branch
 		bra.w	.soundtestsel
 	.donothing:
 		jmp	LevelSelect_Loop
@@ -85,8 +82,5 @@ OptionSelect:
 		rts
 .soundtestsel:
 		jmp	SoundTestSelection
-.levsel:
-		move.b	#1,(Menu_page).w
-		move.w	#$0,(Level_select_zone).w	;go to top of list
-		jsr	LevelSelect_TextLoad
-		jmp	LevelSelect_Loop
+.gototitle:
+		jmp	TitleScreen
