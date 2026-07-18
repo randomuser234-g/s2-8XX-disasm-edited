@@ -14789,7 +14789,7 @@ ObjPtr_Oil:		dc.l	Obj07			; Oil Ocean in OOZ
 			dc.l	Obj_0x79_Lamp_Post		; loc_13B54
 			dc.l	Obj_0x7A_Platform_Horizontal	  ; loc_1d594
 			dc.l	Obj_0x7B_Spring_Tubes			  ; loc_1d74C
-			dc.l	Obj_Null
+			dc.l	Obj7C			;originally obj84, force sonic into ball trigger
 			dc.l	Obj7D			; Points that can be gotten at the end of an act (leftover from S1)
 			dc.l	Obj7E		;hanging vine that moves down, used to be Obj80
 			dc.l	Obj7F		;dust hill (DHZ) hanging vines switch
@@ -19255,7 +19255,10 @@ loc_FF34:
 ; Called if Sonic is in a ball,but not airborne (thus,probably rolling)
 ; loc_FF3E: Sonic_MdRoll:
 Obj01_MdRoll:
-		bsr.w	Sonic_Jump
+	tst.b	pinball_mode(a0)
+	bne.s	+
+	bsr.w	Sonic_Jump
++
 		bsr.w	Sonic_RollRepel
 		bsr.w	Sonic_RollSpeed
 		bsr.w	Sonic_LevelBound
@@ -19650,11 +19653,20 @@ loc_1025E:
 Sonic_CheckRollStop:
 		tst.w	$14(a0)
 		bne.s	Sonic_SetRollSpeeds
+		tst.b	pinball_mode(a0) ; note: the spindash flag has a different meaning when Sonic's already rolling -- it's used to mean he's not allowed to stop rolling
+		bne.s	Sonic_KeepRolling
 		bclr	#2,$22(a0)
 		move.b	#$13,$16(a0)
 		move.b	#9,$17(a0)
 		move.b	#5,$1C(a0)
 		subq.w	#5,$C(a0)
+		bra.s	Sonic_SetRollSpeeds
+
+Sonic_KeepRolling:
+	move.w	#$400,inertia(a0)
+	btst	#0,status(a0)
+	beq.s	Sonic_SetRollSpeeds
+	neg.w	inertia(a0)
 ; ---------------------------------------------------------------------------
 ; loc_10284:
 Sonic_SetRollSpeeds:
@@ -20013,6 +20025,8 @@ return_1054E:
 ; ---------------------------------------------------------------------------
 ; loc_10550:
 Sonic_UpVelCap:
+		tst.b	pinball_mode(a0)	; is Sonic charging a spindash or in a rolling-only area?
+		bne.s	return_1055E		; if yes, return
 		cmpi.w	#-$FC0,$12(a0)	; is Sonic moving up really fast?
 		bge.s	return_1055E	; if not,branch
 		move.w	#-$FC0,$12(a0)	; cap upward speed
@@ -20518,6 +20532,8 @@ return_1090A:
 Sonic_ResetOnFloor:
 		cmpi.b	#2,id(a0)	;is this Tails?
 		beq.w	Tails_ResetTailsOnFloor	;if yes, do tails code
+		tst.b	pinball_mode(a0)
+		bne.s	loc_10950
 		btst	#4,status(a0)
 		beq.s	loc_1091A
 		nop
@@ -20525,9 +20541,6 @@ Sonic_ResetOnFloor:
 		nop
 
 loc_1091A:
-		bclr	#5,status(a0)
-		bclr	#1,status(a0)
-		bclr	#4,status(a0)
 		btst	#2,status(a0)
 		beq.s	loc_10950
 		bclr	#2,status(a0)
@@ -20537,6 +20550,9 @@ loc_1091A:
 		subq.w	#5,y_pos(a0)
 
 loc_10950:
+		bclr	#5,status(a0)
+		bclr	#1,status(a0)
+		bclr	#4,status(a0)
 		move.b	#0,jumping(a0)
 		move.w	#0,(Chain_Bonus_counter).w
 		move.b	#0,flip_angle(a0)
@@ -21728,7 +21744,10 @@ Obj02_MdAir:
 ; Called if Tails is in a ball,but not airborne (thus,probably rolling)
 ; loc_110C2: Tails_MdRoll:
 Obj02_MdRoll:
+		tst.b	pinball_mode(a0)
+		bne.s	+
 		bsr.w	Tails_Jump
++
 		bsr.w	Tails_RollRepel
 		bsr.w	Tails_RollSpeed
 		bsr.w	Tails_LevelBoundaries
@@ -22115,11 +22134,19 @@ loc_113E2:
 Tails_CheckRollStop:
 		tst.w	$14(a0)
 		bne.s	Tails_SetRollSpeed
+		tst.b	pinball_mode(a0)  ; note: the spindash flag has a different meaning when Tails is already rolling -- it's used to mean he's not allowed to stop rolling
+		bne.s	Tails_KeepRolling
 		bclr	#2,$22(a0)
 		move.b	#$F,$16(a0)	; sets standing height to only slightly higher than rolling height,unlike Sonic
 		move.b	#9,$17(a0)
 		move.b	#5,$1C(a0)
 		subq.w	#5,$C(a0)
+
+Tails_KeepRolling:
+	move.w	#$400,inertia(a0)
+	btst	#0,status(a0)
+	beq.s	Tails_SetRollSpeed
+	neg.w	inertia(a0)
 ; loc_11408:
 Tails_SetRollSpeed:
 		move.b	$26(a0),d0
@@ -22426,6 +22453,8 @@ loc_116AC:
 loc_116C0:
 		rts
 loc_116C2:
+		tst.b	pinball_mode(a0)	; is Tails charging a spindash or in a rolling-only area?
+		bne.s	loc_116d0		; if yes, return
 		cmpi.w	#$F040,$0012(a0)
 		bge.s	loc_116d0
 		move.w	#$F040,$0012(a0)
@@ -22850,15 +22879,14 @@ loc_11A64:
 ; [ Begin ]
 ;===============================================================================
 Tails_ResetTailsOnFloor: ; loc_11A66:
+		tst.b	pinball_mode(a0)
+		bne.s	loc_11AAA
 		btst	#4,status(a0)
 		beq.s	loc_11A74
 		nop
 		nop
 		nop
 loc_11A74:
-		bclr	#$05,status(a0)
-		bclr	#1,status(a0)
-		bclr	#$04,status(a0)
 		btst	#2,status(a0)
 		beq.s	loc_11AAA
 		bclr	#2,status(a0)
@@ -22867,6 +22895,9 @@ loc_11A74:
 		move.b	#0,anim(a0)
 		subq.w	#1,y_pos(a0)
 loc_11AAA:
+		bclr	#$05,status(a0)
+		bclr	#1,status(a0)
+		bclr	#$04,status(a0)
 		move.b	#0,jumping(a0)
 		move.w	#0,(Chain_Bonus_counter).w
 		move.b	#0,flip_angle(a0)
@@ -26794,7 +26825,7 @@ Obj13_ChkDel:
 		sub.w	(Camera_X_pos_coarse).w,d0
 		cmpi.w	#$0280,d0
 		bhi.w	.deleteobject
-		bra.w	DisplaySprite
+		jmp	DisplaySprite
 .deleteobject:
 		jmp	DeleteObject
 ; ===========================================================================
@@ -27080,7 +27111,7 @@ loc_1562C:
 		lsl.w	#$03,d1
 		move.b	d1,$0016(a0)
 loc_15668:
-		bsr.w	loc_DDD8
+		jsr	loc_DDD8
 		bne.s	loc_1568A
 		moveq	#0,d1
 		move.b	$0019(a0),d1
@@ -47333,6 +47364,220 @@ return_1AC3C:
 ;graphic for SONIC TEAM PRESENTS, from sonic 1
 Nem_CreditText:	binclude	"art/nemesis/Ending - Credits.nem"
 		even
+; ===========================================================================
+; ----------------------------------------------------------------------------
+; Object 84 - Pinball mode enable/disable
+; (used in Casino Night Zone to determine when Sonic should stay in a ball)
+; ----------------------------------------------------------------------------
+; Sprite_2115C:
+;Obj84:
+Obj7C:
+	moveq	#0,d0
+	move.b	routine(a0),d0
+	move.w	Obj7C_Index(pc,d0.w),d1
+	jsr	Obj7C_Index(pc,d1.w)
+	jmp	(MarkObjGone3).l
+; ===========================================================================
+; off_21170: Obj84_States:
+Obj7C_Index:	offsetTable
+		offsetTableEntry.w Obj7C_Init	; 0
+		offsetTableEntry.w Obj7C_MainX	; 2
+		offsetTableEntry.w Obj7C_MainY	; 4
+; ===========================================================================
+; loc_21176:
+Obj7C_Init:
+	addq.b	#2,routine(a0) ; => Obj84_MainX
+	move.l	#Obj03_MapUnc_147d0,mappings(a0)
+	;move.w	#make_art_tile(ArtTile_ArtNem_Ring,0,0),art_tile(a0)
+	move.w	#$26BC,2(a1)
+	jsr	Adjust2PArtPointer
+	ori.b	#1<<2,render_flags(a0)
+	move.b	#$10,width_pixels(a0)
+	move.b	#5,priority(a0)
+	move.b	subtype(a0),d0
+	btst	#2,d0
+	beq.s	Obj7C_Init_CheckX
+	addq.b	#2,routine(a0) ; => Obj84_MainY
+	andi.w	#7,d0
+	move.b	d0,mapping_frame(a0)
+	andi.w	#3,d0
+	add.w	d0,d0
+	move.w	word_211E8(pc,d0.w),objoff_32(a0)
+	move.w	y_pos(a0),d1
+	lea	(MainCharacter).w,a1 ; a1=character
+	cmp.w	y_pos(a1),d1
+	bhs.s	+
+	move.b	#1,objoff_34(a0)
++
+	lea	(Sidekick).w,a1 ; a1=character
+	cmp.w	y_pos(a1),d1
+	bhs.s	+
+	move.b	#1,objoff_35(a0)
++
+	bra.w	Obj7C_MainY
+; ===========================================================================
+word_211E8:
+	dc.w   $20
+	dc.w   $40	; 1
+	dc.w   $80	; 2
+	dc.w  $100	; 3
+; ===========================================================================
+; loc_211F0:
+Obj7C_Init_CheckX:
+	andi.w	#3,d0
+	move.b	d0,mapping_frame(a0)
+	add.w	d0,d0
+	move.w	word_211E8(pc,d0.w),objoff_32(a0)
+	move.w	x_pos(a0),d1
+	lea	(MainCharacter).w,a1 ; a1=character
+	cmp.w	x_pos(a1),d1
+	bhs.s	+
+	move.b	#1,objoff_34(a0)
++
+	lea	(Sidekick).w,a1 ; a1=character
+	cmp.w	x_pos(a1),d1
+	bhs.s	Obj7C_MainX
+	move.b	#1,objoff_35(a0)
+
+; loc_21224:
+Obj7C_MainX:
+
+	tst.w	(Debug_placement_mode).w
+	bne.s	return_21284
+	move.w	x_pos(a0),d1
+	lea	objoff_34(a0),a2 ; a2=object
+	lea	(MainCharacter).w,a1 ; a1=character
+	bsr.s	+
+	lea	(Sidekick).w,a1 ; a1=character
+	cmpi.w	#4,(Tails_CPU_routine).w	; TailsCPU_Flying
+	beq.s	return_21284
+
++	tst.b	(a2)+
+	bne.s	Obj7C_MainX_Alt
+	cmp.w	x_pos(a1),d1
+	bhi.s	return_21284
+	move.b	#1,-1(a2)
+	move.w	y_pos(a0),d2
+	move.w	d2,d3
+	move.w	objoff_32(a0),d4
+	sub.w	d4,d2
+	add.w	d4,d3
+	move.w	y_pos(a1),d4
+	cmp.w	d2,d4
+	blo.s	return_21284
+	cmp.w	d3,d4
+	bhs.s	return_21284
+	btst	#0,render_flags(a0)
+	bne.s	+
+	move.b	#1,pinball_mode(a1) ; enable must-roll "pinball mode"
+	bra.s	loc_212C4
+; ---------------------------------------------------------------------------
++	move.b	#0,pinball_mode(a1) ; disable pinball mode
+
+return_21284:
+	rts
+; ===========================================================================
+; loc_21286:
+Obj7C_MainX_Alt:
+	cmp.w	x_pos(a1),d1
+	bls.s	return_21284
+	move.b	#0,-1(a2)
+	move.w	y_pos(a0),d2
+	move.w	d2,d3
+	move.w	objoff_32(a0),d4
+	sub.w	d4,d2
+	add.w	d4,d3
+	move.w	y_pos(a1),d4
+	cmp.w	d2,d4
+	blo.s	return_21284
+	cmp.w	d3,d4
+	bhs.s	return_21284
+	btst	#0,render_flags(a0)
+	beq.s	+
+	move.b	#1,pinball_mode(a1)
+	bra.s	loc_212C4
+; ---------------------------------------------------------------------------
++	move.b	#0,pinball_mode(a1)
+	rts
+; ===========================================================================
+
+loc_212C4:
+	btst	#2,status(a1)
+	beq.s	+
+	rts
+; ---------------------------------------------------------------------------
++	bset	#2,status(a1)
+	move.b	#$E,y_radius(a1)
+	move.b	#7,x_radius(a1)
+	move.b	#2,anim(a1)
+	addq.w	#5,y_pos(a1)
+	move.w	#SndID_Roll,d0
+	jsr	(PlaySound).l
+	rts
+
+; ===========================================================================
+; loc_212F6:
+Obj7C_MainY:
+
+	tst.w	(Debug_placement_mode).w
+	bne.s	return_21350
+	move.w	y_pos(a0),d1
+	lea	objoff_34(a0),a2 ; a2=object
+	lea	(MainCharacter).w,a1 ; a1=character
+	bsr.s	+
+	lea	(Sidekick).w,a1 ; a1=character
+	; AI Tails can behave rather strangely if he happens to be flying into
+	; an autoroll object, most visible in Casino Night.
+	cmpi.w	#4,(Tails_CPU_routine).w	; TailsCPU_Flying
+	beq.s	return_21350
++
+	tst.b	(a2)+
+	bne.s	Obj7C_MainY_Alt
+	cmp.w	y_pos(a1),d1
+	bhi.s	return_21350
+	move.b	#1,-1(a2)
+	move.w	x_pos(a0),d2
+	move.w	d2,d3
+	move.w	objoff_32(a0),d4
+	sub.w	d4,d2
+	add.w	d4,d3
+	move.w	x_pos(a1),d4
+	cmp.w	d2,d4
+	blo.s	return_21350
+	cmp.w	d3,d4
+	bhs.s	return_21350
+	btst	#0,render_flags(a0)
+	bne.s	+
+	move.b	#1,pinball_mode(a1)
+	bra.w	loc_212C4
+; ---------------------------------------------------------------------------
++	move.b	#0,pinball_mode(a1)
+
+return_21350:
+	rts
+; ===========================================================================
+; loc_21352:
+Obj7C_MainY_Alt:
+	cmp.w	y_pos(a1),d1
+	bls.s	return_21350
+	move.b	#0,-1(a2)
+	move.w	x_pos(a0),d2
+	move.w	d2,d3
+	move.w	objoff_32(a0),d4
+	sub.w	d4,d2
+	add.w	d4,d3
+	move.w	x_pos(a1),d4
+	cmp.w	d2,d4
+	blo.s	return_21350
+	cmp.w	d3,d4
+	bhs.s	return_21350
+	btst	#0,render_flags(a0)
+	beq.s	+
+	move.b	#1,pinball_mode(a1)
+	bra.w	loc_212C4
+; ---------------------------------------------------------------------------
++	move.b	#0,pinball_mode(a1)
+	rts
 ; ===========================================================================
 ; ----------------------------------------------------------------------------
 ; Object 0F - Title screen menu
