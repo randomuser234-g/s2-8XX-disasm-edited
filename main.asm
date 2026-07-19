@@ -3638,10 +3638,10 @@ Option_Text: ; loc_3d7C: ; Options Menu Text
 		dc.b	"    -ADDITIONAL OPTIONS-   "
 		dc.b	"    PROTOTYPE ZONE ORDER   "
 		dc.b	"     LARGER ZONE ORDER     "
-		dc.b	"                           "
-		dc.b	"                           "
-		dc.b	"                           "
-		dc.b	"                           "
+		dc.b	"       ROLL LOCK OFF       "
+		dc.b	"       EASIER CROUCH       "
+		dc.b	"      TAILS FLIGHT ON      "
+		dc.b	"     DISABLE ALL MOVES     "
 		dc.b	"                           "
 		dc.b	"                           "
 		dc.b	"                           "
@@ -12706,6 +12706,11 @@ Obj26_Init:
 Obj26_SetFrame:
 		move.b	#$46,$20(a0)
 		move.b	$28(a0),$1C(a0)		; subtype = icon to display
+		cmpi.b	#1,anim(a0)		;is this a Sonic monitor?
+		bne.s	Obj26_Main		;if not, branch
+		cmpi.b	#2,(MainCharacter+id).w	;is this Tails?
+		bne.s	Obj26_Main		;if not, branch
+		move.b	#2,anim(a0)		; use 'Tails' icon
 ; loc_B31A:
 Obj26_Main:
 		move.b	$25(a0),d0		; is the monitor set to fall?
@@ -19889,25 +19894,38 @@ Sonic_Boundary_Sides:
 
 ; loc_10410:
 Sonic_Roll:
-		tst.b	(Sliding_flag).w
-		bne.s	Obj01_NoRoll
-		move.w	$14(a0),d0
-		bpl.s	loc_1041E
-		neg.w	d0
+	tst.b	(Sliding_flag).w
+	bne.s	Obj01_NoRoll
+	move.b	(Ctrl_1_Held_Logical).w,d0
+	andi.b	#button_left_mask|button_right_mask,d0		; is left/right being pressed?
+	bne.s	Obj01_NoRoll	; if yes, branch
+	btst	#button_down,(Ctrl_1_Held_Logical).w	; is down being pressed?
+	beq.s	Obj01_ChkWalk			; if yes, branch
+	mvabs.w	inertia(a0),d0
 
-loc_1041E:
-		cmpi.w	#$80,d0		; is Sonic moving at $80 speed or faster?
-		blo.s	Obj01_NoRoll	; if not,branch
-		move.b	(Ctrl_1_Held_Logical).w,d0
-		andi.b	#button_left_mask+button_right_mask,d0		; is left/right being pressed?
-		bne.s	Obj01_NoRoll	; if yes,branch
-		btst	#button_down,(Ctrl_1_Held_Logical).w	; is down being pressed?
-		bne.s	Obj01_ChkRoll	; if yes,branch
+	cmpi.b	#1,(Crouching_S3).w
+	beq.s	.s3roll	; if not, branch
+	cmpi.w	#$80,d0		; is Sonic moving at $80 speed or faster?
+	bhs.s	Obj01_ChkRoll	; if yes, branch
+	rts
+.s3roll:
+	cmpi.w	#$100,d0		; is Sonic moving at $100 speed or faster?
+	bhs.s	Obj01_ChkRoll	; if yes, branch
+	btst	#3,status(a0)
+	bne.s	Obj01_NoRoll	; if not, branch
+	move.b	#8,anim(a0)	;  "duck" animation
 ; return_10436: Sonic_NoRoll:
 Obj01_NoRoll:
 		rts
 ; ---------------------------------------------------------------------------
-; loc_10438:
+
+; obj01_ChkWalk
+Obj01_ChkWalk:
+	cmpi.b	#8,anim(a0)	; check if "duck" animation
+		bne.s	Obj01_NoRoll			;if yes, branch
+	move.b	#0,anim(a0)	; use "walking" animation
+		rts
+; ---------------------------------------------------------------------------; loc_10438:
 Obj01_ChkRoll:
 		btst	#2,$22(a0)
 		beq.s	Obj01_DoRoll
@@ -19989,6 +20007,11 @@ return_1051A:
 ; loc_1051C:
 Sonic_RollJump:
 		bset	#4,$22(a0)	; set the rolling+jumping flag
+		tst.w	(Demo_mode_flag).w	; is ending demo flag set? (leftover from Sonic 1)
+		bne.s	return_1051A		; if not,branch
+		cmpi.b	#1,(Roll_lock_toggle).w		;roll lock toggle on?
+		bne.s	return_1051A			;if not, branch
+		bclr	#4,$22(a0)	; clear the rolling+jumping flag
 		rts
 ; End of function Sonic_Jump
 
@@ -21079,7 +21102,7 @@ Obj02_Init:
 		move.b	#5,(Tails_Tails).w
 		move.w	a0,(Tails_Tails+parent).w ; set its parent object to this
 		move.w	#0,(Tails_CPU_routine).w	; set AI state to TailsCPU_Init
-		move.w	#0,(Tails_control_counter).w
+		move.w	#1,(Tails_control_counter).w
 		move.w	#0,(Tails_respawn_counter).w
 ; loc_10EB4: Tails_Control:
 Obj02_Control:
@@ -21455,6 +21478,10 @@ TailsCPU_Normal_SonicOK:
 	bne.w	TailsCPU_Normal_HumanControl		; (if not, branch)
 	tst.b	obj_control(a0)			; and Tails isn't fully object controlled (&$80)
 	bmi.w	TailsCPU_Normal_HumanControl		; (if not, branch)
+	cmpi.b	#1,(Tails_carrying_Sonic).w	;carrying Sonic?
+	bne.s	+				;if not branch
+	jmp	Tails_SonicControl		;if yes, go to sonic's controls
++
 	tst.w	move_lock(a0)			; and Tails' movement is locked (usually because he just fell down a slope)
 	beq.s	+					; (if not, branch)
 	tst.w	inertia(a0)			; and Tails is stopped, then...
@@ -21682,7 +21709,6 @@ TailsCPU_Panic_RevDash:
 
 return_1BF36:
 	rts
-
 ; End of subroutine TailsCPU_Control
 
 ; ---------------------------------------------------------------------------
@@ -21764,16 +21790,43 @@ Obj02_MdRoll:
 ;		 Why they gave it a separate copy of the code,I don't know.
 ; loc_110E2: Tails_MdJump2:
 Obj02_MdJump:
+        tst.b   (Tails_doublejump).w                  
+        bne.s   .flying
+	move.b	#0,(Tails_carrying_Sonic).w	;dont hold sonic
+
 		bsr.w	Tails_JumpHeight
 		bsr.w	Tails_ChgJumpDir
 		bsr.w	Tails_LevelBoundaries
 		jsr	(ObjectMoveAndFall).l
 		btst	#6,$22(a0)	; is Tails underwater?
-		beq.s	+		; if not,branch
+		beq.s	.notunderwater		; if not,branch
 		subi.w	#$28,$12(a0)	; reduce gravity by $28 ($38-$28=$10)
-+
+.notunderwater:
 		bsr.w	Tails_JumpAngle
 		bsr.w	Tails_Floor
+		rts
+.flying:
+		jsr	Tails_StartFlying
+                bsr     Tails_ChgJumpDir                       ; Offset_0x00E0EC
+                bsr     Tails_LevelBoundaries                  ; Offset_0x00E17C
+                jsr     (ObjectMove)                           ; Offset_0x01111E
+                bsr     Tails_JumpAngle                        ; Offset_0x00E590
+                movem.l A4-A6, -(A7)
+                bsr     Tails_Floor                           ; Offset_0x00E5F0
+                movem.l (A7)+, A4-A6
+                cmpi.b  #$0000, (Player_mode).w             ; sonic and tails game?
+                bne.s   .dontflysonic
+		lea	(MainCharacter).w,a1 ; a1=character
+		move.w	(Ctrl_1).w,d0
+		jsr	Tails_CarrySonic
+	tst.w	(Tails_control_counter).w	; if CPU has control
+	bne.w	.dontflysonic		; (if not, branch)
+	.end:
+		rts
+.dontflysonic:
+	btst	#button_down,(Ctrl_2_Held_Logical).w	; is left being pressed?
+	beq.s	.end			; if not, branch
+	move.b	#2,anim(a0)
 		rts
 ; End of subroutine Obj02_MdJump
 
@@ -22141,6 +22194,7 @@ Tails_CheckRollStop:
 		move.b	#9,$17(a0)
 		move.b	#5,$1C(a0)
 		subq.w	#5,$C(a0)
+		bra.s	Tails_SetRollSpeed
 
 Tails_KeepRolling:
 	move.w	#$400,inertia(a0)
@@ -22340,21 +22394,38 @@ loc_1156A:
 ; [ Begin ]
 ;===============================================================================
 Tails_Roll: ; loc_11582:
-		tst.b	(Sliding_flag).w
-		bne.s	loc_115A8
-		move.w	$0014(a0),d0
-		bpl.s	loc_11590
-		neg.w	d0
-loc_11590:
-		cmpi.w	#$0080,d0
-		blo.s	loc_115A8
-		move.b	(Ctrl_2_Held_Logical).w,d0
-		andi.b	#button_left_mask+button_right_mask,d0
-		bne.s	loc_115A8
-		btst	#button_down,(Ctrl_2_Held_Logical).w
-		bne.s	loc_115AA
+
+	tst.b	(Sliding_flag).w
+	bne.s	loc_115A8
+	move.b	(Ctrl_2_Held_Logical).w,d0
+	andi.b	#button_left_mask|button_right_mask,d0		; is left/right being pressed?
+	bne.s	loc_115A8	; if yes, branch
+	btst	#button_down,(Ctrl_2_Held_Logical).w	; is down being pressed?
+	beq.s	Obj02_ChkWalk			; if yes, branch
+	mvabs.w	inertia(a0),d0
+
+	cmpi.b	#1,(Crouching_S3).w
+	beq.s	.s3roll	; if not, branch
+	cmpi.w	#$80,d0		; is Sonic moving at $80 speed or faster?
+	bhs.s	loc_115AA	; if yes, branch
+	rts
+.s3roll:
+	cmpi.w	#$100,d0		; is Sonic moving at $100 speed or faster?
+	bhs.s	loc_115AA	; if yes, branch
+	btst	#3,status(a0)
+	bne.s	loc_115A8	; if not, branch
+	move.b	#8,anim(a0)	;  "duck" animation
 loc_115A8:
 		rts
+; ---------------------------------------------------------------------------
+
+; obj02_ChkWalk
+Obj02_ChkWalk:
+	cmpi.b	#8,anim(a0)	; check if "duck" animation
+		bne.s	loc_115A8			;if yes, branch
+	move.b	#0,anim(a0)	; use "walking" animation
+		rts
+; ---------------------------------------------------------------------------
 loc_115AA:
 		btst	#2,$0022(a0)
 		beq.s	loc_115B4
@@ -22426,6 +22497,11 @@ loc_1168C:
 		rts
 loc_1168E:
 		bset	#$04,$0022(a0)
+		tst.w	(Demo_mode_flag).w	; is ending demo flag set? (leftover from Sonic 1)
+		bne.s	loc_1168C		; if yes,branch
+		cmpi.b	#1,(Roll_lock_toggle).w		;roll lock toggle on?
+		bne.s	loc_1168C			;if not, branch
+		bclr	#4,$22(a0)	; clear the rolling+jumping flag
 		rts
 ;===============================================================================
 ; Sub Routine Tails_Jump
@@ -22445,7 +22521,7 @@ Tails_JumpHeight: ; loc_11696:
 		move.w	#-$200,d1
 loc_116AC:
 		cmp.w	$0012(a0),d1
-		ble.s	loc_116C0
+		ble.s	Tails_MidAirAbility
 		move.b	(Ctrl_2_Held_Logical).w,d0
 		andi.b	#button_A_mask+button_B_mask+button_C_mask,d0
 		bne.s	loc_116C0
@@ -22454,11 +22530,13 @@ loc_116C0:
 		rts
 loc_116C2:
 		tst.b	pinball_mode(a0)	; is Tails charging a spindash or in a rolling-only area?
-		bne.s	loc_116d0		; if yes, return
+		bne.s	loc_116C0		; if yes, return
 		cmpi.w	#$F040,$0012(a0)
-		bge.s	loc_116d0
+		bge.s	loc_116C0
 		move.w	#$F040,$0012(a0)
-loc_116d0:
+		rts
+Tails_MidAirAbility:
+		jsr	Tails_Flight
 		rts
 ;===============================================================================
 ; Sub Routine Tails_JumpHeight
@@ -26660,7 +26738,7 @@ loc_14Ad2:
 		moveq	#9,d3
 		move.w	8(a0),d4
 		bsr.w	PlatformObject
-		bra.w	MarkObjGone
+		jmp	MarkObjGone
 ; ===========================================================================
 ; ---------------------------------------------------------------------------
 ; Unused sprite mappings
@@ -47660,6 +47738,187 @@ Obj8B_Main:
 	rts
 ; ===========================================================================
 Obj8B_MapUnc_13B70:	include "mappings/sprite/obj8B.asm"
+
+; ===========================================================================
+;Subroutine to let Tails fly ala Sonic 3 (prototype)
+; ===========================================================================
+Tails_Flight:
+		tst.w	(Demo_mode_flag).w	; is demo mode on?
+		bne.w	rts_TailsFlight		; if yes, no move
+		tst.b	(Update_HUD_timer).w	; has Tails reached the end of the act?
+		beq.s	rts_TailsFlight		; if yes, don't fly
+		cmpi.b	#1,(Tails_flight_toggle).w	; has Tails reached the end of the act?
+		bne.s	rts_TailsFlight		; if yes, don't fly
+		btst	#2,status(a0)		; tails is rolling?
+		beq.w	rts_TailsFlight		;if not, don't fly
+		move.b	(Ctrl_2_Press_Logical).w,d0
+		andi.b	#button_B_mask|button_C_mask|button_A_mask,d0 ; is A, B or C pressed?
+		beq.s	rts_TailsFlight		;if not, don't fly
+		btst	#button_up,(Ctrl_1_Held_Logical).w	; is up being pressed?
+		bne.s	.skipcpucheck			; if yes, branch
+		tst.w	(Tails_control_counter).w	; if CPU has control
+		beq.s	rts_TailsFlight		;if yes, don't fly
+.skipcpucheck:
+		; we already checked this earlier...
+		;btst	#2,status(a0)
+		;beq.s	Offset_0x00E382
+		;bclr	#2,status(a0)
+		;move.b	Obj_Height_2(a0),d1			
+		;move.b	Obj_Height_3(a0),Obj_Height_2(a0)
+		;move.b	Obj_Width_3(a0),Obj_Width_2(a0)
+		;sub.b	Obj_Height_3(a0),d1
+		;ext.w	d1
+		;add.w	d1,obY(a0)
+		;move.b	#id_Walk,anim(a0)
+
+Offset_0x00E382:
+		move.b	#1,(Tails_doublejump).w
+		andi.b	#button_B_mask|button_C_mask,d0
+		beq.s	.20anim
+		move.b	#2,(Tails_doublejump).w
+
+;Offset_0x00E394:
+.20anim:
+		move.b	#$E,anim(a0)	;flying animation
+
+;Offset_0x00E39A:
+rts_TailsFlight:
+		rts
+; End of function Tails_Flight
+;---------------------------------------------------------------------------------------------------------
+Tails_StartFlying:
+		tst.b	(Update_HUD_timer).w	; has Tails reached the end of the act?
+		beq.s	.noflying		; if yes, don't fly
+		cmpi.b	#1,(Tails_flight_toggle).w	; has Tails reached the end of the act?
+		bne.s	.noflying		; if yes, don't fly
+		cmpi.b	#$E,anim(a0)		;is tails in flying animation?
+		bne.s	.noflying		;if not, don't fly
+		bra.s	.flying			;otherwise fly
+	.noflying:
+		move.b	#0,(Tails_doublejump).w
+		move.b	#0,(Tails_carrying_Sonic).w
+		rts
+	.flying:
+		cmpi.b	#1,(Tails_doublejump).w
+		bne.s	FlyP1
+		move.b	(Ctrl_2_Press_Logical).w,d0
+		andi.b	#button_B_mask|button_C_mask,d0		;$30?
+		beq.s	Tails_Speed1
+		subi.w	#$40,y_vel(a0)
+		bra.s	Tails_Speed2
+
+;Offset_0x00DC18:
+Tails_Speed1:
+		move.b	(Ctrl_2_Held_Logical).w,d0
+		andi.b	#button_A_mask,d0		;2 flying styles, if A is held, smooth acceleration flight
+		beq.s	Tails_Speed2		;if A isn't held, C must be pressed and will "bob" tails up in the air in multiple spirts, similar to jump
+		subi.w	#$10,y_vel(a0)
+
+;Offset_0x00DC28:
+Tails_Speed2:
+		addi.w	#8,y_vel(a0)
+		cmpi.w	#-$100,y_vel(a0)
+		bge.s	Fly_DoNothing
+		move.w	#-$100,y_vel(a0)
+
+;Offset_0x00DC3C:
+Fly_DoNothing:
+                rts
+; ---------------------------------------------------------------------------
+
+;Offset_0x00DC3E:
+FlyP1:
+		move.b	(Ctrl_2_Press_Logical).w,d0
+		andi.b	#button_B_mask|button_C_mask,d0
+		beq.s	FlyP2
+		tst.w	y_vel(a0)
+		bmi.s	FlyP3
+		subi.w	#$300,y_vel(a0)
+		bra.s	FlyP3
+
+;Offset_0x00DC56:
+FlyP2:
+		move.b	(Ctrl_2_Held_Logical).w,d0
+		andi.b	#button_A_mask,d0
+		beq.s	FlyP3
+		tst.w	y_vel(a0)
+		bmi.s	FlyP3
+		subi.w	#$200,y_vel(a0)
+
+;Offset_0x00DC6C:
+FlyP3:
+		addi.w	#8,y_vel(a0)
+		rts
+; End of function Tails_StartFlying
+
+Tails_CarrySonic:	;code copied from obj7F, one of vines in mystic cave zone
+	move.w	x_pos(a1),d0
+	sub.w	x_pos(a0),d0
+	addi.w	#$C,d0
+	cmpi.w	#$18,d0
+	bhs.w	.stopcarryingsonic
+	move.w	y_pos(a1),d1
+	sub.w	y_pos(a0),d1
+	subi.w	#$19,d1		;28
+	cmpi.w	#$D,d1		;10
+	bhs.w	.stopcarryingsonic
+	tst.b	obj_control(a1)
+	bmi.w	.stopcarryingsonic
+	cmpi.b	#4,routine(a1)
+	bhs.w	.stopcarryingsonic
+	tst.w	(Debug_placement_mode).w
+	bne.w	.stopcarryingsonic
+	;face left or right
+	btst	#0,status(a0)		;tails facing left?
+	bne.s	.notleft		;if not, don't face left
+	bclr	#0,status(a1)		;try to copy facing left/right
+	bra.s	.afterdirections
+.notleft:
+	bset	#0,status(a1)		;try to copy facing left/right
+.afterdirections:
+	;be airborne
+	btst	#1,status(a0)		;tails in the air?
+	bne.s	.notairborne		;if not, don't be airborne
+	bclr	#1,status(a1)		;try to copy being in the air
+	bra.s	.afteraircheck
+.notairborne:
+	bset	#1,status(a1)		;try to copy being in the air
+.afteraircheck:
+	clr.w	x_vel(a1)
+	clr.w	y_vel(a1)
+	clr.w	inertia(a1)
+	move.w	x_pos(a0),x_pos(a1)
+	move.w	y_pos(a0),y_pos(a1)
+	move.w	x_vel(a0),x_vel(a1)	;velocity
+	move.w	y_vel(a0),y_vel(a1)
+	addi.w	#$1D,y_pos(a1)	;30		; the 3 numbers edited here may be where on y axis tails should hold sonic
+	move.b	#$1F,anim(a1)	;HangingFromObj
+	move.b	#1,(Tails_carrying_Sonic).w
+	move.b	#0,(Tails_CPU_jumping).w
+	btst	#button_down,(Ctrl_1_Held_Logical).w	; is down being pressed?
+	beq.s	.end			; if not, branch
+	move.b	#2,anim(a1)
+	move.b	#2,anim(a0)
+.stopcarryingsonic:
+	move.b	#0,(Tails_carrying_Sonic).w
+		rts
+.end:
+		rts
+Tails_SonicControl:
+		move.b	(Ctrl_1_Logical).w,d0
+		andi.b	#button_left_mask|button_right_mask,d0
+		beq.s	.ABC
+		or.b	(Ctrl_2_Logical).w,d0
+		move.b	d0,(Ctrl_2_Logical).w
+.ABC:
+		move.b	(Ctrl_1_Logical).w,d0
+		andi.b	#button_A_mask+button_B_mask+button_C_mask,d0	;little issue, only A responds to flying
+		beq.s	.donothing
+		or.b	(Ctrl_2_Logical).w,d0
+		move.b	d0,(Ctrl_2_Logical).w
+.donothing:
+		rts
+
 
 	if PaddingOptimization=0
 		cnop	-1,2<<lastbit(*-1)

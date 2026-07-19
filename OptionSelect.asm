@@ -51,9 +51,39 @@ OptionSelect:
 ;-----------------------------------------------------------------------------------------------------------
 	.expandedzoneorder:
 		cmpi.w	#$C,d0		; have you selected item $6 (s1 style peelout)?
-		bne.w	.startgame	; if not, do nothing
+		bne.w	.rolllock	; if not, do nothing
 		move.b	#1,(Expanded_zone_option).w
 		move.b	#SndID_Ring,d0		; put value of Ring sound into d0
+		bsr.w	.optionplaysound
+;-----------------------------------------------------------------------------------------------------------
+	.rolllock:
+		cmpi.w	#$D,d0		; have you selected item $6 (s1 style peelout)?
+		bne.w	.s3crouch	; if not, do nothing
+		move.b	#1,(Roll_lock_toggle).w
+		move.b	#SndID_Ring,d0		; put value of Ring sound into d0
+		bsr.w	.optionplaysound
+;-----------------------------------------------------------------------------------------------------------
+	.s3crouch:
+		cmpi.w	#$E,d0		; have you selected item $6 (s1 style peelout)?
+		bne.w	.tailsflight	; if not, do nothing
+		move.b	#1,(Crouching_S3).w
+		move.b	#SndID_Ring,d0		; put value of Ring sound into d0
+		bsr.w	.optionplaysound
+;-----------------------------------------------------------------------------------------------------------
+	.tailsflight:
+		cmpi.w	#$F,d0		; have you selected item $6 (s1 style peelout)?
+		bne.w	.resetmoves	; if not, do nothing
+		move.b	#1,(Tails_flight_toggle).w
+		move.b	#SndID_Ring,d0		; put value of Ring sound into d0
+		bsr.w	.optionplaysound
+;-----------------------------------------------------------------------------------------------------------
+	.resetmoves:
+		cmpi.w	#$10,d0		; have you selected item $6 (s1 style peelout)?
+		bne.w	.startgame	; if not, do nothing
+		move.b	#0,(Roll_lock_toggle).w
+		move.b	#0,(Crouching_S3).w
+		move.b	#0,(Tails_flight_toggle).w
+		move.b	#SndID_Bumper,d0		; put value of Ring sound into d0
 		bsr.w	.optionplaysound
 ;-----------------------------------------------------------------------------------------------------------
 	.startgame:

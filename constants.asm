@@ -859,7 +859,8 @@ Tails_CPU_routine:		ds.w	1
 Tails_respawn_counter:		ds.w	1
 Tails_interact_ID:		ds.b	1
 Tails_CPU_jumping:		ds.b	1
-				ds.b	2	; $FFFFF70A-$FFFFF70F ; seems unused
+Sonic_doublejump:		ds.b	1	; $FFFFF70A-$FFFFF70F ; was unused
+Tails_doublejump:		ds.b	1	; $FFFFF70A-$FFFFF70F ; was unused
 
 Rings_manager_routine:		ds.b	1
 Level_started_flag:		ds.b	1
@@ -873,7 +874,8 @@ Ring_Manager_Addresses_P2:
 Ring_start_addr_P2:		ds.w	1
 Ring_end_addr_P2:		ds.w	1
 Ring_Manager_Addresses_P2_End:
-				ds.b	6	; $FFFFF71A-$FFFFF71F ; seems unused
+Tails_carrying_Sonic:		ds.b	1	;check if carrying sonic
+				ds.b	5	; $FFFFF71B-$FFFFF71F ; seems unused
 
 Screen_redraw_flag:		ds.b	1	; if whole screen needs to redraw
 CPZ_UnkScroll_Timer:		ds.b	1	; used only in unused CPZ scrolling function
@@ -1137,7 +1139,10 @@ Player_mode:			ds.b	1	; player option
 Two_player_winner:		ds.b	1	; who won in versus game
 Menu_page:			ds.b	1	; what page the menu screen is on
 Expanded_zone_option:		ds.b	1	;toggle expanded zone order
-				ds.b	$7	; $FFFFFFC5-$FFFFFFCF ; seems unused
+Roll_lock_toggle:		ds.b	1
+Crouching_S3:			ds.b	1
+Tails_flight_toggle:		ds.b	1
+				ds.b	$4	; $FFFFFFC5-$FFFFFFCF ; seems unused
 
 Level_select_flag:		ds.b	1
 Slow_motion_flag:		ds.b	1
