@@ -3443,6 +3443,8 @@ loc_3C5E:
 loc_3C6E:
 		move.w	d0,(Level_select_zone).w
 		bsr.w	LevelSelect_TextLoad
+		move.w	#SndID_Blip,d0		;play sound when moving through menus
+		jsr	(PlaySound).l			  
 		rts
 ; ===========================================================================
 ; loc_3C78:
@@ -21806,6 +21808,7 @@ Obj02_MdJump:
 		bsr.w	Tails_Floor
 		rts
 .flying:
+		bclr	#$04,status(a0)		;clear roll lock status if flying
 		jsr	Tails_StartFlying
                 bsr     Tails_ChgJumpDir                       ; Offset_0x00E0EC
                 bsr     Tails_LevelBoundaries                  ; Offset_0x00E17C
@@ -26789,8 +26792,10 @@ Obj12_Main:
 		andi.w	#$FF80,d0
 		sub.w	(Camera_X_pos_coarse).w,d0
 		cmpi.w	#$280,d0
-		bhi.w	DeleteObject
+		bhi.w	.deleteobject
 		bra.w	DisplaySprite
+.deleteobject:
+		jmp	DeleteObject
 ; ===========================================================================
 ; ---------------------------------------------------------------------------
 ; Sprite mappings
