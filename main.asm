@@ -19337,41 +19337,79 @@ Obj01_NotRight:
 		lea	(MainCharacter).w,a1
 		lea	(a1,d0.w),a1
 		tst.b	$22(a1)
-		bmi.s	Sonic_LookUp
+		bmi.w	Sonic_LookUp
 		moveq	#0,d1
 		move.b	$19(a1),d1
 		move.w	d1,d2
 		add.w	d2,d2
-		subq.w	#4,d2
+		subq.w	#2,d2		;change from 4
 		add.w	8(a0),d1
 		sub.w	8(a1),d1
-		cmpi.w	#4,d1
-		blt.s	Sonic_BalanceOnObjLeft
+		cmpi.w	#2,d1		;change from 4
+		blt.w	Sonic_BalanceOnObjLeft
 		cmp.w	d2,d1
 		bge.s	Sonic_BalanceOnObjRight
-		bra.s	Sonic_LookUp
+		bra.w	Sonic_LookUp
 ; ===========================================================================
 ; loc_1001E:
-Sonic_Balance:
+Sonic_Balance:		;code changed to match final s2 to an extent
 		jsr	(ChkFloorEdge).l
 		cmpi.w	#$C,d1
-		blt.s	Sonic_LookUp
-		cmpi.b	#3,$36(a0)
-		bne.s	loc_1003A
+		blt.w	Sonic_LookUp
+		cmpi.b	#3,next_tilt(a0)
+		bne.s	Sonic_BalanceLeft
+		;s2
+		bclr	#0,status(a0)
+		move.b	#6,anim(a0)	;balancing animation
+		move.w	x_pos(a0),d3
+		subq.w	#6,d3
+		jsr	(ChkFloorEdge_Part2).l
+		cmpi.w	#$C,d1		;further toward the ledge?
+		blt.w	loc_10048	;if not, branch
+		move.b	#$22,anim(a0)	;pull out different balancing animation
+		bra.w	loc_10048
+		;s2
+
+		
 ; loc_10032:
 Sonic_BalanceOnObjRight:
-		bclr	#0,$22(a0)
+		bclr	#0,status(a0)
+		;s2
+		move.b	#6,anim(a0)	;balancing animation
+		addq.w	#6,d2
+		cmp.w	d2,d1		;further toward the ledge?
+		blt.w	loc_10048	;if not, branch
+		move.b	#$22,anim(a0)	;pull out different balancing animation
 		bra.s	loc_10048
+		;s2
 
-loc_1003A:
-		cmpi.b	#3,$37(a0)
+;loc_1003A:
+Sonic_BalanceLeft:
+		bset	#0,status(a0)
+		cmpi.b	#3,tilt(a0)
 		bne.s	Sonic_LookUp
+		;s2
+		move.b	#6,anim(a0)	;balancing animation
+		move.w	x_pos(a0),d3
+		addq.w	#6,d3
+		jsr	(ChkFloorEdge_Part2).l
+		cmpi.w	#$C,d1		;further toward the ledge?
+		blt.w	loc_10048	;if not, branch
+		move.b	#$22,anim(a0)	;pull out different balancing animation
+		bra.w	loc_10048
+		;s2
+
 ; loc_10042:
 Sonic_BalanceOnObjLeft:
-		bset	#0,$22(a0)
-
+		bset	#0,status(a0)
+		move.b	#6,anim(a0)		; balancing animation
+		;s2
+		cmpi.w	#-4,d1			;further toward the ledge?
+		bge.w	loc_10048		;if not, branch
+		move.b	#$22,anim(a0)	;pull out different balancing animation
+		;s2
 loc_10048:
-		move.b	#6,$1C(a0)
+		;move balancing animation
 		bra.s	Obj01_UpdateSpeedOnGround
 ; ===========================================================================
 ; loc_10050:
@@ -20823,6 +20861,12 @@ SAnim_WalkRun:
 		bpl.s	+
 		neg.w	d2
 +
+		lea	(SonAni_RunFaster).l,a1	; use faster running animation
+		cmpi.w	#$A00,d2		; is Sonic at running speed?
+		bhs.s	+			; if yes,branch
+		lea	(SonAni_RunFast).l,a1	; use faster running animation
+		cmpi.w	#$800,d2		; is Sonic at running speed?
+		bhs.s	+			; if yes,branch
 		lea	(SonAni_Run).l,a1	; use running animation
 		cmpi.w	#$600,d2		; is Sonic at running speed?
 		bhs.s	+			; if yes,branch
@@ -20934,38 +20978,41 @@ SAnim_Push:
 ; ---------------------------------------------------------------------------
 ; off_10CB4: Sonic_AnimateData:
 SonicAniData:	offsetTable
-		offsetTableEntry.w SonAni_Walk
-		offsetTableEntry.w SonAni_Run
-		offsetTableEntry.w SonAni_Roll
-		offsetTableEntry.w SonAni_Roll2
-		offsetTableEntry.w SonAni_Push
-		offsetTableEntry.w SonAni_Wait
-		offsetTableEntry.w SonAni_Balance
-		offsetTableEntry.w SonAni_LookUp
-		offsetTableEntry.w SonAni_Duck
-		offsetTableEntry.w SonAni_Spindash
-		offsetTableEntry.w SonAni_WallRecoil1
-		offsetTableEntry.w SonAni_WallRecoil2
-		offsetTableEntry.w SonAni_0x0C
-		offsetTableEntry.w SonAni_Stop
-		offsetTableEntry.w SonAni_Float1
-		offsetTableEntry.w SonAni_Float2
-		offsetTableEntry.w SonAni_0x10
-		offsetTableEntry.w SonAni_S1LzHang
-		offsetTableEntry.w SonAni_Unused_0x12
-		offsetTableEntry.w SonAni_Unused_0x13
-		offsetTableEntry.w SonAni_Unused_0x14
-		offsetTableEntry.w SonAni_Bubble
-		offsetTableEntry.w SonAni_Death1
-		offsetTableEntry.w SonAni_Drown
-		offsetTableEntry.w SonAni_Death2
-		offsetTableEntry.w SonAni_Unused_0x19
-		offsetTableEntry.w SonAni_Hurt
-		offsetTableEntry.w SonAni_S1LzSlide
-		offsetTableEntry.w SonAni_0x1C
-		offsetTableEntry.w SonAni_Float3
-		offsetTableEntry.w SonAni_0x1E
-		offsetTableEntry.w SonAni_HangingOntoObj
+		offsetTableEntry.w SonAni_Walk		;00
+		offsetTableEntry.w SonAni_Run		;01
+		offsetTableEntry.w SonAni_Roll		;02
+		offsetTableEntry.w SonAni_Roll2		;03
+		offsetTableEntry.w SonAni_Push		;04
+		offsetTableEntry.w SonAni_Wait		;05
+		offsetTableEntry.w SonAni_Balance	;06
+		offsetTableEntry.w SonAni_LookUp	;07
+		offsetTableEntry.w SonAni_Duck		;08
+		offsetTableEntry.w SonAni_Spindash	;09
+		offsetTableEntry.w SonAni_WallRecoil1	;0A
+		offsetTableEntry.w SonAni_WallRecoil2	;0B
+		offsetTableEntry.w SonAni_GetUp		;0C	,old name of 0x0C
+		offsetTableEntry.w SonAni_Stop		;0D
+		offsetTableEntry.w SonAni_Float1	;0E	;tails fly is in this spot
+		offsetTableEntry.w SonAni_Float2	;0F
+		offsetTableEntry.w SonAni_Spring		;10	,old name of 0x10
+		offsetTableEntry.w SonAni_S1LzHang	;11
+		offsetTableEntry.w SonAni_Unused_0x12	;12
+		offsetTableEntry.w SonAni_Unused_0x13	;13
+		offsetTableEntry.w SonAni_Unused_0x14	;14
+		offsetTableEntry.w SonAni_Bubble	;15
+		offsetTableEntry.w SonAni_Death1	;16
+		offsetTableEntry.w SonAni_Drown		;17
+		offsetTableEntry.w SonAni_Death2	;18
+		offsetTableEntry.w SonAni_Unused_0x19	;19
+		offsetTableEntry.w SonAni_Hurt		;1A
+		offsetTableEntry.w SonAni_S1LzSlide	;1B
+		offsetTableEntry.w SonAni_0x1C		;1C
+		offsetTableEntry.w SonAni_Float3	;1D
+		offsetTableEntry.w SonAni_0x1E		;1E
+		offsetTableEntry.w SonAni_HangingOntoObj;1F
+		offsetTableEntry.w SonAni_RunFast	;20		
+		offsetTableEntry.w SonAni_RunFaster	;21	
+		offsetTableEntry.w SonAni_Balance2	;22
 SonAni_Walk:		dc.b $FF,$10,$11,$12,$13,$14,$15,$16,$17,$0C,$0D,$0E,$0F,$FF
 SonAni_Run:		dc.b $FF,$3C,$3D,$3E,$3F,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF
 SonAni_Roll:		dc.b $FE,$6C,$70,$6D,$70,$6E,$70,$6F,$70,$FF
@@ -20980,11 +21027,11 @@ SonAni_Duck:		dc.b $05,$7F,$80,$FE,$01
 SonAni_Spindash:	dc.b $00,$71,$72,$71,$73,$71,$74,$71,$75,$71,$76,$71,$FF
 SonAni_WallRecoil1:	dc.b $3F,$82,$FF
 SonAni_WallRecoil2:	dc.b $07,$08,$08,$09,$FD,$05
-SonAni_0x0C:		dc.b $07,$09,$FD,$05
+SonAni_GetUp:		dc.b $07,$09,$FD,$05
 SonAni_Stop:		dc.b $03,$81,$82,$83,$84,$85,$86,$87,$88,$FE,$02
-SonAni_Float1:		dc.b $07,$94,$96,$FF
+SonAni_Float1:		dc.b $07,$91,$96,$FF		;change from 93, may be error from sonic 1 anim as new frames are there
 SonAni_Float2:		dc.b $07,$91,$92,$93,$94,$95,$FF
-SonAni_0x10:		dc.b $2F,$7E,$FD,$00
+SonAni_Spring:		dc.b $2F,$7E,$FD,$00
 SonAni_S1LzHang:	dc.b $05,$8F,$90,$FF
 SonAni_Unused_0x12:	dc.b $0F,$43,$43,$43,$FE,$01
 SonAni_Unused_0x13:	dc.b $0F,$43,$44,$FE,$01
@@ -20999,7 +21046,10 @@ SonAni_S1LzSlide:	dc.b $09,$8D,$8E,$FF
 SonAni_0x1C:		dc.b $77,$00,$FD,$00
 SonAni_Float3:		dc.b $03,$91,$92,$93,$94,$95,$FF
 SonAni_0x1E:		dc.b $03,$3C,$FD,$00
-SonAni_HangingOntoObj:		dc.b $13,$A7,$A8,$FF
+SonAni_HangingOntoObj:	dc.b $13,$A7,$A8,$FF
+SonAni_RunFast:		dc.b $FF,$40,$41,$42,$43,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF
+SonAni_RunFaster:	dc.b $FF,$44,$45,$46,$47,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF,$FF
+SonAni_Balance2:		dc.b $07,$8B,$8C,$FF
 		even
 
 ; ---------------------------------------------------------------------------
@@ -23170,6 +23220,10 @@ loc_11C84:
 		add.b	d1,d0
 		add.b	d0,d0
 		move.b	d0,d3
+
+		cmpi.w	#$700,d2		; is Tails going really fast?
+		blo.s	loc_11CA6	; if not, branch
+		lea	(Tails_Animate_RunFast).l,a1
 loc_11CA6:
 		neg.w	d2
 		addi.w	#$0800,d2
@@ -23283,38 +23337,41 @@ loc_11DCA:
 		add.b	d3,$001A(a0)
 		rts
 Tails_AnimateData: ; loc_11DF4: ; Tails Data
-		dc.w	Tails_Animate_Walk-Tails_AnimateData		   ; loc_11E32
-		dc.w	Tails_Animate_Run-Tails_AnimateData			   ; loc_11E3C
-		dc.w	Tails_Animate_Roll-Tails_AnimateData		   ; loc_11E46
-		dc.w	Tails_Animate_Roll2-Tails_AnimateData		   ; loc_11E4B
-		dc.w	Tails_Animate_Push_NoArt-Tails_AnimateData	   ; loc_11E50
-		dc.w	Tails_Animate_Wait-Tails_AnimateData		   ; loc_11E58
-		dc.w	Tails_Animate_Balance_NoArt-Tails_AnimateData  ; loc_11E96
-		dc.w	Tails_Animate_LookUp-Tails_AnimateData		   ; loc_11EA0
-		dc.w	Tails_Animate_Duck-Tails_AnimateData		   ; loc_11EA3
-		dc.w	Tails_Animate_Spindash-Tails_AnimateData	   ; loc_11EA6
-		dc.w	Tails_Animate_0x0A-Tails_AnimateData		   ; loc_11EAB
-		dc.w	Tails_Animate_0x0B-Tails_AnimateData		   ; loc_11EAE
-		dc.w	Tails_Animate_0x0C-Tails_AnimateData		   ; loc_11EB4
-		dc.w	Tails_Animate_Stop-Tails_AnimateData		   ; loc_11EB8
-		dc.w	Tails_Animate_Fly-Tails_AnimateData			   ; loc_11EBC
-		dc.w	Tails_Animate_0x0F-Tails_AnimateData		   ; loc_11EC0
-		dc.w	Tails_Animate_Jump-Tails_AnimateData		   ; loc_11EC7
-		dc.w	Tails_Animate_0x11-Tails_AnimateData		   ; loc_11Ed6
-		dc.w	Tails_Animate_0x12-Tails_AnimateData		   ; loc_11EDA
-		dc.w	Tails_Animate_0x13-Tails_AnimateData		   ; loc_11EE0
-		dc.w	Tails_Animate_0x14-Tails_AnimateData		   ; loc_11EE5
-		dc.w	Tails_Animate_0x15-Tails_AnimateData		   ; loc_11EE8
-		dc.w	Tails_Animate_Death1-Tails_AnimateData		   ; loc_11EEF
-		dc.w	Tails_Animate_Unused_Drown-Tails_AnimateData   ; loc_11EF2
-		dc.w	Tails_Animate_Death2-Tails_AnimateData		   ; loc_11EF5
-		dc.w	Tails_Animate_0x19-Tails_AnimateData		   ; loc_11EF8
-		dc.w	Tails_Animate_0x1A-Tails_AnimateData		   ; loc_11EFB
-		dc.w	Tails_Animate_0x1B-Tails_AnimateData		   ; loc_11EFE
-		dc.w	Tails_Animate_0x1C-Tails_AnimateData		   ; loc_11F02
-		dc.w	Tails_Animate_0x1D-Tails_AnimateData		   ; loc_11F06
-		dc.w	Tails_Animate_0x1E-Tails_AnimateData		   ; loc_11F10
+		dc.w	Tails_Animate_Walk-Tails_AnimateData		   ; loc_11E32	;00
+		dc.w	Tails_Animate_Run-Tails_AnimateData		   ; loc_11E3C	;01
+		dc.w	Tails_Animate_Roll-Tails_AnimateData		   ; loc_11E46	;02
+		dc.w	Tails_Animate_Roll2-Tails_AnimateData		   ; loc_11E4B	;03
+		dc.w	Tails_Animate_Push_NoArt-Tails_AnimateData	   ; loc_11E50	;04
+		dc.w	Tails_Animate_Wait-Tails_AnimateData		   ; loc_11E58	;05
+		dc.w	Tails_Animate_Balance_NoArt-Tails_AnimateData  	   ; loc_11E96	;06
+		dc.w	Tails_Animate_LookUp-Tails_AnimateData		   ; loc_11EA0	;07
+		dc.w	Tails_Animate_Duck-Tails_AnimateData		   ; loc_11EA3	;08
+		dc.w	Tails_Animate_Spindash-Tails_AnimateData	   ; loc_11EA6	;09
+		dc.w	Tails_Animate_0x0A-Tails_AnimateData		   ; loc_11EAB	;0A
+		dc.w	Tails_Animate_0x0B-Tails_AnimateData		   ; loc_11EAE	;0B
+		dc.w	Tails_Animate_0x0C-Tails_AnimateData		   ; loc_11EB4	;0C
+		dc.w	Tails_Animate_Stop-Tails_AnimateData		   ; loc_11EB8	;0D
+		dc.w	Tails_Animate_Fly-Tails_AnimateData		   ; loc_11EBC	;0E
+		dc.w	Tails_Animate_0x0F-Tails_AnimateData		   ; loc_11EC0	;0F
+		dc.w	Tails_Animate_Jump-Tails_AnimateData		   ; loc_11EC7	;10
+		dc.w	Tails_Animate_0x11-Tails_AnimateData		   ; loc_11Ed6	;11
+		dc.w	Tails_Animate_0x12-Tails_AnimateData		   ; loc_11EDA	;12
+		dc.w	Tails_Animate_0x13-Tails_AnimateData		   ; loc_11EE0	;13
+		dc.w	Tails_Animate_0x14-Tails_AnimateData		   ; loc_11EE5	;14
+		dc.w	Tails_Animate_0x15-Tails_AnimateData		   ; loc_11EE8	;15
+		dc.w	Tails_Animate_Death1-Tails_AnimateData		   ; loc_11EEF	;16
+		dc.w	Tails_Animate_Unused_Drown-Tails_AnimateData       ; loc_11EF2	;17
+		dc.w	Tails_Animate_Death2-Tails_AnimateData		   ; loc_11EF5	;18
+		dc.w	Tails_Animate_0x19-Tails_AnimateData		   ; loc_11EF8	;19
+		dc.w	Tails_Animate_0x1A-Tails_AnimateData		   ; loc_11EFB	;1A
+		dc.w	Tails_Animate_0x1B-Tails_AnimateData		   ; loc_11EFE	;1B
+		dc.w	Tails_Animate_0x1C-Tails_AnimateData		   ; loc_11F02	;1C
+		dc.w	Tails_Animate_0x1D-Tails_AnimateData		   ; loc_11F06	;1D
+		dc.w	Tails_Animate_0x1E-Tails_AnimateData		   ; loc_11F10	;1E
 		dc.w	Tails_Animate_HangingFromObj-Tails_AnimateData		   ; 1F
+		dc.w	Tails_Animate_RunFast-Tails_AnimateData		   ; 20
+		dc.w	Tails_Animate_RunFast-Tails_AnimateData		   ; 21* (duplicate)
+		dc.w	Tails_Animate_Balance_NoArt-Tails_AnimateData  	   ; 22* (duplicate) balance2
 Tails_Animate_Walk: ; loc_11E32:
 		dc.b	$FF,$10,$11,$12,$13,$14,$15,$0E,$0F,$FF
 Tails_Animate_Run: ; loc_11E3C:
@@ -23385,6 +23442,11 @@ Tails_Animate_0x1E: ; loc_11F10:
 Tails_Animate_HangingFromObj: ; loc_11F10:
 		dc.b $13,$85,$86,$FF
 		even
+Tails_Animate_RunFast:
+		dc.b $FF,$32,$33,$FF
+		dc.b $FF,$FF,$FF,$FF,$FF,$FF
+		even
+
 ; ===========================================================================
 ; ---------------------------------------------------------------------------
 ; Tails' Tails pattern loading subroutine
@@ -25241,6 +25303,7 @@ loc_137F2:
 ; loc_137F4: Sonic_HitFloor:
 ChkFloorEdge:
 		move.w	8(a0),d3
+ChkFloorEdge_Part2:
 		move.w	y_pos(a0),d2
 		moveq	#0,d0
 		move.b	$0016(a0),d0
@@ -26634,7 +26697,7 @@ loc_14966:
 		bclr	#3,$22(a0)
 
 loc_1497E:
-		bra.w	MarkObjGone
+		jmp	MarkObjGone
 ; ===========================================================================
 ; animation script
 ; off_14982:
@@ -26793,7 +26856,7 @@ Obj12_Main:
 		sub.w	(Camera_X_pos_coarse).w,d0
 		cmpi.w	#$280,d0
 		bhi.w	.deleteobject
-		bra.w	DisplaySprite
+		jmp	DisplaySprite
 .deleteobject:
 		jmp	DeleteObject
 ; ===========================================================================
@@ -27064,7 +27127,7 @@ loc_15364:
 		addq.b	#2,routine(a0)
 		move.l	#Obj49_MapUnc_15404,mappings(a0) ; loc_15404
 		move.w	#$23AE,art_tile(a0)
-		bsr.w	Adjust2PArtPointer	   ; loc_DC30
+		jsr	Adjust2PArtPointer	   ; loc_DC30
 		move.b	#$04,$0001(a0)
 		move.b	#$20,$0019(a0)
 		move.w	8(a0),$0030(a0)
@@ -44047,814 +44110,814 @@ Invencibility_Stars: ; loc_6E114:
 Unused_Dust: ; loc_6E1FC:
 		binclude	"data\sprites\dust.dat"
 Tails_Mappings:
-Map_6c0f: mappingsTable
-	mappingsTableEntry.w	Map_6c0f_0
-	mappingsTableEntry.w	Map_6c0f_1
-	mappingsTableEntry.w	Map_6c0f_2
-	mappingsTableEntry.w	Map_6c0f_3
-	mappingsTableEntry.w	Map_6c0f_4
-	mappingsTableEntry.w	Map_6c0f_5
-	mappingsTableEntry.w	Map_6c0f_6
-	mappingsTableEntry.w	Map_6c0f_7
-	mappingsTableEntry.w	Map_6c0f_8
-	mappingsTableEntry.w	Map_6c0f_9
-	mappingsTableEntry.w	Map_6c0f_10
-	mappingsTableEntry.w	Map_6c0f_11
-	mappingsTableEntry.w	Map_6c0f_12
-	mappingsTableEntry.w	Map_6c0f_13
-	mappingsTableEntry.w	Map_6c0f_14
-	mappingsTableEntry.w	Map_6c0f_15
-	mappingsTableEntry.w	Map_6c0f_16
-	mappingsTableEntry.w	Map_6c0f_17
-	mappingsTableEntry.w	Map_6c0f_18
-	mappingsTableEntry.w	Map_6c0f_19
-	mappingsTableEntry.w	Map_6c0f_20
-	mappingsTableEntry.w	Map_6c0f_21
-	mappingsTableEntry.w	Map_6c0f_22
-	mappingsTableEntry.w	Map_6c0f_23
-	mappingsTableEntry.w	Map_6c0f_24
-	mappingsTableEntry.w	Map_6c0f_25
-	mappingsTableEntry.w	Map_6c0f_26
-	mappingsTableEntry.w	Map_6c0f_27
-	mappingsTableEntry.w	Map_6c0f_28
-	mappingsTableEntry.w	Map_6c0f_29
-	mappingsTableEntry.w	Map_6c0f_30
-	mappingsTableEntry.w	Map_6c0f_31
-	mappingsTableEntry.w	Map_6c0f_32
-	mappingsTableEntry.w	Map_6c0f_33
-	mappingsTableEntry.w	Map_6c0f_34
-	mappingsTableEntry.w	Map_6c0f_35
-	mappingsTableEntry.w	Map_6c0f_36
-	mappingsTableEntry.w	Map_6c0f_37
-	mappingsTableEntry.w	Map_6c0f_38
-	mappingsTableEntry.w	Map_6c0f_39
-	mappingsTableEntry.w	Map_6c0f_40
-	mappingsTableEntry.w	Map_6c0f_41
-	mappingsTableEntry.w	Map_6c0f_42
-	mappingsTableEntry.w	Map_6c0f_43
-	mappingsTableEntry.w	Map_6c0f_44
-	mappingsTableEntry.w	Map_6c0f_45
-	mappingsTableEntry.w	Map_6c0f_46
-	mappingsTableEntry.w	Map_6c0f_47
-	mappingsTableEntry.w	Map_6c0f_48
-	mappingsTableEntry.w	Map_6c0f_49
-	mappingsTableEntry.w	Map_6c0f_50
-	mappingsTableEntry.w	Map_6c0f_51
-	mappingsTableEntry.w	Map_6c0f_52
-	mappingsTableEntry.w	Map_6c0f_53
-	mappingsTableEntry.w	Map_6c0f_54
-	mappingsTableEntry.w	Map_6c0f_55
-	mappingsTableEntry.w	Map_6c0f_56
-	mappingsTableEntry.w	Map_6c0f_57
-	mappingsTableEntry.w	Map_6c0f_58
-	mappingsTableEntry.w	Map_6c0f_59
-	mappingsTableEntry.w	Map_6c0f_60
-	mappingsTableEntry.w	Map_6c0f_61
-	mappingsTableEntry.w	Map_6c0f_62
-	mappingsTableEntry.w	Map_6c0f_63
-	mappingsTableEntry.w	Map_6c0f_64
-	mappingsTableEntry.w	Map_6c0f_65
-	mappingsTableEntry.w	Map_6c0f_66
-	mappingsTableEntry.w	Map_6c0f_67
-	mappingsTableEntry.w	Map_6c0f_68
-	mappingsTableEntry.w	Map_6c0f_69
-	mappingsTableEntry.w	Map_6c0f_70
-	mappingsTableEntry.w	Map_6c0f_71
-	mappingsTableEntry.w	Map_6c0f_72
-	mappingsTableEntry.w	Map_6c0f_73
-	mappingsTableEntry.w	Map_6c0f_74
-	mappingsTableEntry.w	Map_6c0f_75
-	mappingsTableEntry.w	Map_6c0f_76
-	mappingsTableEntry.w	Map_6c0f_77
-	mappingsTableEntry.w	Map_6c0f_78
-	mappingsTableEntry.w	Map_6c0f_79
-	mappingsTableEntry.w	Map_6c0f_80
-	mappingsTableEntry.w	Map_6c0f_81
-	mappingsTableEntry.w	Map_6c0f_82
-	mappingsTableEntry.w	Map_6c0f_83
-	mappingsTableEntry.w	Map_6c0f_84
-	mappingsTableEntry.w	Map_6c0f_85
-	mappingsTableEntry.w	Map_6c0f_86
-	mappingsTableEntry.w	Map_6c0f_87
-	mappingsTableEntry.w	Map_6c0f_88
-	mappingsTableEntry.w	Map_6c0f_89
-	mappingsTableEntry.w	Map_6c0f_90
-	mappingsTableEntry.w	Map_6c0f_91
-	mappingsTableEntry.w	Map_6c0f_92
-	mappingsTableEntry.w	Map_6c0f_93
-	mappingsTableEntry.w	Map_6c0f_94
-	mappingsTableEntry.w	Map_6c0f_95
-	mappingsTableEntry.w	Map_6c0f_96
-	mappingsTableEntry.w	Map_6c0f_97
-	mappingsTableEntry.w	Map_6c0f_98
-	mappingsTableEntry.w	Map_6c0f_99
-	mappingsTableEntry.w	Map_6c0f_100
-	mappingsTableEntry.w	Map_6c0f_101
-	mappingsTableEntry.w	Map_6c0f_102
-	mappingsTableEntry.w	Map_6c0f_103
-	mappingsTableEntry.w	Map_6c0f_104
-	mappingsTableEntry.w	Map_6c0f_105
-	mappingsTableEntry.w	Map_6c0f_106
-	mappingsTableEntry.w	Map_6c0f_107
-	mappingsTableEntry.w	Map_6c0f_108
-	mappingsTableEntry.w	Map_6c0f_109
-	mappingsTableEntry.w	Map_6c0f_110
-	mappingsTableEntry.w	Map_6c0f_111
-	mappingsTableEntry.w	Map_6c0f_112
-	mappingsTableEntry.w	Map_6c0f_113
-	mappingsTableEntry.w	Map_6c0f_114
-	mappingsTableEntry.w	Map_6c0f_115
-	mappingsTableEntry.w	Map_6c0f_116
-	mappingsTableEntry.w	Map_6c0f_117
-	mappingsTableEntry.w	Map_6c0f_118
-	mappingsTableEntry.w	Map_6c0f_119
-	mappingsTableEntry.w	Map_6c0f_120
-	mappingsTableEntry.w	Map_6c0f_121
-	mappingsTableEntry.w	Map_6c0f_122
-	mappingsTableEntry.w	Map_6c0f_123
-	mappingsTableEntry.w	Map_6c0f_124
-	mappingsTableEntry.w	Map_6c0f_125
-	mappingsTableEntry.w	Map_6c0f_126
-	mappingsTableEntry.w	Map_6c0f_127
-	mappingsTableEntry.w	Map_6c0f_128
-	mappingsTableEntry.w	Map_6c0f_129
-	mappingsTableEntry.w	Map_6c0f_130
-	mappingsTableEntry.w	Map_6c0f_131
-	mappingsTableEntry.w	Map_6c0f_132
-	mappingsTableEntry.w	Map_6c0f_133
-	mappingsTableEntry.w	Map_6c0f_134
+Map_bff1: mappingsTable
+	mappingsTableEntry.w	Map_bff1_0
+	mappingsTableEntry.w	Map_bff1_1
+	mappingsTableEntry.w	Map_bff1_2
+	mappingsTableEntry.w	Map_bff1_3
+	mappingsTableEntry.w	Map_bff1_4
+	mappingsTableEntry.w	Map_bff1_5
+	mappingsTableEntry.w	Map_bff1_6
+	mappingsTableEntry.w	Map_bff1_7
+	mappingsTableEntry.w	Map_bff1_8
+	mappingsTableEntry.w	Map_bff1_9
+	mappingsTableEntry.w	Map_bff1_10
+	mappingsTableEntry.w	Map_bff1_11
+	mappingsTableEntry.w	Map_bff1_12
+	mappingsTableEntry.w	Map_bff1_13
+	mappingsTableEntry.w	Map_bff1_14
+	mappingsTableEntry.w	Map_bff1_15
+	mappingsTableEntry.w	Map_bff1_16
+	mappingsTableEntry.w	Map_bff1_17
+	mappingsTableEntry.w	Map_bff1_18
+	mappingsTableEntry.w	Map_bff1_19
+	mappingsTableEntry.w	Map_bff1_20
+	mappingsTableEntry.w	Map_bff1_21
+	mappingsTableEntry.w	Map_bff1_22
+	mappingsTableEntry.w	Map_bff1_23
+	mappingsTableEntry.w	Map_bff1_24
+	mappingsTableEntry.w	Map_bff1_25
+	mappingsTableEntry.w	Map_bff1_26
+	mappingsTableEntry.w	Map_bff1_27
+	mappingsTableEntry.w	Map_bff1_28
+	mappingsTableEntry.w	Map_bff1_29
+	mappingsTableEntry.w	Map_bff1_30
+	mappingsTableEntry.w	Map_bff1_31
+	mappingsTableEntry.w	Map_bff1_32
+	mappingsTableEntry.w	Map_bff1_33
+	mappingsTableEntry.w	Map_bff1_34
+	mappingsTableEntry.w	Map_bff1_35
+	mappingsTableEntry.w	Map_bff1_36
+	mappingsTableEntry.w	Map_bff1_37
+	mappingsTableEntry.w	Map_bff1_38
+	mappingsTableEntry.w	Map_bff1_39
+	mappingsTableEntry.w	Map_bff1_40
+	mappingsTableEntry.w	Map_bff1_41
+	mappingsTableEntry.w	Map_bff1_42
+	mappingsTableEntry.w	Map_bff1_43
+	mappingsTableEntry.w	Map_bff1_44
+	mappingsTableEntry.w	Map_bff1_45
+	mappingsTableEntry.w	Map_bff1_46
+	mappingsTableEntry.w	Map_bff1_47
+	mappingsTableEntry.w	Map_bff1_48
+	mappingsTableEntry.w	Map_bff1_49
+	mappingsTableEntry.w	Map_bff1_50
+	mappingsTableEntry.w	Map_bff1_51
+	mappingsTableEntry.w	Map_bff1_52
+	mappingsTableEntry.w	Map_bff1_53
+	mappingsTableEntry.w	Map_bff1_54
+	mappingsTableEntry.w	Map_bff1_55
+	mappingsTableEntry.w	Map_bff1_56
+	mappingsTableEntry.w	Map_bff1_57
+	mappingsTableEntry.w	Map_bff1_58
+	mappingsTableEntry.w	Map_bff1_59
+	mappingsTableEntry.w	Map_bff1_60
+	mappingsTableEntry.w	Map_bff1_61
+	mappingsTableEntry.w	Map_bff1_62
+	mappingsTableEntry.w	Map_bff1_63
+	mappingsTableEntry.w	Map_bff1_64
+	mappingsTableEntry.w	Map_bff1_65
+	mappingsTableEntry.w	Map_bff1_66
+	mappingsTableEntry.w	Map_bff1_67
+	mappingsTableEntry.w	Map_bff1_68
+	mappingsTableEntry.w	Map_bff1_69
+	mappingsTableEntry.w	Map_bff1_70
+	mappingsTableEntry.w	Map_bff1_71
+	mappingsTableEntry.w	Map_bff1_72
+	mappingsTableEntry.w	Map_bff1_73
+	mappingsTableEntry.w	Map_bff1_74
+	mappingsTableEntry.w	Map_bff1_75
+	mappingsTableEntry.w	Map_bff1_76
+	mappingsTableEntry.w	Map_bff1_77
+	mappingsTableEntry.w	Map_bff1_78
+	mappingsTableEntry.w	Map_bff1_79
+	mappingsTableEntry.w	Map_bff1_80
+	mappingsTableEntry.w	Map_bff1_81
+	mappingsTableEntry.w	Map_bff1_82
+	mappingsTableEntry.w	Map_bff1_83
+	mappingsTableEntry.w	Map_bff1_84
+	mappingsTableEntry.w	Map_bff1_85
+	mappingsTableEntry.w	Map_bff1_86
+	mappingsTableEntry.w	Map_bff1_87
+	mappingsTableEntry.w	Map_bff1_88
+	mappingsTableEntry.w	Map_bff1_89
+	mappingsTableEntry.w	Map_bff1_90
+	mappingsTableEntry.w	Map_bff1_91
+	mappingsTableEntry.w	Map_bff1_92
+	mappingsTableEntry.w	Map_bff1_93
+	mappingsTableEntry.w	Map_bff1_94
+	mappingsTableEntry.w	Map_bff1_95
+	mappingsTableEntry.w	Map_bff1_96
+	mappingsTableEntry.w	Map_bff1_97
+	mappingsTableEntry.w	Map_bff1_98
+	mappingsTableEntry.w	Map_bff1_99
+	mappingsTableEntry.w	Map_bff1_100
+	mappingsTableEntry.w	Map_bff1_101
+	mappingsTableEntry.w	Map_bff1_102
+	mappingsTableEntry.w	Map_bff1_103
+	mappingsTableEntry.w	Map_bff1_104
+	mappingsTableEntry.w	Map_bff1_105
+	mappingsTableEntry.w	Map_bff1_106
+	mappingsTableEntry.w	Map_bff1_107
+	mappingsTableEntry.w	Map_bff1_108
+	mappingsTableEntry.w	Map_bff1_109
+	mappingsTableEntry.w	Map_bff1_110
+	mappingsTableEntry.w	Map_bff1_111
+	mappingsTableEntry.w	Map_bff1_112
+	mappingsTableEntry.w	Map_bff1_113
+	mappingsTableEntry.w	Map_bff1_114
+	mappingsTableEntry.w	Map_bff1_115
+	mappingsTableEntry.w	Map_bff1_116
+	mappingsTableEntry.w	Map_bff1_117
+	mappingsTableEntry.w	Map_bff1_118
+	mappingsTableEntry.w	Map_bff1_119
+	mappingsTableEntry.w	Map_bff1_120
+	mappingsTableEntry.w	Map_bff1_121
+	mappingsTableEntry.w	Map_bff1_122
+	mappingsTableEntry.w	Map_bff1_123
+	mappingsTableEntry.w	Map_bff1_124
+	mappingsTableEntry.w	Map_bff1_125
+	mappingsTableEntry.w	Map_bff1_126
+	mappingsTableEntry.w	Map_bff1_127
+	mappingsTableEntry.w	Map_bff1_128
+	mappingsTableEntry.w	Map_bff1_129
+	mappingsTableEntry.w	Map_bff1_130
+	mappingsTableEntry.w	Map_bff1_131
+	mappingsTableEntry.w	Map_bff1_132
+	mappingsTableEntry.w	Map_bff1_133
+	mappingsTableEntry.w	Map_bff1_134
 
-Map_6c0f_0:	spriteHeader
-Map_6c0f_0_End
+Map_bff1_0:	spriteHeader
+Map_bff1_0_End
 
-Map_6c0f_1:	spriteHeader
+Map_bff1_1:	spriteHeader
  spritePiece -$C, -$10, 3, 2, 0, 0, 0, 0, 0
  spritePiece -$C, 0, 3, 2, 6, 0, 0, 0, 0
-Map_6c0f_1_End
+Map_bff1_1_End
 
-Map_6c0f_2:	spriteHeader
+Map_bff1_2:	spriteHeader
  spritePiece -$C, -$10, 3, 2, 0, 0, 0, 0, 0
  spritePiece -$C, 0, 3, 2, 6, 0, 0, 0, 0
-Map_6c0f_2_End
+Map_bff1_2_End
 
-Map_6c0f_3:	spriteHeader
+Map_bff1_3:	spriteHeader
  spritePiece -$C, -$10, 3, 2, 0, 0, 0, 0, 0
  spritePiece -$C, 0, 3, 2, 6, 0, 0, 0, 0
-Map_6c0f_3_End
+Map_bff1_3_End
 
-Map_6c0f_4:	spriteHeader
+Map_bff1_4:	spriteHeader
  spritePiece -$C, -$10, 3, 2, 0, 0, 0, 0, 0
  spritePiece -$C, 0, 3, 2, 6, 0, 0, 0, 0
-Map_6c0f_4_End
+Map_bff1_4_End
 
-Map_6c0f_5:	spriteHeader
+Map_bff1_5:	spriteHeader
  spritePiece -$C, -$10, 3, 4, 0, 0, 0, 0, 0
-Map_6c0f_5_End
+Map_bff1_5_End
 
-Map_6c0f_6:	spriteHeader
+Map_bff1_6:	spriteHeader
  spritePiece -$C, -$10, 3, 4, 0, 0, 0, 0, 0
-Map_6c0f_6_End
+Map_bff1_6_End
 
-Map_6c0f_7:	spriteHeader
+Map_bff1_7:	spriteHeader
  spritePiece -$C, -$10, 3, 2, 0, 0, 0, 0, 0
  spritePiece -$C, 0, 3, 2, 6, 0, 0, 0, 0
-Map_6c0f_7_End
+Map_bff1_7_End
 
-Map_6c0f_8:	spriteHeader
+Map_bff1_8:	spriteHeader
  spritePiece -$C, -$10, 3, 2, 0, 0, 0, 0, 0
  spritePiece -$C, 0, 3, 2, 6, 0, 0, 0, 0
-Map_6c0f_8_End
+Map_bff1_8_End
 
-Map_6c0f_9:	spriteHeader
+Map_bff1_9:	spriteHeader
  spritePiece -$14, -$10, 2, 4, 0, 0, 0, 0, 0
-Map_6c0f_9_End
+Map_bff1_9_End
 
-Map_6c0f_10:	spriteHeader
+Map_bff1_10:	spriteHeader
  spritePiece -$1C, -$10, 3, 4, 0, 0, 0, 0, 0
-Map_6c0f_10_End
+Map_bff1_10_End
 
-Map_6c0f_11:	spriteHeader
+Map_bff1_11:	spriteHeader
  spritePiece -$1C, -$10, 3, 4, 0, 0, 0, 0, 0
-Map_6c0f_11_End
+Map_bff1_11_End
 
-Map_6c0f_12:	spriteHeader
+Map_bff1_12:	spriteHeader
  spritePiece -$1C, 0, 3, 2, 0, 0, 0, 0, 0
-Map_6c0f_12_End
+Map_bff1_12_End
 
-Map_6c0f_13:	spriteHeader
+Map_bff1_13:	spriteHeader
  spritePiece -$1C, -$10, 3, 4, 0, 0, 0, 0, 0
-Map_6c0f_13_End
+Map_bff1_13_End
 
-Map_6c0f_14:	spriteHeader
+Map_bff1_14:	spriteHeader
  spritePiece -$10, -$14, 3, 2, 0, 0, 0, 0, 0
  spritePiece -$10, -4, 4, 2, 6, 0, 0, 0, 0
  spritePiece -$1E, -4, 3, 2, $E, 0, 0, 0, 0
-Map_6c0f_14_End
+Map_bff1_14_End
 
-Map_6c0f_15:	spriteHeader
+Map_bff1_15:	spriteHeader
  spritePiece -$D, -$10, 3, 2, 0, 0, 0, 0, 0
  spritePiece -$10, 0, 4, 2, 6, 0, 0, 0, 0
  spritePiece -$1C, 0, 3, 2, $E, 0, 0, 0, 0
-Map_6c0f_15_End
+Map_bff1_15_End
 
-Map_6c0f_16:	spriteHeader
+Map_bff1_16:	spriteHeader
  spritePiece -8, -$10, 3, 2, 0, 0, 0, 0, 0
  spritePiece -$D, 0, 3, 2, 6, 0, 0, 0, 0
  spritePiece -$1C, -3, 3, 2, $C, 0, 0, 0, 0
-Map_6c0f_16_End
+Map_bff1_16_End
 
-Map_6c0f_17:	spriteHeader
+Map_bff1_17:	spriteHeader
  spritePiece -$E, -$10, 3, 2, 0, 0, 0, 0, 0
  spritePiece -$E, 0, 3, 2, 6, 0, 0, 0, 0
  spritePiece -$1A, -3, 3, 2, $C, 0, 0, 0, 0
-Map_6c0f_17_End
+Map_bff1_17_End
 
-Map_6c0f_18:	spriteHeader
+Map_bff1_18:	spriteHeader
  spritePiece -$10, -$14, 3, 2, 0, 0, 0, 0, 0
  spritePiece -$10, -4, 4, 2, 6, 0, 0, 0, 0
  spritePiece -$1E, -4, 3, 2, $E, 0, 0, 0, 0
-Map_6c0f_18_End
+Map_bff1_18_End
 
-Map_6c0f_19:	spriteHeader
+Map_bff1_19:	spriteHeader
  spritePiece -$D, -$10, 3, 2, 0, 0, 0, 0, 0
  spritePiece -$10, 0, 4, 2, 6, 0, 0, 0, 0
  spritePiece -$1C, 0, 3, 2, $E, 0, 0, 0, 0
-Map_6c0f_19_End
+Map_bff1_19_End
 
-Map_6c0f_20:	spriteHeader
+Map_bff1_20:	spriteHeader
  spritePiece -8, -$10, 3, 2, 0, 0, 0, 0, 0
  spritePiece -$F, 0, 3, 2, 6, 0, 0, 0, 0
  spritePiece -$1C, -3, 3, 2, $C, 0, 0, 0, 0
-Map_6c0f_20_End
+Map_bff1_20_End
 
-Map_6c0f_21:	spriteHeader
+Map_bff1_21:	spriteHeader
  spritePiece -$E, -$10, 3, 2, 0, 0, 0, 0, 0
  spritePiece -$E, 0, 3, 2, 6, 0, 0, 0, 0
  spritePiece -$1A, -3, 3, 2, $C, 0, 0, 0, 0
-Map_6c0f_21_End
+Map_bff1_21_End
 
-Map_6c0f_22:	spriteHeader
+Map_bff1_22:	spriteHeader
  spritePiece -$D, -$1D, 1, 2, 0, 0, 0, 0, 0
  spritePiece -$14, -$D, 1, 4, 2, 0, 0, 0, 0
  spritePiece -$C, -$D, 3, 4, 6, 0, 0, 0, 0
-Map_6c0f_22_End
+Map_bff1_22_End
 
-Map_6c0f_23:	spriteHeader
+Map_bff1_23:	spriteHeader
  spritePiece -$A, -$19, 2, 2, 0, 0, 0, 0, 0
  spritePiece -$12, -9, 3, 4, 4, 0, 0, 0, 0
  spritePiece 6, -2, 2, 2, $10, 0, 0, 0, 0
-Map_6c0f_23_End
+Map_bff1_23_End
 
-Map_6c0f_24:	spriteHeader
+Map_bff1_24:	spriteHeader
  spritePiece -8, -$1A, 2, 2, 0, 0, 0, 0, 0
  spritePiece -$11, -$A, 1, 4, 4, 0, 0, 0, 0
  spritePiece -9, -$A, 3, 4, 8, 0, 0, 0, 0
-Map_6c0f_24_End
+Map_bff1_24_End
 
-Map_6c0f_25:	spriteHeader
+Map_bff1_25:	spriteHeader
  spritePiece -9, -$1D, 1, 2, 0, 0, 0, 0, 0
  spritePiece -$14, -$D, 4, 4, 2, 0, 0, 0, 0
  spritePiece $C, -5, 1, 2, $12, 0, 0, 0, 0
-Map_6c0f_25_End
+Map_bff1_25_End
 
-Map_6c0f_26:	spriteHeader
+Map_bff1_26:	spriteHeader
  spritePiece -$D, -$1D, 1, 2, 0, 0, 0, 0, 0
  spritePiece -$14, -$D, 1, 4, 2, 0, 0, 0, 0
  spritePiece -$C, -$D, 3, 4, 6, 0, 0, 0, 0
-Map_6c0f_26_End
+Map_bff1_26_End
 
-Map_6c0f_27:	spriteHeader
+Map_bff1_27:	spriteHeader
  spritePiece -$A, -$19, 2, 2, 0, 0, 0, 0, 0
  spritePiece -$12, -9, 3, 4, 4, 0, 0, 0, 0
  spritePiece 6, -1, 2, 2, $10, 0, 0, 0, 0
-Map_6c0f_27_End
+Map_bff1_27_End
 
-Map_6c0f_28:	spriteHeader
+Map_bff1_28:	spriteHeader
  spritePiece -8, -$1A, 2, 2, 0, 0, 0, 0, 0
  spritePiece -$11, -$A, 1, 4, 4, 0, 0, 0, 0
  spritePiece -9, -$A, 3, 4, 8, 0, 0, 0, 0
-Map_6c0f_28_End
+Map_bff1_28_End
 
-Map_6c0f_29:	spriteHeader
+Map_bff1_29:	spriteHeader
  spritePiece -9, -$1D, 1, 2, 0, 0, 0, 0, 0
  spritePiece -$14, -$D, 4, 4, 2, 0, 0, 0, 0
  spritePiece $C, 3, 1, 2, $12, 0, 0, 0, 0
-Map_6c0f_29_End
+Map_bff1_29_End
 
-Map_6c0f_30:	spriteHeader
+Map_bff1_30:	spriteHeader
  spritePiece -$14, -$10, 2, 4, 0, 0, 0, 0, 0
  spritePiece -4, -$10, 2, 4, 8, 0, 0, 0, 0
  spritePiece -4, 6, 2, 4, $10, 0, 0, 0, 0
-Map_6c0f_30_End
+Map_bff1_30_End
 
-Map_6c0f_31:	spriteHeader
+Map_bff1_31:	spriteHeader
  spritePiece -$10, -$10, 2, 4, 0, 0, 0, 0, 0
  spritePiece 0, -$10, 2, 4, 8, 0, 0, 0, 0
  spritePiece 0, 4, 2, 4, $10, 0, 0, 0, 0
-Map_6c0f_31_End
+Map_bff1_31_End
 
-Map_6c0f_32:	spriteHeader
+Map_bff1_32:	spriteHeader
  spritePiece -$10, -$10, 2, 4, 0, 0, 0, 0, 0
  spritePiece 0, -$10, 2, 4, 8, 0, 0, 0, 0
  spritePiece -3, 4, 2, 4, $10, 0, 0, 0, 0
-Map_6c0f_32_End
+Map_bff1_32_End
 
-Map_6c0f_33:	spriteHeader
+Map_bff1_33:	spriteHeader
  spritePiece -$10, -$10, 2, 4, 0, 0, 0, 0, 0
  spritePiece 0, -$10, 2, 4, 8, 0, 0, 0, 0
  spritePiece -3, 4, 2, 4, $10, 0, 0, 0, 0
-Map_6c0f_33_End
+Map_bff1_33_End
 
-Map_6c0f_34:	spriteHeader
+Map_bff1_34:	spriteHeader
  spritePiece -$14, -$10, 2, 4, 0, 0, 0, 0, 0
  spritePiece -4, -$10, 2, 4, 8, 0, 0, 0, 0
  spritePiece -4, 6, 2, 4, $10, 0, 0, 0, 0
-Map_6c0f_34_End
+Map_bff1_34_End
 
-Map_6c0f_35:	spriteHeader
+Map_bff1_35:	spriteHeader
  spritePiece -$10, -$10, 2, 4, 0, 0, 0, 0, 0
  spritePiece 0, -$10, 2, 4, 8, 0, 0, 0, 0
  spritePiece 0, 4, 2, 4, $10, 0, 0, 0, 0
-Map_6c0f_35_End
+Map_bff1_35_End
 
-Map_6c0f_36:	spriteHeader
+Map_bff1_36:	spriteHeader
  spritePiece -$10, -$10, 2, 4, 0, 0, 0, 0, 0
  spritePiece 0, -$10, 2, 4, 8, 0, 0, 0, 0
  spritePiece -3, 4, 2, 4, $10, 0, 0, 0, 0
-Map_6c0f_36_End
+Map_bff1_36_End
 
-Map_6c0f_37:	spriteHeader
+Map_bff1_37:	spriteHeader
  spritePiece -$10, -$10, 2, 4, 0, 0, 0, 0, 0
  spritePiece 0, -$10, 2, 4, 8, 0, 0, 0, 0
  spritePiece -3, 4, 2, 4, $10, 0, 0, 0, 0
-Map_6c0f_37_End
+Map_bff1_37_End
 
-Map_6c0f_38:	spriteHeader
+Map_bff1_38:	spriteHeader
  spritePiece -$15, 4, 1, 2, 0, 0, 0, 0, 0
  spritePiece -$D, -$C, 4, 4, 2, 0, 0, 0, 0
-Map_6c0f_38_End
+Map_bff1_38_End
 
-Map_6c0f_39:	spriteHeader
+Map_bff1_39:	spriteHeader
  spritePiece -8, -$1E, 2, 2, 0, 0, 0, 0, 0
  spritePiece -$10, -6, 1, 2, 4, 0, 0, 0, 0
  spritePiece -8, -$E, 4, 4, 6, 0, 0, 0, 0
-Map_6c0f_39_End
+Map_bff1_39_End
 
-Map_6c0f_40:	spriteHeader
+Map_bff1_40:	spriteHeader
  spritePiece -$14, -7, 1, 2, 0, 0, 0, 0, 0
  spritePiece -$C, -$F, 4, 4, 2, 0, 0, 0, 0
-Map_6c0f_40_End
+Map_bff1_40_End
 
-Map_6c0f_41:	spriteHeader
+Map_bff1_41:	spriteHeader
  spritePiece -$11, -4, 1, 2, 0, 0, 0, 0, 0
  spritePiece -1, -$1B, 1, 2, 2, 0, 0, 0, 0
  spritePiece -9, -$B, 4, 4, 4, 0, 0, 0, 0
-Map_6c0f_41_End
+Map_bff1_41_End
 
-Map_6c0f_42:	spriteHeader
+Map_bff1_42:	spriteHeader
  spritePiece -$15, 4, 1, 2, 0, 0, 0, 0, 0
  spritePiece -$D, -$C, 4, 4, 2, 0, 0, 0, 0
-Map_6c0f_42_End
+Map_bff1_42_End
 
-Map_6c0f_43:	spriteHeader
+Map_bff1_43:	spriteHeader
  spritePiece 0, -$1E, 1, 2, 0, 0, 0, 0, 0
  spritePiece -$10, -6, 1, 2, 2, 0, 0, 0, 0
  spritePiece -8, -$E, 4, 4, 4, 0, 0, 0, 0
-Map_6c0f_43_End
+Map_bff1_43_End
 
-Map_6c0f_44:	spriteHeader
+Map_bff1_44:	spriteHeader
  spritePiece -$14, -7, 1, 2, 0, 0, 0, 0, 0
  spritePiece -$C, -$F, 4, 4, 2, 0, 0, 0, 0
-Map_6c0f_44_End
+Map_bff1_44_End
 
-Map_6c0f_45:	spriteHeader
+Map_bff1_45:	spriteHeader
  spritePiece -1, -$1C, 1, 2, 0, 0, 0, 0, 0
  spritePiece -$11, -4, 1, 2, 2, 0, 0, 0, 0
  spritePiece -9, -$C, 4, 4, 4, 0, 0, 0, 0
-Map_6c0f_45_End
+Map_bff1_45_End
 
-Map_6c0f_46:	spriteHeader
+Map_bff1_46:	spriteHeader
  spritePiece -$10, -$10, 4, 4, 0, 0, 0, 0, 0
  spritePiece -$16, -$10, 2, 4, $10, 0, 0, 0, 0
-Map_6c0f_46_End
+Map_bff1_46_End
 
-Map_6c0f_47:	spriteHeader
+Map_bff1_47:	spriteHeader
  spritePiece -$10, -$10, 4, 4, 0, 0, 0, 0, 0
  spritePiece -$16, -8, 2, 2, $10, 0, 0, 0, 0
-Map_6c0f_47_End
+Map_bff1_47_End
 
-Map_6c0f_48:	spriteHeader
+Map_bff1_48:	spriteHeader
  spritePiece -$10, -$10, 4, 4, 0, 0, 0, 0, 0
  spritePiece -$16, -8, 2, 2, $10, 0, 0, 0, 0
-Map_6c0f_48_End
+Map_bff1_48_End
 
-Map_6c0f_49:	spriteHeader
+Map_bff1_49:	spriteHeader
  spritePiece -$10, -$10, 4, 4, 0, 0, 0, 0, 0
  spritePiece -$16, -8, 2, 2, $10, 0, 1, 0, 0
-Map_6c0f_49_End
+Map_bff1_49_End
 
-Map_6c0f_50:	spriteHeader
+Map_bff1_50:	spriteHeader
  spritePiece -$10, -$10, 4, 4, 0, 0, 0, 0, 0
  spritePiece -$16, -$10, 2, 4, $10, 0, 0, 0, 0
-Map_6c0f_50_End
+Map_bff1_50_End
 
-Map_6c0f_51:	spriteHeader
+Map_bff1_51:	spriteHeader
  spritePiece -$10, -$10, 4, 4, 0, 0, 0, 0, 0
  spritePiece -$16, -$10, 2, 4, $10, 1, 1, 0, 0
-Map_6c0f_51_End
+Map_bff1_51_End
 
-Map_6c0f_52:	spriteHeader
+Map_bff1_52:	spriteHeader
  spritePiece -6, -$1C, 1, 2, 0, 0, 0, 0, 0
  spritePiece -$10, -$C, 3, 4, 2, 0, 0, 0, 0
  spritePiece -$18, -2, 3, 4, $E, 0, 0, 0, 0
-Map_6c0f_52_End
+Map_bff1_52_End
 
-Map_6c0f_53:	spriteHeader
+Map_bff1_53:	spriteHeader
  spritePiece -8, -$1C, 2, 2, 0, 0, 0, 0, 0
  spritePiece -$10, -$C, 3, 4, 4, 0, 0, 0, 0
  spritePiece -$11, 4, 2, 2, $10, 0, 0, 0, 0
-Map_6c0f_53_End
+Map_bff1_53_End
 
-Map_6c0f_54:	spriteHeader
+Map_bff1_54:	spriteHeader
  spritePiece -6, -$1C, 1, 2, 0, 0, 0, 0, 0
  spritePiece -$10, -$C, 3, 4, 2, 0, 0, 0, 0
  spritePiece -$11, 4, 2, 2, $E, 0, 0, 0, 0
-Map_6c0f_54_End
+Map_bff1_54_End
 
-Map_6c0f_55:	spriteHeader
+Map_bff1_55:	spriteHeader
  spritePiece -8, -$1C, 2, 2, 0, 0, 0, 0, 0
  spritePiece -$10, -$C, 3, 4, 4, 0, 0, 0, 0
  spritePiece -$11, 4, 2, 2, $10, 0, 0, 0, 0
-Map_6c0f_55_End
+Map_bff1_55_End
 
-Map_6c0f_56:	spriteHeader
+Map_bff1_56:	spriteHeader
  spritePiece -6, -$1C, 1, 2, 0, 0, 0, 0, 0
  spritePiece -$10, -$C, 3, 4, 2, 0, 0, 0, 0
  spritePiece -$16, -4, 3, 4, $E, 0, 0, 0, 0
-Map_6c0f_56_End
+Map_bff1_56_End
 
-Map_6c0f_57:	spriteHeader
+Map_bff1_57:	spriteHeader
  spritePiece -8, -$1C, 2, 2, 0, 0, 0, 0, 0
  spritePiece -$10, -$C, 3, 4, 4, 0, 0, 0, 0
- spritePiece -$E, -$17, 3, 4, $10, 1, 1, 0, 0
-Map_6c0f_57_End
+ spritePiece -$16, -9, 3, 4, $10, 1, 1, 0, 0
+Map_bff1_57_End
 
-Map_6c0f_58:	spriteHeader
+Map_bff1_58:	spriteHeader
  spritePiece -$10, -$10, 3, 2, 0, 0, 0, 0, 0
  spritePiece -$10, 0, 4, 2, 6, 0, 0, 0, 0
  spritePiece -$10, 6, 4, 2, $E, 0, 0, 0, 0
-Map_6c0f_58_End
+Map_bff1_58_End
 
-Map_6c0f_59:	spriteHeader
+Map_bff1_59:	spriteHeader
  spritePiece -$10, -$10, 3, 2, 0, 0, 0, 0, 0
  spritePiece -$10, 0, 4, 2, 6, 0, 0, 0, 0
  spritePiece -8, 6, 2, 2, $E, 0, 0, 0, 0
-Map_6c0f_59_End
+Map_bff1_59_End
 
-Map_6c0f_60:	spriteHeader
+Map_bff1_60:	spriteHeader
  spritePiece -$10, -$10, 3, 2, 0, 0, 0, 0, 0
  spritePiece -$10, 0, 4, 2, 6, 0, 0, 0, 0
  spritePiece -8, 6, 2, 2, $E, 0, 0, 0, 0
-Map_6c0f_60_End
+Map_bff1_60_End
 
-Map_6c0f_61:	spriteHeader
+Map_bff1_61:	spriteHeader
  spritePiece -$10, -$10, 3, 2, 0, 0, 0, 0, 0
  spritePiece -$10, 0, 4, 2, 6, 0, 0, 0, 0
  spritePiece -8, 6, 2, 2, $E, 0, 0, 0, 0
-Map_6c0f_61_End
+Map_bff1_61_End
 
-Map_6c0f_62:	spriteHeader
+Map_bff1_62:	spriteHeader
  spritePiece -$10, -$10, 3, 2, 0, 0, 0, 0, 0
  spritePiece -$10, 0, 4, 2, 6, 0, 0, 0, 0
  spritePiece -$10, 6, 4, 2, $E, 0, 0, 0, 0
-Map_6c0f_62_End
+Map_bff1_62_End
 
-Map_6c0f_63:	spriteHeader
+Map_bff1_63:	spriteHeader
  spritePiece -$10, -$10, 3, 2, 0, 0, 0, 0, 0
  spritePiece -$10, 0, 4, 2, 6, 0, 0, 0, 0
- spritePiece -$10, 6, 4, 2, $E, 0, 0, 0, 0
-Map_6c0f_63_End
+ spritePiece -$10, 6, 4, 2, $E, 1, 0, 0, 0
+Map_bff1_63_End
 
-Map_6c0f_64:	spriteHeader
+Map_bff1_64:	spriteHeader
  spritePiece -$14, -8, 3, 4, 0, 0, 0, 0, 0
  spritePiece 4, -8, 2, 2, $C, 0, 0, 0, 0
  spritePiece 0, -2, 3, 4, $10, 1, 0, 0, 0
-Map_6c0f_64_End
+Map_bff1_64_End
 
-Map_6c0f_65:	spriteHeader
+Map_bff1_65:	spriteHeader
  spritePiece -$14, -8, 3, 4, 0, 0, 0, 0, 0
  spritePiece 4, -8, 2, 2, $C, 0, 0, 0, 0
  spritePiece 4, 1, 2, 2, $10, 1, 0, 0, 0
-Map_6c0f_65_End
+Map_bff1_65_End
 
-Map_6c0f_66:	spriteHeader
+Map_bff1_66:	spriteHeader
  spritePiece -$14, -8, 3, 4, 0, 0, 0, 0, 0
  spritePiece 4, -8, 2, 2, $C, 0, 0, 0, 0
  spritePiece 4, 1, 2, 2, $10, 1, 0, 0, 0
-Map_6c0f_66_End
+Map_bff1_66_End
 
-Map_6c0f_67:	spriteHeader
+Map_bff1_67:	spriteHeader
  spritePiece -$14, -8, 3, 4, 0, 0, 0, 0, 0
  spritePiece 4, -8, 2, 2, $C, 0, 0, 0, 0
  spritePiece 4, 1, 2, 2, $10, 1, 0, 0, 0
-Map_6c0f_67_End
+Map_bff1_67_End
 
-Map_6c0f_68:	spriteHeader
+Map_bff1_68:	spriteHeader
  spritePiece -$14, -8, 3, 4, 0, 0, 0, 0, 0
  spritePiece 4, -8, 2, 2, $C, 0, 0, 0, 0
  spritePiece -2, -4, 3, 4, $10, 1, 0, 0, 0
-Map_6c0f_68_End
+Map_bff1_68_End
 
-Map_6c0f_69:	spriteHeader
+Map_bff1_69:	spriteHeader
  spritePiece -$14, -8, 3, 4, 0, 0, 0, 0, 0
  spritePiece 4, -8, 2, 2, $C, 0, 0, 0, 0
- spritePiece 6, -4, 3, 4, $10, 0, 1, 0, 0
-Map_6c0f_69_End
+ spritePiece -2, -8, 3, 4, $10, 0, 1, 0, 0
+Map_bff1_69_End
 
-Map_6c0f_70:	spriteHeader
+Map_bff1_70:	spriteHeader
  spritePiece -$10, -$10, 4, 4, 0, 0, 0, 0, 0
-Map_6c0f_70_End
+Map_bff1_70_End
 
-Map_6c0f_71:	spriteHeader
+Map_bff1_71:	spriteHeader
  spritePiece -$10, -$10, 4, 4, 0, 0, 0, 0, 0
-Map_6c0f_71_End
+Map_bff1_71_End
 
-Map_6c0f_72:	spriteHeader
+Map_bff1_72:	spriteHeader
  spritePiece -$10, -$10, 4, 4, 0, 0, 0, 0, 0
-Map_6c0f_72_End
+Map_bff1_72_End
 
-Map_6c0f_73:	spriteHeader
+Map_bff1_73:	spriteHeader
  spritePiece -$24, -8, 3, 2, 0, 0, 0, 0, 0
-Map_6c0f_73_End
+Map_bff1_73_End
 
-Map_6c0f_74:	spriteHeader
+Map_bff1_74:	spriteHeader
  spritePiece -$24, -8, 3, 2, 0, 0, 0, 0, 0
-Map_6c0f_74_End
+Map_bff1_74_End
 
-Map_6c0f_75:	spriteHeader
+Map_bff1_75:	spriteHeader
  spritePiece -$24, -8, 3, 2, 0, 0, 0, 0, 0
-Map_6c0f_75_End
+Map_bff1_75_End
 
-Map_6c0f_76:	spriteHeader
+Map_bff1_76:	spriteHeader
  spritePiece -$24, -8, 3, 2, 0, 0, 0, 0, 0
-Map_6c0f_76_End
+Map_bff1_76_End
 
-Map_6c0f_77:	spriteHeader
+Map_bff1_77:	spriteHeader
  spritePiece -$1F, 7, 3, 2, 0, 0, 0, 0, 0
-Map_6c0f_77_End
+Map_bff1_77_End
 
-Map_6c0f_78:	spriteHeader
+Map_bff1_78:	spriteHeader
  spritePiece -$1F, 7, 3, 2, 0, 0, 0, 0, 0
-Map_6c0f_78_End
+Map_bff1_78_End
 
-Map_6c0f_79:	spriteHeader
+Map_bff1_79:	spriteHeader
  spritePiece -$1F, 7, 3, 2, 0, 0, 0, 0, 0
-Map_6c0f_79_End
+Map_bff1_79_End
 
-Map_6c0f_80:	spriteHeader
+Map_bff1_80:	spriteHeader
  spritePiece -$1F, 7, 3, 2, 0, 0, 0, 0, 0
-Map_6c0f_80_End
+Map_bff1_80_End
 
-Map_6c0f_81:	spriteHeader
+Map_bff1_81:	spriteHeader
  spritePiece -8, $C, 2, 4, 0, 0, 0, 0, 0
-Map_6c0f_81_End
+Map_bff1_81_End
 
-Map_6c0f_82:	spriteHeader
+Map_bff1_82:	spriteHeader
  spritePiece -8, $C, 2, 4, 0, 0, 0, 0, 0
-Map_6c0f_82_End
+Map_bff1_82_End
 
-Map_6c0f_83:	spriteHeader
+Map_bff1_83:	spriteHeader
  spritePiece -8, $C, 2, 4, 0, 0, 0, 0, 0
-Map_6c0f_83_End
+Map_bff1_83_End
 
-Map_6c0f_84:	spriteHeader
+Map_bff1_84:	spriteHeader
  spritePiece -8, $C, 2, 4, 0, 0, 0, 0, 0
-Map_6c0f_84_End
+Map_bff1_84_End
 
-Map_6c0f_85:	spriteHeader
+Map_bff1_85:	spriteHeader
  spritePiece 7, 7, 2, 4, 0, 0, 0, 0, 0
-Map_6c0f_85_End
+Map_bff1_85_End
 
-Map_6c0f_86:	spriteHeader
+Map_bff1_86:	spriteHeader
  spritePiece 7, 7, 2, 4, 0, 0, 0, 0, 0
-Map_6c0f_86_End
+Map_bff1_86_End
 
-Map_6c0f_87:	spriteHeader
+Map_bff1_87:	spriteHeader
  spritePiece 7, 7, 2, 4, 0, 0, 0, 0, 0
-Map_6c0f_87_End
+Map_bff1_87_End
 
-Map_6c0f_88:	spriteHeader
+Map_bff1_88:	spriteHeader
  spritePiece 7, 7, 2, 4, 0, 0, 0, 0, 0
-Map_6c0f_88_End
+Map_bff1_88_End
 
-Map_6c0f_89:	spriteHeader
+Map_bff1_89:	spriteHeader
  spritePiece -8, -$18, 2, 2, 0, 0, 0, 0, 0
  spritePiece -$10, -8, 3, 4, 4, 0, 0, 0, 0
-Map_6c0f_89_End
+Map_bff1_89_End
 
-Map_6c0f_90:	spriteHeader
+Map_bff1_90:	spriteHeader
  spritePiece -8, -$18, 2, 2, 0, 0, 0, 0, 0
  spritePiece -$10, -8, 3, 4, 4, 0, 0, 0, 0
-Map_6c0f_90_End
+Map_bff1_90_End
 
-Map_6c0f_91:	spriteHeader
+Map_bff1_91:	spriteHeader
  spritePiece -7, -$10, 3, 4, 0, 0, 0, 0, 0
-Map_6c0f_91_End
+Map_bff1_91_End
 
-Map_6c0f_92:	spriteHeader
+Map_bff1_92:	spriteHeader
  spritePiece -$10, -$10, 4, 4, 0, 0, 0, 0, 0
-Map_6c0f_92_End
+Map_bff1_92_End
 
-Map_6c0f_93:	spriteHeader
+Map_bff1_93:	spriteHeader
  spritePiece -$10, -$10, 4, 4, 0, 0, 0, 0, 0
-Map_6c0f_93_End
+Map_bff1_93_End
 
-Map_6c0f_94:	spriteHeader
+Map_bff1_94:	spriteHeader
  spritePiece -$10, -$10, 4, 4, 0, 0, 0, 0, 0
  spritePiece -$16, -$1C, 4, 2, $10, 0, 0, 0, 0
-Map_6c0f_94_End
+Map_bff1_94_End
 
-Map_6c0f_95:	spriteHeader
+Map_bff1_95:	spriteHeader
  spritePiece -$10, -$10, 4, 4, 0, 0, 0, 0, 0
  spritePiece -$16, -$1C, 4, 2, $10, 1, 0, 0, 0
-Map_6c0f_95_End
+Map_bff1_95_End
 
-Map_6c0f_96:	spriteHeader
+Map_bff1_96:	spriteHeader
  spritePiece -$10, -$C, 4, 4, 0, 0, 0, 0, 0
-Map_6c0f_96_End
+Map_bff1_96_End
 
-Map_6c0f_97:	spriteHeader
+Map_bff1_97:	spriteHeader
  spritePiece -$10, -$C, 4, 4, 0, 0, 0, 0, 0
-Map_6c0f_97_End
+Map_bff1_97_End
 
-Map_6c0f_98:	spriteHeader
+Map_bff1_98:	spriteHeader
  spritePiece -$10, -$C, 4, 4, 0, 0, 0, 0, 0
-Map_6c0f_98_End
+Map_bff1_98_End
 
-Map_6c0f_99:	spriteHeader
+Map_bff1_99:	spriteHeader
  spritePiece -8, -$10, 3, 2, 0, 0, 0, 0, 0
  spritePiece -$10, 0, 4, 2, 6, 0, 0, 0, 0
-Map_6c0f_99_End
+Map_bff1_99_End
 
-Map_6c0f_100:	spriteHeader
+Map_bff1_100:	spriteHeader
  spritePiece -8, -$10, 3, 2, 0, 0, 0, 0, 0
  spritePiece -8, 0, 3, 2, 6, 0, 0, 0, 0
-Map_6c0f_100_End
+Map_bff1_100_End
 
-Map_6c0f_101:	spriteHeader
+Map_bff1_101:	spriteHeader
  spritePiece -8, -$10, 3, 2, 0, 0, 0, 0, 0
  spritePiece -8, 0, 3, 2, 6, 0, 0, 0, 0
-Map_6c0f_101_End
+Map_bff1_101_End
 
-Map_6c0f_102:	spriteHeader
+Map_bff1_102:	spriteHeader
  spritePiece -8, -$10, 3, 2, 0, 0, 0, 0, 0
  spritePiece -8, 0, 3, 2, 6, 0, 0, 0, 0
-Map_6c0f_102_End
+Map_bff1_102_End
 
-Map_6c0f_103:	spriteHeader
+Map_bff1_103:	spriteHeader
  spritePiece -$10, -$10, 3, 2, 0, 0, 0, 0, 0
  spritePiece -$10, 0, 4, 2, 6, 0, 0, 0, 0
-Map_6c0f_103_End
+Map_bff1_103_End
 
-Map_6c0f_104:	spriteHeader
+Map_bff1_104:	spriteHeader
  spritePiece -$10, -$10, 3, 2, 0, 0, 0, 0, 0
  spritePiece -$10, 0, 4, 2, 6, 0, 0, 0, 0
-Map_6c0f_104_End
+Map_bff1_104_End
 
-Map_6c0f_105:	spriteHeader
+Map_bff1_105:	spriteHeader
  spritePiece -$10, -8, 1, 2, 0, 0, 0, 0, 0
  spritePiece -8, -$10, 3, 4, 2, 0, 0, 0, 0
-Map_6c0f_105_End
+Map_bff1_105_End
 
-Map_6c0f_106:	spriteHeader
+Map_bff1_106:	spriteHeader
  spritePiece -8, -$10, 3, 2, 0, 0, 0, 0, 0
  spritePiece -$10, 0, 4, 2, 6, 0, 0, 0, 0
-Map_6c0f_106_End
+Map_bff1_106_End
 
-Map_6c0f_107:	spriteHeader
+Map_bff1_107:	spriteHeader
  spritePiece -$10, -$10, 4, 4, 0, 0, 0, 0, 0
-Map_6c0f_107_End
+Map_bff1_107_End
 
-Map_6c0f_108:	spriteHeader
+Map_bff1_108:	spriteHeader
  spritePiece -$14, -$10, 4, 4, 0, 0, 0, 0, 0
  spritePiece $C, -$10, 1, 4, $10, 0, 0, 0, 0
-Map_6c0f_108_End
+Map_bff1_108_End
 
-Map_6c0f_109:	spriteHeader
+Map_bff1_109:	spriteHeader
  spritePiece -$14, -$10, 4, 4, 0, 0, 0, 0, 0
  spritePiece $C, -$10, 1, 4, $10, 0, 0, 0, 0
-Map_6c0f_109_End
+Map_bff1_109_End
 
-Map_6c0f_110:	spriteHeader
+Map_bff1_110:	spriteHeader
  spritePiece -$14, -8, 2, 2, 0, 0, 0, 0, 0
  spritePiece -4, -$10, 3, 4, 4, 0, 0, 0, 0
-Map_6c0f_110_End
+Map_bff1_110_End
 
-Map_6c0f_111:	spriteHeader
+Map_bff1_111:	spriteHeader
  spritePiece -$10, -$10, 2, 4, 0, 0, 0, 0, 0
  spritePiece 0, -$10, 2, 4, 0, 1, 0, 0, 0
-Map_6c0f_111_End
+Map_bff1_111_End
 
-Map_6c0f_112:	spriteHeader
+Map_bff1_112:	spriteHeader
  spritePiece 4, -8, 2, 2, 0, 1, 0, 0, 0
  spritePiece -$14, -$10, 3, 4, 4, 1, 0, 0, 0
-Map_6c0f_112_End
+Map_bff1_112_End
 
-Map_6c0f_113:	spriteHeader
+Map_bff1_113:	spriteHeader
  spritePiece -$10, -$10, 2, 4, 0, 0, 0, 0, 0
  spritePiece 0, -8, 2, 2, 8, 0, 0, 0, 0
-Map_6c0f_113_End
+Map_bff1_113_End
 
-Map_6c0f_114:	spriteHeader
+Map_bff1_114:	spriteHeader
  spritePiece 0, -$10, 2, 4, 0, 1, 0, 0, 0
  spritePiece -$10, -8, 2, 2, 8, 1, 0, 0, 0
-Map_6c0f_114_End
+Map_bff1_114_End
 
-Map_6c0f_115:	spriteHeader
+Map_bff1_115:	spriteHeader
  spritePiece -$14, -8, 2, 2, 0, 0, 0, 0, 0
  spritePiece -4, -$10, 3, 4, 4, 0, 0, 0, 0
-Map_6c0f_115_End
+Map_bff1_115_End
 
-Map_6c0f_116:	spriteHeader
+Map_bff1_116:	spriteHeader
  spritePiece -$10, -$10, 4, 4, 0, 0, 0, 0, 0
-Map_6c0f_116_End
+Map_bff1_116_End
 
-Map_6c0f_117:	spriteHeader
+Map_bff1_117:	spriteHeader
  spritePiece -$F, -$10, 3, 4, 0, 0, 0, 0, 0
-Map_6c0f_117_End
+Map_bff1_117_End
 
-Map_6c0f_118:	spriteHeader
+Map_bff1_118:	spriteHeader
  spritePiece -8, -$1C, 2, 2, 0, 0, 0, 0, 0
  spritePiece -$F, -$C, 3, 4, 4, 0, 0, 0, 0
-Map_6c0f_118_End
+Map_bff1_118_End
 
-Map_6c0f_119:	spriteHeader
+Map_bff1_119:	spriteHeader
  spritePiece -$E, -$E, 3, 4, 0, 0, 0, 0, 0
-Map_6c0f_119_End
+Map_bff1_119_End
 
-Map_6c0f_120:	spriteHeader
+Map_bff1_120:	spriteHeader
  spritePiece -$10, -$C, 3, 4, 0, 0, 0, 0, 0
-Map_6c0f_120_End
+Map_bff1_120_End
 
-Map_6c0f_121:	spriteHeader
+Map_bff1_121:	spriteHeader
  spritePiece -$E, -$D, 3, 4, 0, 0, 0, 0, 0
-Map_6c0f_121_End
+Map_bff1_121_End
 
-Map_6c0f_122:	spriteHeader
+Map_bff1_122:	spriteHeader
  spritePiece -$E, -$E, 3, 4, 0, 0, 0, 0, 0
-Map_6c0f_122_End
+Map_bff1_122_End
 
-Map_6c0f_123:	spriteHeader
+Map_bff1_123:	spriteHeader
  spritePiece -$E, -$E, 3, 4, 0, 0, 0, 0, 0
-Map_6c0f_123_End
+Map_bff1_123_End
 
-Map_6c0f_124:	spriteHeader
+Map_bff1_124:	spriteHeader
  spritePiece -$F, -$10, 3, 4, 0, 0, 0, 0, 0
-Map_6c0f_124_End
+Map_bff1_124_End
 
-Map_6c0f_125:	spriteHeader
+Map_bff1_125:	spriteHeader
  spritePiece -$10, -$13, 3, 4, 0, 0, 0, 0, 0
-Map_6c0f_125_End
+Map_bff1_125_End
 
-Map_6c0f_126:	spriteHeader
+Map_bff1_126:	spriteHeader
  spritePiece -$F, -$14, 3, 4, 0, 0, 0, 0, 0
-Map_6c0f_126_End
+Map_bff1_126_End
 
-Map_6c0f_127:	spriteHeader
+Map_bff1_127:	spriteHeader
  spritePiece -$D, -$C, 3, 2, 0, 0, 0, 0, 0
  spritePiece -$D, 4, 2, 2, 6, 0, 0, 0, 0
-Map_6c0f_127_End
+Map_bff1_127_End
 
-Map_6c0f_128:	spriteHeader
+Map_bff1_128:	spriteHeader
  spritePiece -$10, -$E, 2, 4, 0, 0, 0, 0, 0
  spritePiece 0, -$14, 1, 4, 8, 0, 0, 0, 0
-Map_6c0f_128_End
+Map_bff1_128_End
 
-Map_6c0f_129:	spriteHeader
+Map_bff1_129:	spriteHeader
  spritePiece -$20, -8, 3, 2, 0, 0, 0, 0, 0
-Map_6c0f_129_End
+Map_bff1_129_End
 
-Map_6c0f_130:	spriteHeader
+Map_bff1_130:	spriteHeader
  spritePiece -$20, -8, 3, 2, 0, 0, 0, 0, 0
-Map_6c0f_130_End
+Map_bff1_130_End
 
-Map_6c0f_131:	spriteHeader
+Map_bff1_131:	spriteHeader
  spritePiece -$20, -8, 3, 2, 0, 0, 0, 0, 0
-Map_6c0f_131_End
+Map_bff1_131_End
 
-Map_6c0f_132:	spriteHeader
+Map_bff1_132:	spriteHeader
  spritePiece -$20, -8, 3, 2, 0, 0, 0, 0, 0
-Map_6c0f_132_End
+Map_bff1_132_End
 
-Map_6c0f_133:	spriteHeader
+Map_bff1_133:	spriteHeader
  spritePiece -$C, -$18, 3, 2, 0, 0, 0, 0, 0
  spritePiece -$C, -8, 4, 2, 6, 0, 0, 0, 0
-Map_6c0f_133_End
+Map_bff1_133_End
 
-Map_6c0f_134:	spriteHeader
+Map_bff1_134:	spriteHeader
  spritePiece -$C, -$18, 3, 2, 0, 0, 0, 0, 0
  spritePiece -$C, -8, 4, 2, 6, 0, 0, 0, 0
-Map_6c0f_134_End
+Map_bff1_134_End
 
 	even
 Tails_Dyn_Script:
