@@ -47980,10 +47980,16 @@ Tails_SonicControl:
 		move.b	d0,(Ctrl_2_Logical).w
 .ABC:
 		move.b	(Ctrl_1_Logical).w,d0
-		andi.b	#button_A_mask+button_B_mask+button_C_mask,d0	;little issue, only A responds to flying
-		beq.s	.donothing
+		andi.b	#button_A_mask,d0	;little issue, only A responds to flying
+		beq.s	.BC
 		or.b	(Ctrl_2_Logical).w,d0
 		move.b	d0,(Ctrl_2_Logical).w
+.BC:
+		move.b	(Ctrl_1_Press_Logical).w,d0
+		andi.b	#button_B_mask|button_C_mask,d0	;little issue, only A responds to flying
+		beq.s	.donothing
+		or.b	(Ctrl_2_Press_Logical).w,d0
+		move.b	d0,(Ctrl_2_Press_Logical).w
 .donothing:
 		rts
 
