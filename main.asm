@@ -47867,6 +47867,7 @@ Tails_StartFlying:
 		move.b	#0,(Tails_carrying_Sonic).w
 		rts
 	.flying:
+		move.b	#0,(Tails_CPU_jumping).w	;clear doublejump flag to prevent tails spamming A/B/C and flying infinitely
 		cmpi.b	#1,(Tails_doublejump).w
 		bne.s	FlyP1
 		move.b	(Ctrl_2_Press_Logical).w,d0
