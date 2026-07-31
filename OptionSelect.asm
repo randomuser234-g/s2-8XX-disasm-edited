@@ -72,13 +72,20 @@ OptionSelect:
 ;-----------------------------------------------------------------------------------------------------------
 	.tailsflight:
 		cmpi.w	#$F,d0		; have you selected item $6 (s1 style peelout)?
-		bne.w	.resetmoves	; if not, do nothing
+		bne.w	.ggflight	; if not, do nothing
 		move.b	#1,(Tails_flight_toggle).w
 		move.b	#SndID_Ring,d0		; put value of Ring sound into d0
 		bsr.w	.optionplaysound
 ;-----------------------------------------------------------------------------------------------------------
-	.resetmoves:
+	.ggflight:
 		cmpi.w	#$10,d0		; have you selected item $6 (s1 style peelout)?
+		bne.w	.resetmoves	; if not, do nothing
+		move.b	#2,(Tails_flight_toggle).w
+		move.b	#SndID_Ring,d0		; put value of Ring sound into d0
+		bsr.w	.optionplaysound
+;-----------------------------------------------------------------------------------------------------------
+	.resetmoves:
+		cmpi.w	#$11,d0		; have you selected item $6 (s1 style peelout)?
 		bne.w	.startgame	; if not, do nothing
 		move.b	#0,(Roll_lock_toggle).w
 		move.b	#0,(Crouching_S3).w

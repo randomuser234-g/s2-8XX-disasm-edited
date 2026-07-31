@@ -3643,8 +3643,8 @@ Option_Text: ; loc_3d7C: ; Options Menu Text
 		dc.b	"       ROLL LOCK OFF       "
 		dc.b	"       EASIER CROUCH       "
 		dc.b	"      TAILS FLIGHT ON      "
+		dc.b	"   GAME GEAR TAILS FLIGHT  "
 		dc.b	"     DISABLE ALL MOVES     "
-		dc.b	"                           "
 		dc.b	"                           "
 		dc.b	"                           "
 		dc.b	"                           "
@@ -21405,12 +21405,13 @@ TailsCPU_Flying:
 	move.b	#1<<1,status(a0)
 	move.w	#0,x_pos(a0)
 	move.w	#0,y_pos(a0)
-	move.b	#$E,anim(a0)	;flying animation
+	jsr	Tails_FlyAnimNoTimer	;flying animation
 	rts
 ; ---------------------------------------------------------------------------
 ; loc_1BBC8:
 TailsCPU_FlyingOnscreen:
 	move.w	#0,(Tails_respawn_counter).w
+	jsr	Tails_FlyAnimNoTimer	;animation and sound effect
 ; loc_1BBCE:
 TailsCPU_Flying_Part2:
 	lea	(Sonic_Pos_Record_Buf).w,a2
@@ -21520,7 +21521,7 @@ TailsCPU_Normal:
 	move.w	#0,spindash_counter(a0)
 	move.b	#$81,obj_control(a0)
 	move.b	#1<<1,status(a0)
-	move.b	#$E,anim(a0)	;flying animation
+	jsr	Tails_FlyAnimNoTimer	;flying animation
 	rts
 ; ---------------------------------------------------------------------------
 ; loc_1BD0E:
@@ -21530,6 +21531,8 @@ TailsCPU_Normal_SonicOK:
 	bne.w	TailsCPU_Normal_HumanControl		; (if not, branch)
 	tst.b	obj_control(a0)			; and Tails isn't fully object controlled (&$80)
 	bmi.w	TailsCPU_Normal_HumanControl		; (if not, branch)
+	tst.b	(Tails_doublejump).w		;is tails even flying?
+	beq.s	+				;if not,skip this code
 	cmpi.b	#1,(Tails_carrying_Sonic).w	;carrying Sonic?
 	bne.s	+				;if not branch
 	jmp	Tails_SonicControl		;if yes, go to sonic's controls
@@ -21660,7 +21663,7 @@ TailsCPU_Despawn:
 	move.b	#1<<1,status(a0)
 	move.w	#$4000,x_pos(a0)
 	move.w	#0,y_pos(a0)
-	move.b	#$E,anim(a0)	;flying animation
+	jsr	Tails_FlyAnimNoTimer	;flying animation
 	rts
 ; ===========================================================================
 ; sub_1BE66:
@@ -21788,6 +21791,7 @@ Tails_RecordPos:
 ; loc_11070: Tails_MdNormal:
 Obj02_MdNormal:
 		bsr.w	Tails_Spindash
+		jsr	Tails_GGFlight
 		bsr.w	Tails_Jump
 		bsr.w	Tails_SlopeResist
 		bsr.w	Tails_Move
@@ -21843,7 +21847,7 @@ Obj02_MdRoll:
 ; loc_110E2: Tails_MdJump2:
 Obj02_MdJump:
         tst.b   (Tails_doublejump).w                  
-        bne.s   .flying
+        bne.s   Obj02_Flying
 	move.b	#0,(Tails_carrying_Sonic).w	;dont hold sonic
 
 		bsr.w	Tails_JumpHeight
@@ -21857,7 +21861,7 @@ Obj02_MdJump:
 		bsr.w	Tails_JumpAngle
 		bsr.w	Tails_Floor
 		rts
-.flying:
+Obj02_Flying:
 		bclr	#$04,status(a0)		;clear roll lock status if flying
 		jsr	Tails_StartFlying
                 bsr     Tails_ChgJumpDir                       ; Offset_0x00E0EC
@@ -21879,6 +21883,8 @@ Obj02_MdJump:
 .dontflysonic:
 	btst	#button_down,(Ctrl_2_Held_Logical).w	; is left being pressed?
 	beq.s	.end			; if not, branch
+		cmpi.b	#3,(Tails_doublejump).w	;game gear flight?
+		beq.w	.end			;if yes, don't roll, down is normal input
 	move.b	#2,anim(a0)
 		rts
 ; End of subroutine Obj02_MdJump
@@ -26686,7 +26692,7 @@ loc_1494C:
 		moveq	#$11,d3
 		move.w	8(a0),d4
 		bsr.w	PlatformObject
-		bra.w	MarkObjGone
+		jmp	MarkObjGone
 ; ---------------------------------------------------------------------------
 
 loc_14966:
@@ -47847,7 +47853,9 @@ Offset_0x00E382:
 
 ;Offset_0x00E394:
 .20anim:
-		move.b	#$E,anim(a0)	;flying animation
+		move.b	#0,(Tails_carrying_Sonic).w	;he only started flying, maybe not carrying sonic yet
+		move.b	#$F0,(Tails_flight_timer).w		;8 seconds like sonic 3 knux (not actually used)
+		bsr.w	Tails_FlyAnimNoTimer	;flying animation
 
 ;Offset_0x00E39A:
 rts_TailsFlight:
@@ -47857,8 +47865,8 @@ rts_TailsFlight:
 Tails_StartFlying:
 		tst.b	(Update_HUD_timer).w	; has Tails reached the end of the act?
 		beq.s	.noflying		; if yes, don't fly
-		cmpi.b	#1,(Tails_flight_toggle).w	; has Tails reached the end of the act?
-		bne.s	.noflying		; if yes, don't fly
+		tst.b	(Tails_flight_toggle).w	; flight toggle on?
+		beq.s	.noflying		; if not, don't fly
 		cmpi.b	#$E,anim(a0)		;is tails in flying animation?
 		bne.s	.noflying		;if not, don't fly
 		bra.s	.flying			;otherwise fly
@@ -47867,7 +47875,10 @@ Tails_StartFlying:
 		move.b	#0,(Tails_carrying_Sonic).w
 		rts
 	.flying:
+		bsr.w	Tails_FlyAnimNoTimer
 		move.b	#0,(Tails_CPU_jumping).w	;clear doublejump flag to prevent tails spamming A/B/C and flying infinitely
+		cmpi.b	#3,(Tails_doublejump).w
+		beq.w	Tails_GGFlight2
 		cmpi.b	#1,(Tails_doublejump).w
 		bne.s	FlyP1
 		move.b	(Ctrl_2_Press_Logical).w,d0
@@ -47964,6 +47975,8 @@ Tails_CarrySonic:	;code copied from obj7F, one of vines in mystic cave zone
 	move.b	#$1F,anim(a1)	;HangingFromObj
 	move.b	#1,(Tails_carrying_Sonic).w
 	move.b	#0,(Tails_CPU_jumping).w
+	cmpi.b	#2,(Tails_flight_toggle).w	; game gear flight on?
+	beq.w	.end		; if yes, don't cancel, Dpad down is regularly used
 	btst	#button_down,(Ctrl_1_Held_Logical).w	; is down being pressed?
 	beq.s	.end			; if not, branch
 	move.b	#2,anim(a1)
@@ -47976,6 +47989,13 @@ Tails_CarrySonic:	;code copied from obj7F, one of vines in mystic cave zone
 Tails_SonicControl:
 		move.b	(Ctrl_1_Logical).w,d0
 		andi.b	#button_left_mask|button_right_mask,d0
+		beq.s	.updown
+		or.b	(Ctrl_2_Logical).w,d0
+		move.b	d0,(Ctrl_2_Logical).w
+
+.updown:
+		move.b	(Ctrl_1_Logical).w,d0
+		andi.b	#button_up_mask|button_down_mask,d0
 		beq.s	.ABC
 		or.b	(Ctrl_2_Logical).w,d0
 		move.b	d0,(Ctrl_2_Logical).w
@@ -47993,8 +48013,172 @@ Tails_SonicControl:
 		move.b	d0,(Ctrl_2_Press_Logical).w
 .donothing:
 		rts
+;game gear style flight, up and A grounded, control with dpad
+Tails_GGFlight:
+
+		tst.w	(Demo_mode_flag).w	; is demo mode on?
+		bne.w	rts_TailsFlight		; if yes, no move
+		tst.b	(Update_HUD_timer).w	; has Tails reached the end of the act?
+		beq.w	rts_TailsFlight		; if yes, don't fly
+		cmpi.b	#2,(Tails_flight_toggle).w	; has Tails reached the end of the act?
+		bne.w	rts_TailsFlight		; if yes, don't fly
 
 
+		btst	#1,status(a0)		; tails is mid air?
+		bne.w	rts_TailsFlight		;if tes, don't fly
+
+		cmpi.b	#7,anim(a0)		; use "looking up" animation?
+		bne.w	rts_TailsFlight		;if not, branch
+		tst.w	(Tails_control_counter).w	; if CPU has control
+		beq.w	.testifsonic		;if yes, check if sonic is doing inputs
+		btst	#button_up,(Ctrl_2_Held_Logical).w	; is up being pressed?
+		beq.w	rts_TailsFlight			; if yes, branch
+		move.b	(Ctrl_2_Press_Logical).w,d0
+		andi.b	#button_B_mask|button_C_mask|button_A_mask,d0 ; is A, B or C pressed?
+		beq.w	rts_TailsFlight		;if not, don't fly
+		bra.s	.starttofly
+.testifsonic:
+		;btst	#1,(MainCharacter+status).w		; Sonic is mid air?
+		;bne.w	rts_TailsFlight		;if tes, don't fly
+		;cmpi.b	#7,(MainCharacter+anim).w		; use "looking up" animation?
+		;bne.w	rts_TailsFlight		;if not, branch
+		move.b	(Ctrl_1_Press_Logical).w,d0
+		andi.b	#button_B_mask|button_C_mask|button_A_mask,d0 ; is A, B or C pressed?
+		beq.w	rts_TailsFlight		;if not, don't fly
+
+.starttofly:
+		;start flying
+		addq.l	#4,sp
+		;subi.w	#$200,y_vel(a0)
+		subi.w	#5,y_pos(a0)
+		bset	#1,status(a0)	; set in-air flag.
+		bclr	#5,status(a0)	; clear pushing flag.
+		move.b	#1,jumping(a0)	; set jump flag.
+		bset	#2,status(a0)	; ball state
+		move.b	#$E,anim(a0)	;flying animation
+		move.b	#0,(Tails_carrying_Sonic).w	;he only started flying, maybe not carrying sonic yet
+		move.b	#$96,(Tails_flight_timer).w	;2 and 1/2, timer runs other frame, extends to 5 sec, matches sonic chaos and triple trouble
+		move.b	#3,(Tails_doublejump).w
+		rts		
+
+
+Tails_GGFlight2:
+		bsr.w	Tails_TestEndGGFlight
+		bsr.s	.checkup	
+		bsr.s	.checkright
+		rts
+.checkright
+		btst	#button_left,(Ctrl_2_Held_Logical).w	; is left being pressed?
+		beq.s	.checkleft			; if not,branch
+		bsr.w	.left
+		rts
+.checkleft:
+		btst	#button_right,(Ctrl_2_Held_Logical).w	; is right being pressed?
+		beq.s	.stophorizontal		; if not,branch
+		bsr.w	.right
+		rts
+.checkup:
+		move.b	(Ctrl_2_Held_Logical).w,d0
+		andi.b	#button_up_mask+button_down_mask,d0	; did the real player 2 hit something?
+		beq.s	.stopvertical		; if not,branch
+		bsr.w	.up
+		rts
+.stophorizontal:
+		;tst.w	x_vel(a0)
+		;bls.s	.stopleft
+		;bhi.s	.stopright
+		clr.w	x_vel(a0)
+		rts
+.stopvertical:
+		;tst.w	y_vel(a0)
+		;ble.s	.stopup
+		;bls.s	.stopdown
+		clr.w	y_vel(a0)
+		rts
+.stopcomplete:
+		rts
+.stopup:
+		addi.w	#$8,y_vel(a0)
+		rts
+.stopdown:
+		subi.w	#$8,y_vel(a0)
+		rts
+.stopright:
+		subi.w	#$8,x_vel(a0)
+		rts
+.stopleft:
+		addi.w	#$8,x_vel(a0)
+		rts
+.up:
+		btst	#button_up_mask,(Ctrl_2_Held_Logical).w
+		beq.s	.pressedup
+		bra.s	.presseddown
+.pressedup:
+		;subi.w	#$8,y_vel(a0)
+		move.w	#-$200,y_vel(a0)
+		rts
+.pressedLR:
+		;btst	#button_right,(Ctrl_2_Held_Logical).w
+		;bne.s	.right
+		;rts
+.left:
+		;subi.w	#$8,x_vel(a0)
+		;cmpi.w	#$200,x_vel(a0)
+		;ble.s	.stopcomplete
+		move.w	#-$200,x_vel(a0)
+		rts
+.right:	
+		;addi.w	#$8,x_vel(a0)
+		;cmpi.w	#$200,x_vel(a0)
+		;ble.s	.stopcomplete
+		move.w	#$200,x_vel(a0)
+		rts
+.presseddown:
+		;addi.w	#$8,y_vel(a0)
+		move.w	#$200,y_vel(a0)
+		rts
+
+Tails_SetFlyingAnimation:
+		;cmpi.b	#0,(Tails_flight_timer).w
+		;beq.s	Tails_FlyAnimNoTimer
+		;btst	#0,(Timer_frames+1).w	;every 2nd frame?
+		;beq.s	Tails_FlyAnimNoTimer				;if yes, then decrement the timer
+		;subq.b	#1,(Tails_flight_timer).w
+Tails_TestEndGGFlight:
+		cmpi.b	#0,(Tails_flight_timer).w
+		beq.w	Tails_EndGGFlight
+		btst	#0,(Timer_frames+1).w	;every 2nd frame?
+		beq.s	Tails_FlyAnimNoTimer				;if yes, then decrement the timer
+		subq.b	#1,(Tails_flight_timer).w
+
+Tails_FlyAnimNoTimer:
+		move.b	#$E,anim(a0)
+		;bra.s	.sound
+
+.sound:
+		;sound effect
+		move.b	(Timer_frames+1).w,d0
+		addq.b	#8,d0
+		andi.b	#$F,d0
+		bne.s	.skipsound
+		cmpi.w	#4,(Tails_CPU_routine).w	; is tails flying in?
+		beq.s	.normalsound			;if yes, ignore other animations
+		cmpi.b	#0,(Tails_flight_timer).w		;out of time?
+		beq.s	.skipsound			;if yes, tired animation (note other animations not exist)
+.normalsound:
+		move.w	#SndID_Swish,d0
+		jsr	(PlaySound).l
+		rts
+.skipsound:
+		rts
+
+Tails_EndGGFlight:
+		move.b	#0,(Tails_doublejump).w
+		move.b	#0,(Tails_carrying_Sonic).w
+		move.b	#0,anim(a0)		;walking animation
+		bclr	#2,status(a0)		;clear "rolling" status
+		clr.b	jumping(a0)	; remove jump flag.
+		rts
 	if PaddingOptimization=0
 		cnop	-1,2<<lastbit(*-1)
 		even

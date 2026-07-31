@@ -875,7 +875,8 @@ Ring_start_addr_P2:		ds.w	1
 Ring_end_addr_P2:		ds.w	1
 Ring_Manager_Addresses_P2_End:
 Tails_carrying_Sonic:		ds.b	1	;check if carrying sonic
-				ds.b	5	; $FFFFF71B-$FFFFF71F ; seems unused
+Tails_flight_timer:		ds.b	1	;timer until flight ends
+				ds.b	4	; $FFFFF71B-$FFFFF71F ; seems unused
 
 Screen_redraw_flag:		ds.b	1	; if whole screen needs to redraw
 CPZ_UnkScroll_Timer:		ds.b	1	; used only in unused CPZ scrolling function
