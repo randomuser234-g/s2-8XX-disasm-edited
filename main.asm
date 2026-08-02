@@ -22337,6 +22337,8 @@ Tails_ChgJumpDir: ; loc_11484:
 		move.w	(Sonic_top_speed).w,d6
 		move.w	(Sonic_acceleration).w,d5
 		asl.w	#1,d5
+		cmpi.b	#$03,(Tails_doublejump).w	;game gear flight (gg flight)?
+		beq.s	loc_114CE		;if yes, don't use this to change direction
 		btst	#$04,$0022(a0)
 		bne.s	loc_114CE
 		move.w	$0010(a0),d0
@@ -48022,7 +48024,8 @@ Tails_GGFlight:
 		beq.w	rts_TailsFlight		; if yes, don't fly
 		cmpi.b	#2,(Tails_flight_toggle).w	; has Tails reached the end of the act?
 		bne.w	rts_TailsFlight		; if yes, don't fly
-
+		btst	#6,status(a0)			;is Tails underwater?
+		bne.w	rts_TailsFlight		;if yes, end flight
 
 		btst	#1,status(a0)		; tails is mid air?
 		bne.w	rts_TailsFlight		;if tes, don't fly
@@ -48049,7 +48052,7 @@ Tails_GGFlight:
 .starttofly:
 		;start flying
 		addq.l	#4,sp
-		;subi.w	#$200,y_vel(a0)
+		subi.w	#$200,y_vel(a0)
 		subi.w	#5,y_pos(a0)
 		bset	#1,status(a0)	; set in-air flag.
 		bclr	#5,status(a0)	; clear pushing flag.
@@ -48063,6 +48066,8 @@ Tails_GGFlight:
 
 
 Tails_GGFlight2:
+		btst	#6,status(a0)			;is Tails underwater?
+		bne.w	Tails_EndGGFlight		;if yes, end flight
 		bsr.w	Tails_TestEndGGFlight
 		bsr.s	.checkup	
 		bsr.s	.checkright
@@ -48084,37 +48089,39 @@ Tails_GGFlight2:
 		bsr.w	.up
 		rts
 .stophorizontal:
-		;tst.w	x_vel(a0)
-		;bls.s	.stopleft
-		;bhi.s	.stopright
-		clr.w	x_vel(a0)
+		;tst.w	x_vel(a0)	;would be checks for going left/right, unused
+		;blt.s	.stopleft
+		;bgt.s	.stopright
+		;clr.w	x_vel(a0)
 		rts
 .stopvertical:
-		;tst.w	y_vel(a0)
-		;ble.s	.stopup
-		;bls.s	.stopdown
-		clr.w	y_vel(a0)
+		tst.w	y_vel(a0)	;check y velocity
+		blt.s	.stopup		;if still going up, slow down to a stop
+		;bgt.s	.stopdown	;would be checks for going down, not used
+		;clr.w	y_vel(a0)	;old behavior where canceling velocity completely was used
 		rts
 .stopcomplete:
 		rts
 .stopup:
-		addi.w	#$8,y_vel(a0)
+		addi.w	#$10,y_vel(a0)
 		rts
 .stopdown:
-		subi.w	#$8,y_vel(a0)
+		subi.w	#$10,y_vel(a0)
 		rts
 .stopright:
-		subi.w	#$8,x_vel(a0)
+		subi.w	#$10,x_vel(a0)
 		rts
 .stopleft:
-		addi.w	#$8,x_vel(a0)
+		addi.w	#$10,x_vel(a0)
 		rts
 .up:
 		btst	#button_up_mask,(Ctrl_2_Held_Logical).w
 		beq.s	.pressedup
 		bra.s	.presseddown
 .pressedup:
-		;subi.w	#$8,y_vel(a0)
+		subi.w	#$10,y_vel(a0)
+		cmpi.w	#-$200,y_vel(a0)
+		bgt.s	.stopcomplete
 		move.w	#-$200,y_vel(a0)
 		rts
 .pressedLR:
@@ -48122,19 +48129,23 @@ Tails_GGFlight2:
 		;bne.s	.right
 		;rts
 .left:
-		;subi.w	#$8,x_vel(a0)
-		;cmpi.w	#$200,x_vel(a0)
-		;ble.s	.stopcomplete
+		bset	#0,status(a0)	;face tails to the left
+		subi.w	#$10,x_vel(a0)
+		cmpi.w	#-$200,x_vel(a0)
+		bgt.s	.stopcomplete
 		move.w	#-$200,x_vel(a0)
 		rts
 .right:	
-		;addi.w	#$8,x_vel(a0)
-		;cmpi.w	#$200,x_vel(a0)
-		;ble.s	.stopcomplete
+		bclr	#0,status(a0)	;face tails to the right
+		addi.w	#$10,x_vel(a0)
+		cmpi.w	#$200,x_vel(a0)
+		blt.s	.stopcomplete
 		move.w	#$200,x_vel(a0)
 		rts
 .presseddown:
-		;addi.w	#$8,y_vel(a0)
+		addi.w	#$10,y_vel(a0)
+		cmpi.w	#$200,y_vel(a0)
+		blt.w	.stopcomplete
 		move.w	#$200,y_vel(a0)
 		rts
 
