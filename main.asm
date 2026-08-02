@@ -21881,7 +21881,7 @@ Obj02_Flying:
 	.end:
 		rts
 .dontflysonic:
-	btst	#button_down,(Ctrl_2_Held_Logical).w	; is left being pressed?
+	btst	#button_down,(Ctrl_2_Press_Logical).w	; is left being pressed?
 	beq.s	.end			; if not, branch
 		cmpi.b	#3,(Tails_doublejump).w	;game gear flight?
 		beq.w	.end			;if yes, don't roll, down is normal input
@@ -47979,7 +47979,7 @@ Tails_CarrySonic:	;code copied from obj7F, one of vines in mystic cave zone
 	move.b	#0,(Tails_CPU_jumping).w
 	cmpi.b	#2,(Tails_flight_toggle).w	; game gear flight on?
 	beq.w	.end		; if yes, don't cancel, Dpad down is regularly used
-	btst	#button_down,(Ctrl_1_Held_Logical).w	; is down being pressed?
+	btst	#button_down,(Ctrl_1_Press_Logical).w	; is down being pressed?
 	beq.s	.end			; if not, branch
 	move.b	#2,anim(a1)
 	move.b	#2,anim(a0)
