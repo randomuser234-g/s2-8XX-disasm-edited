@@ -3072,7 +3072,7 @@ loc_38EE:
 
 		move.b	#$E,(TitleScreen_Sonic).w
 		move.b	#$E,(TitleScreen_Tails).w
-		move.b	#$8B,(TitleCard_Zone).w
+		move.b	#$8B,(TitleCard_Zone).w		;the menu object (1 player, options, levelselect)
 		move.b	#1,(TitleScreen_Tails+mapping_frame).w
 		jsr	(RunObjects).l
 		jsr	(BuildSprites).l
@@ -3179,8 +3179,8 @@ Title_ChkLevSel:
 		move.w	#$1,(Level_select_zone).w	;go to first selectable item
 		cmpi.b	#0,(Title_screen_option).w	;1 player?
 		beq.w	PlayLevel			;if yes, play level
-		cmpi.b	#1,(Title_screen_option).w	;1 player?
-		beq.w	LevSelEnter			;if yes, play level
+		cmpi.b	#1,(Title_screen_option).w	;options?
+		beq.w	LevSelEnter			;if yes, skip level select
 		move.b	#1,(Menu_page).w	;go to levelselect
 		move.w	#$0,(Level_select_zone).w	;go to first selectable item
 LevSelEnter:
@@ -47934,6 +47934,8 @@ FlyP3:
 ; End of function Tails_StartFlying
 
 Tails_CarrySonic:	;code copied from obj7F, one of vines in mystic cave zone
+	tst.b	(Tails_flight_timer).w	;out of time?
+	beq.w	.stopcarryingsonic	;if yes, don't carry sonic
 	move.w	x_pos(a1),d0
 	sub.w	x_pos(a0),d0
 	addi.w	#$C,d0
@@ -48155,6 +48157,7 @@ Tails_SetFlyingAnimation:
 		;btst	#0,(Timer_frames+1).w	;every 2nd frame?
 		;beq.s	Tails_FlyAnimNoTimer				;if yes, then decrement the timer
 		;subq.b	#1,(Tails_flight_timer).w
+		bra.s	Tails_FlyAnimNoTimer
 Tails_TestEndGGFlight:
 		cmpi.b	#0,(Tails_flight_timer).w
 		beq.w	Tails_EndGGFlight
