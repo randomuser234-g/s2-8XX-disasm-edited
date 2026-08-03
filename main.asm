@@ -47856,7 +47856,7 @@ Offset_0x00E382:
 ;Offset_0x00E394:
 .20anim:
 		move.b	#0,(Tails_carrying_Sonic).w	;he only started flying, maybe not carrying sonic yet
-		move.b	#$F0,(Tails_flight_timer).w		;8 seconds like sonic 3 knux (not actually used)
+		move.b	#$F0,(Tails_flight_timer).w		;8 seconds like sonic 3 knux
 		bsr.w	Tails_FlyAnimNoTimer	;flying animation
 
 ;Offset_0x00E39A:
@@ -47881,8 +47881,11 @@ Tails_StartFlying:
 		move.b	#0,(Tails_CPU_jumping).w	;clear doublejump flag to prevent tails spamming A/B/C and flying infinitely
 		cmpi.b	#3,(Tails_doublejump).w
 		beq.w	Tails_GGFlight2
+		jsr	Tails_SetFlyingAnimation
 		cmpi.b	#1,(Tails_doublejump).w
 		bne.s	FlyP1
+		tst.b	(Tails_flight_timer).w	;out of time?
+		beq.s	Tails_Speed2		;if yes, no flying (skip controls)
 		move.b	(Ctrl_2_Press_Logical).w,d0
 		andi.b	#button_B_mask|button_C_mask,d0		;$30?
 		beq.s	Tails_Speed1
@@ -47910,6 +47913,8 @@ Fly_DoNothing:
 
 ;Offset_0x00DC3E:
 FlyP1:
+		tst.b	(Tails_flight_timer).w	;out of time?
+		beq.s	FlyP3		;if yes, no flying (skip controls)
 		move.b	(Ctrl_2_Press_Logical).w,d0
 		andi.b	#button_B_mask|button_C_mask,d0
 		beq.s	FlyP2
@@ -47934,8 +47939,8 @@ FlyP3:
 ; End of function Tails_StartFlying
 
 Tails_CarrySonic:	;code copied from obj7F, one of vines in mystic cave zone
-	tst.b	(Tails_flight_timer).w	;out of time?
-	beq.w	.stopcarryingsonic	;if yes, don't carry sonic
+	tst.b	(Tails_doublejump).w	;is tails flying?
+	beq.w	.stopcarryingsonic	;if not, stop carrying sonic
 	move.w	x_pos(a1),d0
 	sub.w	x_pos(a0),d0
 	addi.w	#$C,d0
@@ -47979,7 +47984,7 @@ Tails_CarrySonic:	;code copied from obj7F, one of vines in mystic cave zone
 	move.b	#$1F,anim(a1)	;HangingFromObj
 	move.b	#1,(Tails_carrying_Sonic).w
 	move.b	#0,(Tails_CPU_jumping).w
-	cmpi.b	#2,(Tails_flight_toggle).w	; game gear flight on?
+	cmpi.b	#3,(Tails_doublejump).w	; game gear flight on?
 	beq.w	.end		; if yes, don't cancel, Dpad down is regularly used
 	btst	#button_down,(Ctrl_1_Press_Logical).w	; is down being pressed?
 	beq.s	.end			; if not, branch
@@ -48152,11 +48157,13 @@ Tails_GGFlight2:
 		rts
 
 Tails_SetFlyingAnimation:
-		;cmpi.b	#0,(Tails_flight_timer).w
-		;beq.s	Tails_FlyAnimNoTimer
-		;btst	#0,(Timer_frames+1).w	;every 2nd frame?
-		;beq.s	Tails_FlyAnimNoTimer				;if yes, then decrement the timer
-		;subq.b	#1,(Tails_flight_timer).w
+		;cmpi.b	#3,(Tails_doublejump).w	;game gear flight
+		;beq.s	Tails_TestEndGGFlight	;if yes, go to this code
+		cmpi.b	#0,(Tails_flight_timer).w	;out of time?
+		beq.s	Tails_FlyAnimNoTimer		;if yes, skip decrementing the timer
+		btst	#0,(Timer_frames+1).w	;every 2nd frame?
+		beq.s	Tails_FlyAnimNoTimer				;if yes, then decrement the timer
+		subq.b	#1,(Tails_flight_timer).w
 		bra.s	Tails_FlyAnimNoTimer
 Tails_TestEndGGFlight:
 		cmpi.b	#0,(Tails_flight_timer).w
@@ -48167,6 +48174,11 @@ Tails_TestEndGGFlight:
 
 Tails_FlyAnimNoTimer:
 		move.b	#$E,anim(a0)
+		cmpi.w	#4,(Tails_CPU_routine).w	; is tails flying in?
+		beq.s	.sound			;if yes, ignore other animations
+		tst.b	(Tails_flight_timer).w	;out of time?
+		bne.s	.sound			;if not, skip this code
+		move.b	#0,anim_frame(a0)	;constantly stop tails animation (visual due to no tired frames)
 		;bra.s	.sound
 
 .sound:
