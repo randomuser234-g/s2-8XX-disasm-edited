@@ -21808,6 +21808,10 @@ Obj02_MdNormal:
 ; Called if Tails is airborne,but not in a ball (thus,probably not jumping)
 ; loc_11098: Tails_MdJump:
 Obj02_MdAir:
+        tst.b   (Tails_doublejump).w                  
+        bne.w   Obj02_Flying
+	move.b	#0,(Tails_carrying_Sonic).w	;dont hold sonic
+
 		bsr.w	Tails_JumpHeight
 		bsr.w	Tails_ChgJumpDir
 		bsr.w	Tails_LevelBoundaries
@@ -21846,10 +21850,6 @@ Obj02_MdRoll:
 ;		 Why they gave it a separate copy of the code,I don't know.
 ; loc_110E2: Tails_MdJump2:
 Obj02_MdJump:
-        tst.b   (Tails_doublejump).w                  
-        bne.s   Obj02_Flying
-	move.b	#0,(Tails_carrying_Sonic).w	;dont hold sonic
-
 		bsr.w	Tails_JumpHeight
 		bsr.w	Tails_ChgJumpDir
 		bsr.w	Tails_LevelBoundaries
@@ -47836,9 +47836,9 @@ Tails_Flight:
 		beq.s	rts_TailsFlight		;if yes, don't fly
 .skipcpucheck:
 		; we already checked this earlier...
-		;btst	#2,status(a0)
-		;beq.s	Offset_0x00E382
-		;bclr	#2,status(a0)
+		btst	#2,status(a0)
+		beq.s	Offset_0x00E382
+		bclr	#2,status(a0)
 		;move.b	Obj_Height_2(a0),d1			
 		;move.b	Obj_Height_3(a0),Obj_Height_2(a0)
 		;move.b	Obj_Width_3(a0),Obj_Width_2(a0)
@@ -48064,7 +48064,7 @@ Tails_GGFlight:
 		bset	#1,status(a0)	; set in-air flag.
 		bclr	#5,status(a0)	; clear pushing flag.
 		move.b	#1,jumping(a0)	; set jump flag.
-		bset	#2,status(a0)	; ball state
+		;bset	#2,status(a0)	; ball state
 		move.b	#$E,anim(a0)	;flying animation
 		move.b	#0,(Tails_carrying_Sonic).w	;he only started flying, maybe not carrying sonic yet
 		move.b	#$96,(Tails_flight_timer).w	;2 and 1/2, timer runs other frame, extends to 5 sec, matches sonic chaos and triple trouble
