@@ -22545,6 +22545,7 @@ loc_1161A:
 		clr.b	$0038(a0)
 		move.w	#SndID_Jump,d0
 		jsr	(PlaySound).l			  ; loc_14C6
+		clr.b	(Tails_doublejump).w	;clear flight flag
 		move.b	#$0F,$0016(a0)
 		move.b	#$09,$0017(a0)
 		btst	#2,$0022(a0)
@@ -23034,6 +23035,7 @@ loc_11A74:
 		move.b	#0,anim(a0)
 		subq.w	#1,y_pos(a0)
 loc_11AAA:
+		clr.b	(Tails_doublejump).w	;clear flight flag
 		bclr	#$05,status(a0)
 		bclr	#1,status(a0)
 		bclr	#$04,status(a0)
