@@ -4830,6 +4830,7 @@ loc_4C9C:
 loc_4CBE:
 		rts
 End_Level_Art_Load: ; loc_4CC0: ; Test for load end level sprites...
+		;bug in two player mode, tails gets zipped to end if sonic reaches here
 		tst.w	(Debug_placement_mode).w
 		bne.w	Skip_End_Level_Art_Load ; loc_4CF6
 		cmpi.w	#green_hill_zone_act_2,(Current_ZoneAndAct).w
@@ -20613,6 +20614,7 @@ loc_1091A:
 		subq.w	#5,y_pos(a0)
 
 loc_10950:
+		clr.b	(Tails_carrying_Sonic).w
 		bclr	#5,status(a0)
 		bclr	#1,status(a0)
 		bclr	#4,status(a0)
@@ -23036,6 +23038,7 @@ loc_11A74:
 		subq.w	#1,y_pos(a0)
 loc_11AAA:
 		clr.b	(Tails_doublejump).w	;clear flight flag
+		clr.b	(Tails_carrying_Sonic).w
 		bclr	#$05,status(a0)
 		bclr	#1,status(a0)
 		bclr	#$04,status(a0)
@@ -47943,22 +47946,49 @@ FlyP3:
 Tails_CarrySonic:	;code copied from obj7F, one of vines in mystic cave zone
 	tst.b	(Tails_doublejump).w	;is tails flying?
 	beq.w	.stopcarryingsonic	;if not, stop carrying sonic
-	move.w	x_pos(a1),d0
-	sub.w	x_pos(a0),d0
-	addi.w	#$C,d0
-	cmpi.w	#$18,d0
-	bhs.w	.stopcarryingsonic
-	move.w	y_pos(a1),d1
-	sub.w	y_pos(a0),d1
-	subi.w	#$19,d1		;28
-	cmpi.w	#$D,d1		;10
-	bhs.w	.stopcarryingsonic
+	tst.b	spindash_flag(a1)	;already started spindash?
+	bne.w	.stopcarryingsonic	;if yes, don't carry sonic
+	tst.b	(WindTunnel_flag).w	;wind tunnel active?
+	bne.w	.stopcarryingsonic		;if yes, stop carrying sonic
 	tst.b	obj_control(a1)
 	bmi.w	.stopcarryingsonic
 	cmpi.b	#4,routine(a1)
 	bhs.w	.stopcarryingsonic
 	tst.w	(Debug_placement_mode).w
 	bne.w	.stopcarryingsonic
+	tst.b	(Tails_carrying_Sonic).w	;carried?
+	bne.w	.chkspeed		;if yes, different checks
+	move.w	x_pos(a1),d0
+	sub.w	x_pos(a0),d0
+	addi.w	#$10,d0
+	cmpi.w	#$20,d0
+	bhs.w	.stopcarryingsonic
+	move.w	y_pos(a1),d1
+	sub.w	y_pos(a0),d1
+	subi.w	#$20,d1		;28
+	cmpi.w	#$10,d1		;10
+	bhs.w	.stopcarryingsonic
+	bra.s	.leftorright
+.chkspeed:
+	btst	#1,status(a1)	;in the air?
+	beq.w	.stopcarryingsonic			;if not,stop carrying sonic
+	btst	#3,status(a1)	;on an object?
+	bne.w	.stopcarryingsonic			;if yes, stop carrying sonic
+	move.w	x_pos(a1),d0		;distance between players
+	sub.w	x_pos(a0),d0
+	addi.w	#$10,d0
+	cmpi.w	#$20,d0			;is sonic a certain distance toward tails?
+	bhs.w	.bumpandstopcarryingsonic		;if not, stop carrying sonic
+	;with these values, seems to be about sonic's hand at tails outward shoe before detach
+	
+	move.w	y_pos(a1),d0		;distance between players
+	sub.w	y_pos(a0),d0
+	cmpi.w	#$30,d0			;is sonic a certain distance toward tails?
+	bhs.w	.stopcarryingsonic		;if not, stop carrying sonic
+
+
+
+.leftorright:
 	;face left or right
 	btst	#0,status(a0)		;tails facing left?
 	bne.s	.notleft		;if not, don't face left
@@ -47992,6 +48022,9 @@ Tails_CarrySonic:	;code copied from obj7F, one of vines in mystic cave zone
 	beq.s	.end			; if not, branch
 	move.b	#2,anim(a1)
 	move.b	#2,anim(a0)
+	bra.s	.stopcarryingsonic
+.bumpandstopcarryingsonic:
+	move.w	#-$100,y_vel(a1)		; make a slight upwards push
 .stopcarryingsonic:
 	move.b	#0,(Tails_carrying_Sonic).w
 		rts
