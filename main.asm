@@ -4830,6 +4830,7 @@ loc_4C9C:
 loc_4CBE:
 		rts
 End_Level_Art_Load: ; loc_4CC0: ; Test for load end level sprites...
+		;bug in two player mode, tails gets zipped to end if sonic reaches here
 		tst.w	(Debug_placement_mode).w
 		bne.w	Skip_End_Level_Art_Load ; loc_4CF6
 		cmpi.w	#green_hill_zone_act_2,(Current_ZoneAndAct).w
@@ -20613,6 +20614,7 @@ loc_1091A:
 		subq.w	#5,y_pos(a0)
 
 loc_10950:
+		clr.b	(Tails_carrying_Sonic).w	;clear carrying flag
 		bclr	#5,status(a0)
 		bclr	#1,status(a0)
 		bclr	#4,status(a0)
@@ -23036,6 +23038,7 @@ loc_11A74:
 		subq.w	#1,y_pos(a0)
 loc_11AAA:
 		clr.b	(Tails_doublejump).w	;clear flight flag
+		clr.b	(Tails_carrying_Sonic).w	;clear carrying flag
 		bclr	#$05,status(a0)
 		bclr	#1,status(a0)
 		bclr	#$04,status(a0)
@@ -47953,6 +47956,9 @@ Tails_CarrySonic:	;code copied from obj7F, one of vines in mystic cave zone
 	bne.w	.stopcarryingsonic
 	tst.b	(Tails_doublejump).w	;is tails flying?
 	beq.w	.stopcarryingsonic	;if not, stop carrying sonic
+	tst.b	(Tails_carrying_Sonic).w	;carrying sonic?
+	bne.s	.chkdistance		;if yes, check distance between the two with old parameters
+
 	move.w	x_pos(a1),d0
 	sub.w	x_pos(a0),d0
 	addi.w	#$C,d0
@@ -47960,9 +47966,28 @@ Tails_CarrySonic:	;code copied from obj7F, one of vines in mystic cave zone
 	bhs.w	.stopcarryingsonic
 	move.w	y_pos(a1),d1
 	sub.w	y_pos(a0),d1
-	subi.w	#$19,d1		;28
-	cmpi.w	#$D,d1		;10
+	subi.w	#$1E,d1		;30
+	cmpi.w	#$10,d1		;16
 	bhs.w	.stopcarryingsonic
+	bra.s	.leftorright
+.chkdistance:
+	btst	#1,status(a1)	;is sonic airborne?
+	beq.w	.stopcarryingsonic	;if he isn't make sure to cancel
+
+	btst	#3,status(a1)	;is sonic on an object?
+	bne.w	.stopcarryingsonic	;if he is make sure to cancel
+
+	move.w	x_pos(a1),d0
+	sub.w	x_pos(a0),d0
+	addi.w	#$C,d0
+	cmpi.w	#$18,d0
+	bhs.w	.bumpandstopcarryingsonic
+	move.w	y_pos(a1),d1
+	sub.w	y_pos(a0),d1
+	subi.w	#$19,d1		;25
+	cmpi.w	#$D,d1		;13
+	bhs.w	.stopcarryingsonic
+.leftorright:
 	;face left or right
 	btst	#0,status(a0)		;tails facing left?
 	bne.s	.notleft		;if not, don't face left
@@ -47996,6 +48021,9 @@ Tails_CarrySonic:	;code copied from obj7F, one of vines in mystic cave zone
 	beq.s	.end			; if not, branch
 	move.b	#2,anim(a1)
 	move.b	#2,anim(a0)
+	bra.s	.stopcarryingsonic
+.bumpandstopcarryingsonic:
+	move.w	#-$100,y_vel(a1)
 .stopcarryingsonic:
 	move.b	#0,(Tails_carrying_Sonic).w
 		rts
