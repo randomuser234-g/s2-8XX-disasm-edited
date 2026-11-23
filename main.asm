@@ -3213,9 +3213,9 @@ Title_ChkLevSel:
 		moveq	#28-1,d2			;copy paste from titlescreen loading stuff
 		bsr.w	PlaneMapToVRAM_H40		;map menu added end
 		clr.w	(Anim_Counters).w		;added
+		move.w	#$2300,sr			;added
 		move.b	#VintID_Unused6,(Vint_routine).w		;try to set level select vint quickly
 		bsr.w	WaitForVint				;note does not quite work, for a few frames no dma queue
-		;move.w	#$2300,sr			;added
 
 		lea	(Anim_SonicMilesBG).l,a2		;added
 		jsr	Dynamic_Normal				;added
@@ -3235,17 +3235,20 @@ LevSelEnter:
 		;bsr.w	PalLoad2		;change from PalLoad2
 
 		clearRAM Horiz_Scroll_Buf,Horiz_Scroll_Buf_End
-
-		move.l	d0,(Vscroll_Factor).w
-		move.w	#$2700,sr
-		lea	(VDP_data_port).l,a6
-		move.l	#$60000003,(VDP_control_port).l
-		move.w	#bytesToLcnt(VRAM_Plane_Table_Size),d1
+		;seemingly no need for clearing bg when ClearScreen was already run
+		;move.l	d0,(Vscroll_Factor).w
+		;move.w	#$2700,sr
+		;lea	(VDP_data_port).l,a6
+		;move.l	#$60000003,(VDP_control_port).l
+		;move.w	#bytesToLcnt(VRAM_Plane_Table_Size),d1
 ; loc_3A3E: LevelSelect_ClearVRAM:
 Title_ClrVram:
-		nop
-		move.l	d0,(a6)
-		dbf	d1,Title_ClrVram
+		;nop
+		;move.l	d0,(a6)
+		;dbf	d1,Title_ClrVram
+
+		move.b	#VintID_Unused6,(Vint_routine).w		;call for vint again (added)
+		bsr.w	WaitForVint				;added
 
 		bsr.w	LevelSelect_TextLoad
 		bsr.w	Pal_FadeFromBlack		;added
@@ -47591,6 +47594,7 @@ Anim_SonicMilesBG:
                 dc.b    $06, $0A                     ; Quadros / Tiles
                 dc.b    $00, $77, $0A, $05, $14, $05 ; Carregar quadro / Tempo do quadro	;change from C7 to 77
                 dc.b    $1E, $77, $14, $05, $0A, $05 ; Carregar quadro / Tempo do quadro   	;change from C7 to 77, makes it slower, idk why but it works  
+		even
 ; ===========================================================================
 ; ----------------------------------------------------------------------------
 ; Object 84 - Pinball mode enable/disable
