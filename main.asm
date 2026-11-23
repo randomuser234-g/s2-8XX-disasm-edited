@@ -584,19 +584,20 @@ VintRet:
 ; ===========================================================================
 ; off_B68:
 Vint_SwitchTbl:		offsetTable
-Vint_Lag_ptr:		offsetTableEntry.w Vint_Lag
-Vint_SEGA_ptr:		offsetTableEntry.w Vint_SEGA
-Vint_Title_ptr:		offsetTableEntry.w Vint_Title
-Vint_Unused6_ptr:	offsetTableEntry.w Vint_Unused6
-Vint_Level_ptr:		offsetTableEntry.w Vint_Level
-Vint_S1SS_ptr:		offsetTableEntry.w Vint_S1SS
-Vint_TitleCard_ptr:	offsetTableEntry.w Vint_TitleCard
-Vint_UnusedE_ptr:	offsetTableEntry.w Vint_UnusedE
-Vint_Pause_ptr:		offsetTableEntry.w Vint_Pause
-Vint_Fade_ptr:		offsetTableEntry.w Vint_Fade
-Vint_PCM_ptr:		offsetTableEntry.w Vint_PCM
-Vint_SSResults_ptr:	offsetTableEntry.w Vint_SSResults
-Vint_TitleCardDup_ptr:	offsetTableEntry.w Vint_TitleCard
+Vint_Lag_ptr:		offsetTableEntry.w Vint_Lag		;0
+Vint_SEGA_ptr:		offsetTableEntry.w Vint_SEGA		;2
+Vint_Title_ptr:		offsetTableEntry.w Vint_Title		;4
+Vint_Unused6_ptr:	offsetTableEntry.w Vint_Unused6		;6
+Vint_Level_ptr:		offsetTableEntry.w Vint_Level		;8
+Vint_S1SS_ptr:		offsetTableEntry.w Vint_S1SS		;$A
+Vint_TitleCard_ptr:	offsetTableEntry.w Vint_TitleCard	;$C
+Vint_UnusedE_ptr:	offsetTableEntry.w Vint_UnusedE		;$E
+Vint_Pause_ptr:		offsetTableEntry.w Vint_Pause		;$10
+Vint_Fade_ptr:		offsetTableEntry.w Vint_Fade		;$12
+Vint_PCM_ptr:		offsetTableEntry.w Vint_PCM		;$14
+Vint_SSResults_ptr:	offsetTableEntry.w Vint_SSResults	;$16
+Vint_TitleCardDup_ptr:	offsetTableEntry.w Vint_TitleCard	;$18
+								;$1A
 ; ===========================================================================
 ; loc_B82: VintSub00:
 Vint_Lag:
@@ -699,8 +700,28 @@ return_d3E:
 ; ===========================================================================
 ; loc_d40: VintSub6:
 Vint_Unused6:
-		bsr.w	Do_ControllerPal
-		rts
+		;bsr.w	Do_ControllerPal
+		;rts				;old Unused6
+						;the new code here is copy from Vint_Menu in final S2
+	stopZ80
+
+	bsr.w	ReadJoypads
+
+	dma68kToVDP Normal_palette,$0000,palette_line_size*4,CRAM
+	dma68kToVDP Sprite_Table,VRAM_Sprite_Attribute_Table,VRAM_Sprite_Attribute_Table_Size,VRAM
+	dma68kToVDP Horiz_Scroll_Buf,VRAM_Horiz_Scroll_Table,VRAM_Horiz_Scroll_Table_Size,VRAM
+
+	bsr.w	ProcessDMAQueue
+	bsr.w	sndDriverInput
+
+	startZ80
+
+	bsr.w	ProcessDPLC
+	tst.w	(Demo_Time_left).w
+	beq.w	+	; rts
+	subq.w	#1,(Demo_Time_left).w
++
+	rts
 ; ===========================================================================
 ; loc_d46: VintSub10:
 Vint_Pause:
@@ -3174,20 +3195,44 @@ TitleScreen_SkipC:
 ;		move.b	#0,(Player_option).w
 ; loc_39F2:
 Title_ChkLevSel:
-		;no check for level select here as it's something different
-		move.b	#0,(Menu_page).w	;go to first page
-		move.w	#$1,(Level_select_zone).w	;go to first selectable item
 		cmpi.b	#0,(Title_screen_option).w	;1 player?
 		beq.w	PlayLevel			;if yes, play level
+		;no check for level select here as it's something different
+		bsr.w	Pal_FadeFrom		;fade to black added
+
+		move.w	#$2700,sr			;add mappings to s2 final menu
+		jsr	ClearScreen			;clears the screen, removes title sonic graphic
+		lea	(Chunk_Table).l,a1
+		lea	(MapEng_MenuBack).l,a0		;mappings for menu
+		move.w	#$6000,d0			;art tile
+		bsr.w	EniDec				;added
+
+		lea	(Chunk_Table).l,a1		;added
+		move.l	#$40000003,d0			;added
+		moveq	#40-1,d1			;added
+		moveq	#28-1,d2			;copy paste from titlescreen loading stuff
+		bsr.w	PlaneMapToVRAM_H40		;map menu added end
+		clr.w	(Anim_Counters).w		;added
+		move.b	#VintID_Unused6,(Vint_routine).w		;try to set level select vint quickly
+		bsr.w	WaitForVint				;note does not quite work, for a few frames no dma queue
+		;move.w	#$2300,sr			;added
+
+		lea	(Anim_SonicMilesBG).l,a2		;added
+		jsr	Dynamic_Normal				;added
+
+		move.b	#0,(Menu_page).w	;go to first page
+		move.w	#$1,(Level_select_zone).w	;go to first selectable item
 		cmpi.b	#1,(Title_screen_option).w	;options?
 		beq.w	LevSelEnter			;if yes, skip level select
 		move.b	#1,(Menu_page).w	;go to levelselect
 		move.w	#$0,(Level_select_zone).w	;go to first selectable item
 LevSelEnter:
+
 		move.b	#MusID_LevelSel,d0
 		bsr.w	PlayMusic
 		moveq	#PalID_LevelSel,d0
-		bsr.w	PalLoad2
+		bsr.w	PalLoad1		;change from PalLoad2
+		;bsr.w	PalLoad2		;change from PalLoad2
 
 		clearRAM Horiz_Scroll_Buf,Horiz_Scroll_Buf_End
 
@@ -3198,14 +3243,20 @@ LevSelEnter:
 		move.w	#bytesToLcnt(VRAM_Plane_Table_Size),d1
 ; loc_3A3E: LevelSelect_ClearVRAM:
 Title_ClrVram:
+		nop
 		move.l	d0,(a6)
 		dbf	d1,Title_ClrVram
+
 		bsr.w	LevelSelect_TextLoad
+		bsr.w	Pal_FadeFromBlack		;added
 ; ===========================================================================
 ; loc_3A48:
 LevelSelect_Loop:
-		move.b	#VintID_Title,(Vint_routine).w
-		bsr.w	WaitForVint
+		move.b	#VintID_Unused6,(Vint_routine).w		;original Vint_Title does not support DMAqueue
+		bsr.w	WaitForVint				;that is why dynamic graphic does not work
+		lea	(Anim_SonicMilesBG).l,a2		;added dynamic graphic from final s2
+		jsr	Dynamic_Normal
+
 		bsr.w	LevelSelect_Controls
 		bsr.w	RunPLC_RAM
 		tst.l	(Plc_Buffer).w
@@ -3237,9 +3288,9 @@ loc_3A7C:
 		cmpi.w	#$1A,d0
 		bne.s	LevelSelect_PressStart
 		btst	#button_A,(Ctrl_1_Press).w
-		bne.s	LevelSelect_Loop
+		bne.w	LevelSelect_Loop
 		btst	#button_A,(Ctrl_2_Press).w
-		bne.s	LevelSelect_Loop
+		bne.w	LevelSelect_Loop
 		btst	#button_start,(Ctrl_1_Press).w	;was start pressed?
 		bne.w	TitleScreen		;if not, branch
 		btst	#button_start,(Ctrl_2_Press).w	;was A pressed?
@@ -47523,6 +47574,23 @@ return_1AC3C:
 ;graphic for SONIC TEAM PRESENTS, from sonic 1
 Nem_CreditText:	binclude	"art/nemesis/Ending - Credits.nem"
 		even
+;art from sonic 2 final game, level select/options background
+MapEng_MenuBack:		BINCLUDE	"mappings/Sonic and Miles animated background.eni"
+	even
+;ArtNem_MenuBack:		BINCLUDE	"art/nemesis/Sonic and Miles animated background.nem"
+;	even
+;dumbfounded on how to get the dynamic art to work AT ALL, use nemesis graphic which isn't dynamic
+;was dumbfounded, the issue was Vint_Title not processing DMA queue, now issue is loading the screen with text
+ArtUnc_MenuBack:		BINCLUDE	"art/uncompressed/Sonic and Miles animated background.bin"
+	even
+Anim_SonicMilesBG:
+	; Sonic/Miles animated background
+                dc.w    $0000                        ; Total de Anima  es     
+                dc.l    ($FF<<$18)|ArtUnc_MenuBack        ; Offset_0x0A8DC0
+                dc.w    $0020                        ; VRAM 
+                dc.b    $06, $0A                     ; Quadros / Tiles
+                dc.b    $00, $77, $0A, $05, $14, $05 ; Carregar quadro / Tempo do quadro	;change from C7 to 77
+                dc.b    $1E, $77, $14, $05, $0A, $05 ; Carregar quadro / Tempo do quadro   	;change from C7 to 77, makes it slower, idk why but it works  
 ; ===========================================================================
 ; ----------------------------------------------------------------------------
 ; Object 84 - Pinball mode enable/disable
@@ -48239,6 +48307,7 @@ Tails_EndGGFlight:
 		bclr	#2,status(a0)		;clear "rolling" status
 		clr.b	jumping(a0)	; remove jump flag.
 		rts
+
 	if PaddingOptimization=0
 		cnop	-1,2<<lastbit(*-1)
 		even
